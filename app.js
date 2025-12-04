@@ -17,7 +17,7 @@ const APIS = {
     campo: "https://script.google.com/macros/s/AKfycbzetmlxa_w7jL1chqAn7VClGItnYuMXEWRDxMsaxdiYsJOWbX5R99SqW37RzboFQdb34w/exec",
     
     // URL de tu Dashboard (Si es Looker/Web) o la misma de Operaciones si es interno
-    dashboard: "https://script.google.com/macros/s/AKfycbxcGgtcuHpGbh9ggOixboyXfaa3GtTmpPOEwmRjxft30wJvnQHbLt9sv0ejEAjxxPbEyQ/exec?v=dashboard" 
+    dashboard: "https://script.google.com/macros/s/AKfycbxcGgtcuHpGbh9ggOixboyXfaa3GtTmpPOEwmRjxft30wJvnQHbLt9sv0ejEAjxxPbEyQ/exec?v=dashboard",
 };
 
 // ==========================================
