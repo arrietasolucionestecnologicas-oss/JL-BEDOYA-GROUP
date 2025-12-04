@@ -1,0 +1,233 @@
+/* =========================================
+   ESTILOS MAESTROS - JLB GROUP PORTAL
+   ========================================= */
+
+:root {
+    --jlb-dark: #0F172A;
+    --jlb-accent: #84cc16; /* Lime Green JLB */
+    --jlb-blue: #2563eb;
+    --bg-light: #f3f4f6;
+    --text-main: #1f2937;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* --- UTILIDADES DE SEGURIDAD VISUAL (PWA) --- */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-top { padding-top: env(safe-area-inset-top); }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Evita zoom en inputs en iPhone */
+input, select, textarea { font-size: 16px !important; }
+
+/* --- SISTEMA DE VISTAS (SPA) --- */
+.view-section {
+    display: none; /* Oculto por defecto */
+    width: 100%;
+    height: 100%;
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Solo la vista activa se muestra */
+.view-section.active {
+    display: flex; /* Flex para permitir layouts internos */
+    flex-direction: column;
+}
+
+/* Excepción para Login y Portal (Layouts centrados o scroll) */
+#view-login.active {
+    display: flex; /* Mantiene el centrado flex */
+}
+#view-portal.active {
+    display: flex; /* Mantiene la columna flex */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- COMPONENTES GLOBALES --- */
+.glass-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.text-input, .date-input {
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem; /* 8px */
+    padding: 0.75rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.text-input:focus, .date-input:focus {
+    border-color: var(--jlb-blue);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* --- TABLAS Y TARJETAS (OPERACIONES) --- */
+.mobile-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.row-finalizado { background-color: #f0fdf4; border-left: 4px solid #22c55e; }
+.row-proceso { background-color: #eff6ff; border-left: 4px solid #3b82f6; }
+.row-pendiente { background-color: #fff7ed; border-left: 4px solid #f97316; }
+.row-default { background-color: white; border-left: 4px solid #e5e7eb; }
+
+/* --- PESTAÑAS (TABS) --- */
+/* Tabs generales (Operaciones) */
+.tab-btn {
+    padding: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    border-bottom: 2px solid transparent;
+    width: 50%;
+    text-align: center;
+    background: none;
+    cursor: pointer;
+}
+.tab-btn.active {
+    color: var(--jlb-blue);
+    border-bottom: 3px solid var(--jlb-blue);
+    background: #f0f9ff;
+}
+
+/* Tabs específicas de Inventario (Naranja) */
+.tab-inv {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    transition: all 0.2s;
+}
+.active-tab {
+    color: #ea580c !important; /* Orange-600 */
+    border-bottom: 2px solid #ea580c !important;
+    background-color: #fff7ed; /* Orange-50 */
+}
+
+/* Contenido de Tabs */
+.tab-content, .inv-content {
+    display: none;
+    padding: 1rem;
+    width: 100%;
+}
+.tab-content.active, .inv-content.active {
+    display: block;
+    animation: fadeIn 0.2s;
+}
+
+/* --- SUB-NAVEGACIÓN (FILTROS) --- */
+.log-nav, .cp-nav {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.5rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+}
+.log-btn, .cp-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    background: white;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.log-btn.active, .cp-btn.active {
+    background: var(--jlb-dark);
+    color: white;
+    border-color: var(--jlb-dark);
+}
+.log-view, .cp-view {
+    display: none;
+}
+.log-view.active, .cp-view.active {
+    display: block;
+    animation: fadeIn 0.3s;
+}
+
+/* --- TOAST (NOTIFICACIONES) --- */
+#toast-container {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    pointer-events: none;
+    width: 90%;
+    max-width: 400px;
+}
+.toast {
+    pointer-events: auto;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    background: white;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: slideDown 0.3s ease-out;
+}
+@keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.toast.success { border-left: 4px solid #22c55e; }
+.toast.error { border-left: 4px solid #ef4444; }
+
+/* --- STEP CARDS (SEGUIMIENTO) --- */
+.step-card {
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.6rem;
+    display: flex;
+    flex-direction: column;
+}
+.step-card.done {
+    background-color: #ecfdf5;
+    border-color: #a7f3d0;
+}
+.step-card.done label {
+    color: #047857;
+}
+
+/* --- TAREAS (CONTROL) --- */
+.task-card {
+    position: relative;
+    background: white;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+}
+.task-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
