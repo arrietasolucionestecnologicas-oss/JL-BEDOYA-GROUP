@@ -8,7 +8,7 @@
 // ==========================================
 const APIS = {
     // URL del Script de OPERACIONES (El primero que hicimos)
-    operaciones: "https://script.google.com/macros/s/AKfycbzfodjs8ClCuNpRXU2UdMR13IBWXtW2-RzP1roNi9ADXek9Iq3Fvddd7jlR1AfnNq-5pg/exec",
+    operaciones: "https://script.google.com/macros/s/AKfycbxcGgtcuHpGbh9ggOixboyXfaa3GtTmpPOEwmRjxft30wJvnQHbLt9sv0ejEAjxxPbEyQ/exec",
     
     // URL del Script de INVENTARIO (El segundo código que te di)
     almacen: "https://script.google.com/macros/s/AKfycbwukgOIHmHgTsQx96QineroFHlNeFA6GWjR8tb8INFK1wCwMwLy2kgHrKOJpFKEXpLD/exec",
@@ -17,7 +17,7 @@ const APIS = {
     campo: "https://script.google.com/macros/s/AKfycbzetmlxa_w7jL1chqAn7VClGItnYuMXEWRDxMsaxdiYsJOWbX5R99SqW37RzboFQdb34w/exec",
     
     // URL de tu Dashboard (Si es Looker/Web) o la misma de Operaciones si es interno
-    dashboard: "https://script.google.com/macros/s/AKfycbzfodjs8ClCuNpRXU2UdMR13IBWXtW2-RzP1roNi9ADXek9Iq3Fvddd7jlR1AfnNq-5pg/exec?v=dashboard" 
+    dashboard: "https://script.google.com/macros/s/AKfycbxcGgtcuHpGbh9ggOixboyXfaa3GtTmpPOEwmRjxft30wJvnQHbLt9sv0ejEAjxxPbEyQ/exec?v=dashboard" 
 };
 
 // ==========================================
