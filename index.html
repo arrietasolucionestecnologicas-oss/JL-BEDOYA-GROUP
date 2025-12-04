@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>JLB Group Portal</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="h-screen flex flex-col bg-slate-100 text-slate-800 overflow-hidden">
+
+    <div id="toast-container"></div>
+    <div id="global-loader" class="hidden fixed inset-0 bg-black/50 z-[100] flex items-center justify-center text-white font-bold">Cargando...</div>
+
+    <div id="view-login" class="view-section active z-50 fixed inset-0 bg-[#0F172A] flex flex-col items-center justify-center p-6 text-center">
+        <h1 class="text-[#84cc16] font-black text-6xl">JLB</h1>
+        <p class="text-white font-bold text-xl mb-8">GROUP S.A.S</p>
+        <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl w-full max-w-xs border border-white/10">
+            <input type="password" id="portal-pin" class="w-full bg-[#0F172A] border border-slate-600 rounded-xl p-4 text-center text-white text-2xl tracking-[0.5em] font-bold mb-4" placeholder="PIN" inputmode="numeric">
+            <button onclick="loginPortal()" class="w-full bg-[#84cc16] text-[#0f172a] py-4 rounded-xl font-black text-lg">ENTRAR</button>
+        </div>
+    </div>
+
+    <div id="view-portal" class="view-section fixed inset-0 bg-slate-100 z-40 flex flex-col overflow-y-auto">
+        <header class="bg-[#0F172A] p-6 pb-12 rounded-b-[3rem] shadow-xl text-center shrink-0">
+            <h2 class="text-[#84cc16] font-black text-4xl">PORTAL</h2>
+            <p class="text-slate-400 text-sm">Seleccione Módulo</p>
+        </header>
+        <div class="flex-1 p-6 -mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto w-full">
+            <button onclick="abrirApp('operaciones')" class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 flex flex-col items-center gap-4 hover:bg-blue-50 active:scale-95 transition-all">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center"><i data-lucide="zap" class="w-8 h-8"></i></div>
+                <div class="text-center"><h3 class="font-bold text-lg">OPERACIONES</h3><p class="text-xs text-slate-500">Producción y Entradas</p></div>
+            </button>
+            <button onclick="abrirApp('almacen')" class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 flex flex-col items-center gap-4 hover:bg-orange-50 active:scale-95 transition-all">
+                <div class="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center"><i data-lucide="package" class="w-8 h-8"></i></div>
+                <div class="text-center"><h3 class="font-bold text-lg">ALMACÉN</h3><p class="text-xs text-slate-500">Inventario y Salidas</p></div>
+            </button>
+            <button onclick="abrirApp('campo')" class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 flex flex-col items-center gap-4 hover:bg-purple-50 active:scale-95 transition-all">
+                <div class="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center"><i data-lucide="flask-conical" class="w-8 h-8"></i></div>
+                <div class="text-center"><h3 class="font-bold text-lg">TÉCNICO</h3><p class="text-xs text-slate-500">Laboratorio y Pruebas</p></div>
+            </button>
+        </div>
+        <div class="p-6 text-center"><button onclick="document.getElementById('view-portal').classList.remove('active'); document.getElementById('view-login').classList.add('active');" class="text-red-400 text-xs font-bold uppercase">Cerrar Sesión</button></div>
+    </div>
+
+    <div id="view-app-operaciones" class="view-section fixed inset-0 z-30 bg-slate-100 flex flex-col h-full">
+        <header class="h-14 bg-white shadow flex items-center justify-between px-4 z-20 shrink-0">
+            <div class="flex items-center gap-3">
+                <button onclick="cerrarApp()" class="text-slate-500"><i data-lucide="arrow-left"></i></button>
+                <span class="font-bold text-slate-800">OPERACIONES</span>
+                <span id="header-title-ops" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-bold"></span>
+            </div>
+        </header>
+        <div class="flex-1 overflow-hidden relative">
+            <div id="programacion" class="sub-view h-full overflow-y-auto p-4 active">
+                <div class="hidden md:block bg-white rounded-xl shadow border border-slate-200 overflow-hidden mb-4">
+                    <table class="w-full text-left text-sm"><thead class="bg-slate-50 border-b"><tr><th class="p-3">ID</th><th class="p-3">Fecha</th><th class="p-3">Cliente</th><th class="p-3">Estado</th><th class="p-3">Acción</th></tr></thead><tbody id="tabla-prog-desktop"></tbody></table>
+                </div>
+                <div id="lista-prog-mobile" class="md:hidden space-y-3"></div>
+            </div>
+            <div id="entradas" class="sub-view h-full overflow-y-auto p-4">
+                <button onclick="abrirModalNuevaEntrada()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold mb-4">Registrar Entrada</button>
+                <div id="grid-entradas" class="grid gap-4 md:grid-cols-2"></div>
+            </div>
+            <div id="logistica" class="sub-view h-full overflow-y-auto p-4">
+                <div class="flex gap-2 mb-4 overflow-x-auto"><button onclick="subLog('term')" class="bg-white border px-4 py-2 rounded-full font-bold text-sm">Terminados</button><button onclick="subLog('alq')" class="bg-white border px-4 py-2 rounded-full font-bold text-sm">Alquiler</button></div>
+                <div id="view-term" class="log-view active"><div id="lista-terminados" class="space-y-2"></div></div>
+                <div id="view-alq" class="log-view"><table class="w-full bg-white text-sm"><tbody id="tabla-alq"></tbody></table></div>
+            </div>
+        </div>
+        <nav class="bg-white border-t flex justify-around p-2 pb-safe">
+            <button onclick="nav('programacion')" class="flex flex-col items-center text-xs text-slate-500"><i data-lucide="kanban-square" class="w-6 h-6"></i>Prog</button>
+            <button onclick="nav('entradas')" class="flex flex-col items-center text-xs text-slate-500"><i data-lucide="package-plus" class="w-6 h-6"></i>Ent</button>
+            <button onclick="nav('logistica')" class="flex flex-col items-center text-xs text-slate-500"><i data-lucide="truck" class="w-6 h-6"></i>Log</button>
+        </nav>
+        <div id="modal-detalle" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-lg rounded-xl overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="bg-slate-800 text-white p-4 flex justify-between">
+                    <h3 id="m-cliente" class="font-bold">Detalle</h3>
+                    <button onclick="document.getElementById('modal-detalle').classList.add('hidden')">X</button>
+                </div>
+                <div class="p-4 overflow-y-auto flex-1 space-y-4">
+                    <input id="in-idgroup" class="border p-2 w-full rounded" placeholder="ID Group">
+                    <input id="in-serie" class="border p-2 w-full rounded" placeholder="Serie">
+                    <input id="in-desc" class="border p-2 w-full rounded" placeholder="Descripción">
+                    <button onclick="guardarCambios()" class="w-full bg-green-600 text-white py-3 rounded font-bold">Guardar</button>
+                </div>
+            </div>
+        </div>
+        <div id="modal-nueva-entrada" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-lg rounded-xl overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="bg-blue-600 text-white p-4">Nueva Entrada</div>
+                <form id="form-entrada" class="p-4 overflow-y-auto flex-1 space-y-3">
+                    <input name="cliente" id="in-cliente-ent" class="border p-2 w-full rounded" placeholder="Cliente" list="lista-clientes" oninput="autocompletarCliente(this)">
+                    <datalist id="lista-clientes"></datalist>
+                    <input name="descripcion" class="border p-2 w-full rounded" placeholder="Descripción">
+                    <input name="cantidad" type="number" class="border p-2 w-full rounded" placeholder="Cant" value="1">
+                    <input name="empresa" type="hidden" value="JLB">
+                    <canvas id="signature-pad" class="border w-full h-32 bg-slate-50"></canvas>
+                </form>
+                <div class="p-4 border-t flex justify-end gap-2">
+                    <button onclick="cerrarModalNueva()" class="px-4 py-2 border rounded">Cancelar</button>
+                    <button onclick="enviarFormulario()" class="px-4 py-2 bg-blue-600 text-white rounded font-bold">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-app-almacen" class="view-section fixed inset-0 z-30 bg-gray-50 flex flex-col h-full">
+        <header class="h-14 bg-orange-600 text-white shadow flex items-center justify-between px-4 shrink-0">
+            <div class="flex items-center gap-3">
+                <button onclick="cerrarApp()"><i data-lucide="arrow-left"></i></button>
+                <span class="font-bold">INVENTARIO</span>
+            </div>
+        </header>
+        <div class="flex border-b bg-white">
+            <button onclick="invGo('inv-tab-reg', this)" class="tab-inv active-tab flex-1 py-3 font-bold text-sm text-center border-b-2 border-transparent">Movimientos</button>
+            <button onclick="invGo('inv-tab-req', this)" class="tab-inv flex-1 py-3 font-bold text-sm text-center border-b-2 border-transparent">Pedidos</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4">
+            <div id="inv-tab-reg" class="inv-content active space-y-4">
+                <div class="bg-white p-4 rounded shadow border">
+                    <h3 class="font-bold mb-2">Registrar</h3>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <input type="date" id="inv-fecha" class="border p-2 rounded">
+                        <select id="inv-tipoMovimiento" class="border p-2 rounded"><option>Salida</option><option>Entrada</option></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <select id="inv-responsableEntrega" class="border p-2 rounded"></select>
+                        <select id="inv-responsableRecepcion" class="border p-2 rounded"></select>
+                    </div>
+                    <input id="inv-proyecto" class="border p-2 w-full rounded mb-2" placeholder="Proyecto">
+                    <input id="inv-sectorDestino" class="border p-2 w-full rounded mb-2" placeholder="Lugar/Sector">
+                    <div class="border p-2 rounded mb-2">
+                        <div class="flex justify-between mb-2"><span>Items</span> <button onclick="invOpenModal()" class="text-blue-600 font-bold">+ Agregar</button></div>
+                        <div id="inv-listaItems" class="text-sm text-gray-500">Vacío</div>
+                    </div>
+                    <label class="flex items-center gap-2 text-sm mb-2"><input type="checkbox" id="inv-generarRemision" checked> Generar PDF</label>
+                    <input id="inv-obsGeneral" class="border p-2 w-full rounded mb-2" placeholder="Observaciones">
+                    <button onclick="invGuardarMov()" class="w-full bg-orange-600 text-white py-3 rounded font-bold">CONFIRMAR MOVIMIENTO</button>
+                </div>
+                <div class="bg-white p-4 rounded shadow border">
+                    <h3 class="font-bold mb-2">Historial Reciente</h3>
+                    <table class="w-full text-sm text-left"><tbody id="inv-tablaHistorialBody"></tbody></table>
+                </div>
+            </div>
+            <div id="inv-tab-req" class="inv-content hidden">
+                <p>Módulo Pedidos en construcción...</p>
+            </div>
+        </div>
+        <div id="modalItemInv" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white p-4 rounded w-full max-w-sm space-y-3">
+                <h3 class="font-bold">Agregar Item</h3>
+                <select id="inv-mTipo" class="border p-2 w-full" onchange="invLoadNames()"><option>Equipo</option><option>Insumo</option></select>
+                <select id="inv-mNombre" class="border p-2 w-full"></select>
+                <div class="flex gap-2">
+                    <input type="number" id="inv-mCant" class="border p-2 w-full" placeholder="Cant">
+                    <select id="inv-mUnidad" id="admInsUnd" class="border p-2 w-full"></select>
+                </div>
+                <input id="inv-mObs" class="border p-2 w-full" placeholder="Nota item">
+                <div class="flex justify-end gap-2">
+                    <button onclick="document.getElementById('modalItemInv').style.display='none'" class="px-4 py-2 border rounded">Cancelar</button>
+                    <button onclick="invAddItem()" class="px-4 py-2 bg-orange-600 text-white rounded">Agregar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-app-campo" class="view-section fixed inset-0 z-30 bg-slate-50 flex flex-col h-full">
+        <header class="h-14 bg-purple-700 text-white shadow flex items-center justify-between px-4 shrink-0">
+            <div class="flex items-center gap-3">
+                <button onclick="cerrarApp()"><i data-lucide="arrow-left"></i></button>
+                <span class="font-bold">TÉCNICO / LAB</span>
+            </div>
+        </header>
+        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div class="bg-white p-4 rounded shadow border">
+                <h3 class="font-bold text-purple-700 mb-2">Buscar Entrada</h3>
+                <div class="flex gap-2">
+                    <input id="tec-search" type="number" class="border p-2 w-full rounded" placeholder="N° Entrada">
+                    <button onclick="tecBuscar()" class="bg-purple-700 text-white px-4 rounded font-bold">🔍</button>
+                </div>
+            </div>
+            
+            <div id="tec-info-panel" class="hidden space-y-4">
+                <div class="bg-purple-50 p-4 rounded border border-purple-200">
+                    <div class="flex justify-between">
+                        <div><span class="text-xs text-purple-800 block">Entrada</span><strong id="lbl-tec-entrada" class="text-xl"></strong></div>
+                        <div class="text-right"><span class="text-xs text-purple-800 block">KVA</span><strong id="lbl-tec-kva" class="text-xl"></strong></div>
+                    </div>
+                    <div class="mt-2 text-center border-t pt-2 border-purple-200 font-bold text-purple-900" id="lbl-tec-cliente"></div>
+                </div>
+
+                <div class="bg-white p-4 rounded shadow border">
+                    <h3 class="font-bold mb-3">Inspección Visual</h3>
+                    <select id="tec-servicio" class="border p-2 w-full mb-3 rounded"><option>MANTENIMIENTO</option><option>REPARACIÓN</option></select>
+                    
+                    <div class="space-y-2 mb-3">
+                        <label class="flex justify-between items-center text-sm border-b pb-1"><span>Placa</span> <select id="chk-placa" class="border rounded"><option>BUENO</option><option>MALO</option></select></label>
+                        <label class="flex justify-between items-center text-sm border-b pb-1"><span>Pintura</span> <select id="chk-pintura" class="border rounded"><option>BUENO</option><option>MALO</option></select></label>
+                        <label class="flex justify-between items-center text-sm border-b pb-1"><span>Cuba</span> <select id="chk-cuba" class="border rounded"><option>BUENO</option><option>MALO</option></select></label>
+                        <label class="flex justify-between items-center text-sm border-b pb-1"><span>Bujes AT</span> <select id="chk-bujesat" class="border rounded"><option>BUENO</option><option>MALO</option></select></label>
+                        <label class="flex justify-between items-center text-sm border-b pb-1"><span>Bujes BT</span> <select id="chk-bujesbt" class="border rounded"><option>BUENO</option><option>MALO</option></select></label>
+                    </div>
+
+                    <textarea id="tec-obs" class="border p-2 w-full rounded mb-3" placeholder="Observaciones..."></textarea>
+                    <input id="tec-realizado" class="border p-2 w-full rounded mb-3" placeholder="Realizado Por">
+                    <button onclick="tecGuardarInsp()" class="w-full bg-purple-700 text-white py-3 rounded font-bold">GUARDAR & PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
