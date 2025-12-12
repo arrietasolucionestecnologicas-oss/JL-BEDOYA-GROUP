@@ -1,81 +1,81 @@
-/* JLB OPERACIONES - APP.JS (VERSIÓN FINAL ROBUSTA) */
+/* JLB OPERACIONES - APP.JS (FIX FINAL - RECURSIVO) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
 // =============================================================
-// 👇👇 PEGA TU URL DE GOOGLE APPS SCRIPT AQUÍ (La que termina en /exec) 👇👇
+// 👇👇 TU URL DE GOOGLE APPS SCRIPT (EXEC) 👇👇
 const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxEJ7AKN6Qn8VhELXGdluYDsm2Of49bGJV0h28GWCSpKu9lv1YWbWIosq6gQ-jcKNYsJg/exec"; 
 
 // =============================================================
-// 2. ADAPTADOR NUCLEAR (Conexión Google <-> GitHub)
+// 2. ADAPTADOR GOOGLE -> GITHUB (A PRUEBA DE FALLOS)
 // =============================================================
-// Este código crea manualmente el objeto google.script.run para que funcione siempre.
+const google = {
+  script: {
+    run: new Proxy({}, {
+      get: function(target, prop) {
+        // Estado de la llamada actual
+        const state = { success: null, failure: null };
 
-class GoogleRunner {
-    constructor() {
-        this.callbacks = { success: null, failure: null };
-    }
-
-    withSuccessHandler(cb) {
-        this.callbacks.success = cb;
-        return this; // Permite encadenar
-    }
-
-    withFailureHandler(cb) {
-        this.callbacks.failure = cb;
-        return this; // Permite encadenar
-    }
-
-    // Esta función "Atrapa" cualquier nombre que le pidas (ej: obtenerDatosProgramacion)
-    call(action, payload) {
-        console.log("📡 Conectando a Google:", action);
-        
-        fetch(API_ENDPOINT, {
+        // Esta función realiza la conexión real
+        const executeRequest = (action, payload) => {
+          console.log(`🚀 Enviando a Google [${action}]...`);
+          
+          // Ignoramos el error de Tailwind, esto es lo importante:
+          fetch(API_ENDPOINT, {
             method: 'POST',
             body: JSON.stringify({ action: action, payload: payload })
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Manejo de errores que vienen del servidor
-            if (data && data.status === 'error') {
-                console.error("❌ Error Backend:", data.message);
-                if (this.callbacks.failure) this.callbacks.failure(data.message);
+          })
+          .then(res => res.json())
+          .then(response => {
+            if (response && response.status === 'error') {
+              console.error("❌ Error Backend:", response.message);
+              if (state.failure) state.failure(response.message);
             } else {
-                // Éxito: Extraemos la data limpia
-                const finalData = (data && data.data !== undefined) ? data.data : data;
-                if (this.callbacks.success) this.callbacks.success(finalData);
+              // Si todo sale bien, ejecutamos la función de éxito del usuario
+              const data = (response && response.data !== undefined) ? response.data : response;
+              if (state.success) state.success(data);
             }
-        })
-        .catch(err => {
-            console.error("❌ Error Red/Fetch:", err);
-            if (this.callbacks.failure) this.callbacks.failure(err);
-        });
-    }
-}
+          })
+          .catch(err => {
+            console.error("❌ Error de Red:", err);
+            if (state.failure) state.failure(err);
+          });
+        };
 
-// Creamos el objeto google falso usando un Proxy para atrapar los nombres de tus funciones
-const google = {
-    script: {
-        run: new Proxy(new GoogleRunner(), {
-            get: function(target, prop) {
-                // Si llaman a withSuccess/Failure, usamos los métodos de la clase
-                if (prop === 'withSuccessHandler' || prop === 'withFailureHandler') {
-                    return function(cb) {
-                        return target[prop](cb);
-                    };
-                }
-                
-                // Si llaman a cualquier otra cosa (tus funciones), ejecutamos 'call'
-                return function(payload) {
-                    return target.call(prop, payload);
-                };
+        // El "Runner" es un objeto mágico que acepta .withSuccess, .withFailure 
+        // O cualquier nombre de función que tú inventes.
+        const runner = new Proxy({}, {
+          get: function(t, key) {
+            // Si el usuario llama a .withSuccessHandler...
+            if (key === 'withSuccessHandler') {
+              return (cb) => { state.success = cb; return runner; }; // Devolvemos 'runner' para seguir encadenando
             }
-        })
-    }
+            // Si el usuario llama a .withFailureHandler...
+            if (key === 'withFailureHandler') {
+              return (cb) => { state.failure = cb; return runner; }; // Devolvemos 'runner' para seguir encadenando
+            }
+            // Si el usuario llama a TU función (ej: obtenerDatosProgramacion)...
+            return (payload) => executeRequest(key, payload);
+          }
+        });
+
+        // Si la primera llamada ya es un handler (ej: google.script.run.withSuccessHandler...)
+        if (prop === 'withSuccessHandler') {
+          return (cb) => { state.success = cb; return runner; };
+        }
+        if (prop === 'withFailureHandler') {
+          return (cb) => { state.failure = cb; return runner; };
+        }
+
+        // Si la primera llamada es directa (ej: google.script.run.miFuncion())
+        return (payload) => executeRequest(prop, payload);
+      }
+    })
+  }
 };
 
 // =============================================================
-// 3. TU LÓGICA DE NEGOCIO (INTACTA)
+// 3. TU LÓGICA ORIGINAL (INTACTA)
 // =============================================================
 
 // --- VARIABLES GLOBALES ---
@@ -87,7 +87,6 @@ let canvas, ctx, isDrawing=false, indiceActual=-1;
 window.onload = function() { 
     if(typeof lucide !== 'undefined') lucide.createIcons();
     nav('programacion');
-    
     // Carga inicial de clientes
     google.script.run.withSuccessHandler(d => {
         dbClientes = d;
