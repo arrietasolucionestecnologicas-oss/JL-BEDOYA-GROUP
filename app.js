@@ -1,4 +1,63 @@
-/* JLB OPERACIONES - APP.JS */
+/* JLB OPERACIONES - APP.JS (VERSIÓN GITHUB API DEFINITIVA) */
+
+// =============================================================
+// 1. CONFIGURACIÓN DE CONEXIÓN (El Puente)
+// =============================================================
+// Tu URL de la implementación Web App (EXEC)
+const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxEJ7AKN6Qn8VhELXGdluYDsm2Of49bGJV0h28GWCSpKu9lv1YWbWIosq6gQ-jcKNYsJg/exec"; 
+
+// =============================================================
+// 2. ADAPTADOR MÁGICO (Simula ser Google Apps Script)
+// =============================================================
+// Este bloque intercepta tus llamadas antiguas y las convierte en Fetch
+const google = {
+    script: {
+        run: {
+            withSuccessHandler: (successCallback) => {
+                return {
+                    withFailureHandler: (failureCallback) => {
+                        return new Proxy({}, {
+                            get: (target, funcName) => {
+                                return (payload) => {
+                                    console.log("📡 Conectando con Google API:", funcName);
+                                    
+                                    // Petición HTTP segura a tu Backend
+                                    fetch(API_ENDPOINT, {
+                                        method: 'POST',
+                                        // Usamos no-cors/text/plain para evitar preflight OPTIONS en GAS
+                                        // Pero GAS requiere un truco específico para JSON
+                                        body: JSON.stringify({ action: funcName, payload: payload })
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        // Google a veces devuelve el dato directo o envuelto
+                                        if(data && data.status === 'error') {
+                                            console.error("❌ Error Backend:", data.message);
+                                            if(failureCallback) failureCallback(data.message);
+                                        } else {
+                                            // Si el backend devuelve {status:'success', data:...} extraemos data
+                                            // Si devuelve el dato crudo, lo pasamos directo
+                                            const respuestaFinal = (data && data.data !== undefined) ? data.data : data;
+                                            if(successCallback) successCallback(respuestaFinal);
+                                        }
+                                    })
+                                    .catch(err => {
+                                        console.error("❌ Error de Red:", err);
+                                        if(failureCallback) failureCallback(err);
+                                    });
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    }
+};
+
+// =============================================================
+// 3. TU LÓGICA DE NEGOCIO (INTACTA)
+// =============================================================
 
 // --- VARIABLES GLOBALES ---
 let datosProg=[], datosEntradas=[], datosAlq=[], dbClientes = [], tareasCache = [];
@@ -179,9 +238,8 @@ function cerrarModal() { document.getElementById('modal-detalle').classList.add(
 function subLog(id) { document.querySelectorAll('.log-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.log-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-log-'+id).classList.add('active'); if(id==='term') cargarTerminados(); if(id==='alq') cargarAlquiler(); if(id==='pat') cargarPatio(); }
 function subNav(id) { document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.cp-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-cp-'+id).classList.add('active'); }
 
-// (Incluir aquí resto de funciones: Logistica, Clientes, Fotos, Tareas... Están en el JS original, se copian igual)
+// --- FUNCIONES EXTRA (Logistica, Fotos, Tareas) ---
 function cargarTerminados() { google.script.run.withSuccessHandler(d => { const c = document.getElementById('lista-terminados'); c.innerHTML = ''; if(d.length === 0) c.innerHTML = '<p class="text-center text-slate-400 py-4">Sin pendientes.</p>'; d.forEach(i => { const txt = `ENTRADA: ${i.id} | CLIENTE: ${i.cliente} | EQUIPO: ${i.desc} | ODS: ${i.ods}`; c.insertAdjacentHTML('beforeend', `<div class="bg-white border border-green-200 p-4 rounded-lg shadow-sm flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i data-lucide="check" class="w-6 h-6"></i></div><div><h4 class="font-bold text-slate-700">${i.cliente}</h4><p class="text-xs text-slate-500">${i.desc} (ID: ${i.id})</p></div></div><button onclick="copiarTexto('${txt}')" class="bg-slate-100 text-slate-600 p-2 rounded hover:bg-slate-200"><i data-lucide="copy" class="w-4 h-4"></i></button></div>`); }); lucide.createIcons(); }).obtenerLogistica('TERMINADOS'); }
-// ... (Resto de funciones utilitarias se mantienen igual, solo asegúrate de copiar todo el bloque de JS del index.html anterior)
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
 function abrirModalNuevaEntrada() { document.getElementById('modal-nueva-entrada').classList.remove('hidden'); setTimeout(initCanvas, 100); }
