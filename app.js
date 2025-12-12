@@ -1,78 +1,101 @@
-/* JLB OPERACIONES - APP.JS (FIX FINAL - RECURSIVO) */
+/* JLB OPERACIONES - APP.JS (ARQUITECTURA HEADLESS V4) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
 // =============================================================
-// 👇👇 TU URL DE GOOGLE APPS SCRIPT (EXEC) 👇👇
+// ⚠️ IMPORTANTE: Asegúrate de que esta URL sea la de tu nuevo despliegue (versión nueva)
 const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxEJ7AKN6Qn8VhELXGdluYDsm2Of49bGJV0h28GWCSpKu9lv1YWbWIosq6gQ-jcKNYsJg/exec"; 
 
 // =============================================================
-// 2. ADAPTADOR GOOGLE -> GITHUB (A PRUEBA DE FALLOS)
+// 2. ADAPTADOR GOOGLE -> GITHUB (ROBUSTO Y SIN PROXY LOOPS)
 // =============================================================
-const google = {
-  script: {
-    run: new Proxy({}, {
-      get: function(target, prop) {
-        // Estado de la llamada actual
-        const state = { success: null, failure: null };
 
-        // Esta función realiza la conexión real
-        const executeRequest = (action, payload) => {
-          console.log(`🚀 Enviando a Google [${action}]...`);
-          
-          // Ignoramos el error de Tailwind, esto es lo importante:
-          fetch(API_ENDPOINT, {
-            method: 'POST',
-            body: JSON.stringify({ action: action, payload: payload })
-          })
-          .then(res => res.json())
-          .then(response => {
-            if (response && response.status === 'error') {
-              console.error("❌ Error Backend:", response.message);
-              if (state.failure) state.failure(response.message);
-            } else {
-              // Si todo sale bien, ejecutamos la función de éxito del usuario
-              const data = (response && response.data !== undefined) ? response.data : response;
-              if (state.success) state.success(data);
-            }
-          })
-          .catch(err => {
-            console.error("❌ Error de Red:", err);
-            if (state.failure) state.failure(err);
-          });
-        };
+class GoogleRunner {
+    constructor(methodName) {
+        this.methodName = methodName;
+        this.successCallback = null;
+        this.failureCallback = null;
+    }
 
-        // El "Runner" es un objeto mágico que acepta .withSuccess, .withFailure 
-        // O cualquier nombre de función que tú inventes.
-        const runner = new Proxy({}, {
-          get: function(t, key) {
-            // Si el usuario llama a .withSuccessHandler...
-            if (key === 'withSuccessHandler') {
-              return (cb) => { state.success = cb; return runner; }; // Devolvemos 'runner' para seguir encadenando
-            }
-            // Si el usuario llama a .withFailureHandler...
-            if (key === 'withFailureHandler') {
-              return (cb) => { state.failure = cb; return runner; }; // Devolvemos 'runner' para seguir encadenando
-            }
-            // Si el usuario llama a TU función (ej: obtenerDatosProgramacion)...
-            return (payload) => executeRequest(key, payload);
-          }
+    withSuccessHandler(cb) {
+        this.successCallback = cb;
+        return this; // Permite encadenamiento
+    }
+
+    withFailureHandler(cb) {
+        this.failureCallback = cb;
+        return this; // Permite encadenamiento
+    }
+
+    // Método que ejecuta la llamada final (ej: .obtenerDatosProgramacion())
+    // Se usa Proxy para capturar la llamada dinámica
+    execute(payload) {
+        // console.log(`🚀 API CALL: ${this.methodName}`, payload); // Descomentar para debug
+
+        // TRUCO CORS DE GAS: Enviamos texto plano para evitar preflight OPTIONS
+        // Google Apps Script recibe esto en e.postData.contents
+        const requestBody = JSON.stringify({
+            action: this.methodName,
+            payload: payload
         });
 
-        // Si la primera llamada ya es un handler (ej: google.script.run.withSuccessHandler...)
-        if (prop === 'withSuccessHandler') {
-          return (cb) => { state.success = cb; return runner; };
-        }
-        if (prop === 'withFailureHandler') {
-          return (cb) => { state.failure = cb; return runner; };
-        }
+        fetch(API_ENDPOINT, {
+            method: 'POST',
+            redirect: 'follow', // IMPORTANTE: Seguir la redirección 302 de Google
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8" // Engaña al navegador para no hacer OPTIONS
+            },
+            body: requestBody
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'error') {
+                console.error("❌ Error Backend:", data.message);
+                if (this.failureCallback) this.failureCallback(data.message);
+            } else {
+                if (this.successCallback) this.successCallback(data);
+            }
+        })
+        .catch(error => {
+            console.error("❌ Error de Red:", error);
+            if (this.failureCallback) this.failureCallback(error.toString());
+        });
+    }
+}
 
-        // Si la primera llamada es directa (ej: google.script.run.miFuncion())
-        return (payload) => executeRequest(prop, payload);
-      }
-    })
-  }
+// Simulamos el objeto google.script.run
+const google = {
+    script: {
+        run: new Proxy({}, {
+            get: function(target, prop) {
+                // Si llaman a .withSuccessHandler directamente primero
+                if (prop === 'withSuccessHandler') {
+                    return (cb) => {
+                        // Retornamos un Proxy que espera el nombre de la función
+                        return new Proxy({}, {
+                            get: (t, funcName) => {
+                                const runner = new GoogleRunner(funcName);
+                                runner.withSuccessHandler(cb);
+                                return (payload) => runner.execute(payload);
+                            }
+                        });
+                    };
+                }
+                
+                // Si llaman a la función directamente: google.script.run.miFuncion()
+                const runner = new GoogleRunner(prop);
+                // Retornamos una función que al ejecutarse lanza el request
+                // Pero también le pegamos los métodos de handler por si encadenan después (raro en GAS, pero posible)
+                const executor = (payload) => runner.execute(payload);
+                executor.withSuccessHandler = (cb) => { runner.withSuccessHandler(cb); return executor; };
+                executor.withFailureHandler = (cb) => { runner.withFailureHandler(cb); return executor; };
+                
+                return executor;
+            }
+        })
+    }
 };
+
 
 // =============================================================
 // 3. TU LÓGICA ORIGINAL (INTACTA)
