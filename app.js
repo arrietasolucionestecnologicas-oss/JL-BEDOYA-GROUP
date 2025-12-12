@@ -1,367 +1,215 @@
-/**
- * JLB GROUP - CEREBRO UNIFICADO (PWA)
- * Incluye: Portal, Operaciones, Inventario y Técnico.
- */
+/* JLB OPERACIONES - APP.JS */
 
-// ==========================================
-// 1. CONFIGURACIÓN DE APIS (¡PEGA TUS LINKS AQUÍ!)
-// ==========================================
-const APIS = {
-    // URL del Script de OPERACIONES (El primero que hicimos)
-    operaciones: "https://script.google.com/macros/s/AKfycbxcGgtcuHpGbh9ggOixboyXfaa3GtTmpPOEwmRjxft30wJvnQHbLt9sv0ejEAjxxPbEyQ/exec",
-    
-    // URL del Script de INVENTARIO (El segundo código que te di)
-    almacen: "https://script.google.com/macros/s/AKfycbwukgOIHmHgTsQx96QineroFHlNeFA6GWjR8tb8INFK1wCwMwLy2kgHrKOJpFKEXpLD/exec",
-    
-    // URL del Script TÉCNICO (El tercer código que te di)
-    campo: "https://script.google.com/macros/s/AKfycbzetmlxa_w7jL1chqAn7VClGItnYuMXEWRDxMsaxdiYsJOWbX5R99SqW37RzboFQdb34w/exec",
-    
-    // URL de tu Dashboard (Si es Looker/Web) o la misma de Operaciones si es interno
-    dashboard: "https://script.google.com/macros/s/AKfycbxcGgtcuHpGbh9ggOixboyXfaa3GtTmpPOEwmRjxft30wJvnQHbLt9sv0ejEAjxxPbEyQ/exec?v=dashboard",
+// --- VARIABLES GLOBALES ---
+let datosProg=[], datosEntradas=[], datosAlq=[], dbClientes = [], tareasCache = [];
+let alqFotoBase64=null;
+let canvas, ctx, isDrawing=false, indiceActual=-1;
+
+// --- INIT ---
+window.onload = function() { 
+    lucide.createIcons();
+    nav('programacion');
+    // Carga inicial de clientes
+    google.script.run.withSuccessHandler(d => {
+        dbClientes = d;
+        actualizarDatalistClientes();
+    }).obtenerClientesDB();
 };
 
-// ==========================================
-// 2. PUENTE DE CONEXIÓN MULTI-SISTEMA
-// ==========================================
-async function callGasApi(servicio, action, payload = {}) {
-    const url = APIS[servicio];
-    if (!url || url.includes("PEGAR_AQUI")) {
-        alert(`Error: Configura la URL de ${servicio.toUpperCase()} en app.js`);
-        return { status: 'error', message: 'URL no configurada' };
-    }
-    try {
-        // Mostrar loader global si existe
-        if(document.getElementById('global-loader')) document.getElementById('global-loader').classList.remove('hidden');
-        
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action, payload })
-        });
-        const result = await response.json();
-        
-        if(document.getElementById('global-loader')) document.getElementById('global-loader').classList.add('hidden');
-        return result;
-    } catch (error) {
-        if(document.getElementById('global-loader')) document.getElementById('global-loader').classList.add('hidden');
-        console.error(`Error API (${servicio}):`, error);
-        alert("Error de conexión con " + servicio);
-        return { status: "error", message: error.toString() };
-    }
-}
-
-// ==========================================
-// 3. LÓGICA DEL PORTAL
-// ==========================================
-function loginPortal() {
-    const pin = document.getElementById('portal-pin').value;
-    if (pin === '1234' || pin === '6991') {
-        showView('view-portal');
-    } else {
-        alert("PIN Incorrecto");
-    }
-}
-
-function showView(viewId) {
-    document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-    document.getElementById(viewId).classList.add('active');
-}
-
-function abrirApp(appName) {
-    if (appName === 'operaciones') {
-        showView('view-app-operaciones');
-        nav('programacion');
-        // Cargar clientes operaciones
-        callGasApi('operaciones', 'obtenerClientesDB').then(r => {
-            if(r.status === 'success') { dbClientes = r.data; actualizarDatalistClientes(); }
-        });
-    } 
-    else if (appName === 'almacen') {
-        showView('view-app-almacen');
-        initInventario();
-    }
-    else if (appName === 'campo') {
-        showView('view-app-campo');
-        // No requiere carga inicial pesada
-    }
-}
-
-function cerrarApp() {
-    showView('view-portal');
-}
-
-function irAlDashboard() {
-    if(APIS.dashboard && !APIS.dashboard.includes("PEGAR")) window.open(APIS.dashboard, '_blank');
-    else alert("Configura la URL del Dashboard en app.js");
-}
-
-function showToast(msg, type = 'success') {
-    const c = document.getElementById('toast-container');
-    const d = document.createElement('div');
-    d.className = `toast ${type}`;
-    d.innerHTML = `<span class="font-bold text-sm">${msg}</span>`;
-    c.appendChild(d);
-    setTimeout(() => { d.style.opacity='0'; setTimeout(()=>d.remove(),300); }, 3000);
-}
-
-// ==========================================
-// 4. LÓGICA: OPERACIONES (JLB)
-// ==========================================
-// Variables globales Operaciones
-let datosProg=[], datosEntradas=[], datosAlq=[], alqFotoBase64=null;
-let dbClientes = [];
-let canvas, ctx, isDrawing=false, indiceActual=-1;
-let tareasCache = []; 
-
-function actualizarDatalistClientes(){
-     const dl = document.getElementById('lista-clientes'); dl.innerHTML = '';
-     dbClientes.forEach(c => { const o = document.createElement('option'); o.value = c.nombre; dl.appendChild(o); });
-}
-function autocompletarCliente(input){
-    const val = input.value.toUpperCase();
-    const found = dbClientes.find(c => c.nombre === val);
-    if(found){
-        document.getElementById('in-cedula-ent').value = found.nit;
-        document.getElementById('in-telefono-ent').value = found.telefono;
-        document.getElementById('in-contacto-ent').value = found.contacto;
-        document.getElementById('in-ciudad-ent').value = found.ciudad;
-        showToast("Cliente encontrado");
-    }
-}
+// --- NAVEGACION ---
 function nav(id) { 
-    // Ocultar secciones internas de Operaciones
-    document.querySelectorAll('#view-app-operaciones .sub-view').forEach(e => e.classList.remove('active')); 
+    document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active')); 
     const sec = document.getElementById(id); if(sec) sec.classList.add('active'); 
-    document.getElementById('header-title-ops').innerText = id.toUpperCase();
-    
+    document.getElementById('header-title').innerText = id.toUpperCase(); 
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active')); 
+    const btn = document.getElementById('btn-'+id); if(btn) btn.classList.add('nav-active'); 
+    document.querySelectorAll('.nav-btn-mob').forEach(b => b.classList.remove('mobile-nav-active'));
+    const mobBtn = document.getElementById('mob-'+id); if(mobBtn) mobBtn.classList.add('mobile-nav-active');
+
     if(id==='programacion') cargarProgramacion(); 
     if(id==='entradas') cargarEntradas(); 
     if(id==='logistica') subLog('term'); 
     if(id==='control') { cargarActividades(); subNav('act'); } 
-    if(typeof lucide !== 'undefined') lucide.createIcons();
+    lucide.createIcons();
 }
-function subNav(id) { document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); if(id==='req') cargarReq(); }
-function subLog(id) { document.querySelectorAll('.log-view').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); if(id==='term') cargarTerminados(); if(id==='alq') cargarAlquiler(); if(id==='pat') cargarPatio(); }
+function irAlDashboard() { google.script.run.withSuccessHandler(url => window.open(url, '_top')).getUrlDashboard(); }
+function abrirLaboratorio() { google.script.run.withSuccessHandler(url => window.open(url, '_blank')).getUrlLaboratorio(); }
+function recargarActual() { nav(document.querySelector('.view-section.active').id); }
 
-// --- Operaciones: Fotos ---
-function procesarFotosInmediato(input) {
-    const idTrafo = document.getElementById('foto-trafo').value;
-    if(!idTrafo) { alert("¡Escribe el ID del Trafo!"); input.value = ""; return; }
-    if (input.files && input.files.length > 0) {
-        const list = document.getElementById('lista-fotos');
-        const etapa = document.getElementById('foto-etapa').value;
-        Array.from(input.files).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const div = document.createElement('div');
-                div.className = "bg-white p-2 border flex justify-between";
-                div.innerHTML = `<span>${file.name}</span><span class="text-blue-500">Subiendo...</span>`;
-                list.prepend(div);
-                callGasApi('operaciones', 'subirFotoProceso', { base64: e.target.result, idTrafo, etapa }).then(res => {
-                     if(res.status === 'success'){ div.innerHTML = `<span>${file.name}</span><span class="text-green-600">OK</span>`; showToast("Foto OK"); } 
-                     else { div.innerHTML = `<span class="text-red-600">Error</span>`; }
-                });
-            };
-            reader.readAsDataURL(file);
-        });
-        input.value = ""; 
-    }
-}
-
-// --- Operaciones: Programación ---
+// --- MODULO PROGRAMACION & REQUERIMIENTOS ---
 function cargarProgramacion(){ 
     const tDesk = document.getElementById('tabla-prog-desktop'); 
     const tMob = document.getElementById('lista-prog-mobile');
-    tDesk.innerHTML='<tr><td colspan="5" class="text-center p-4">Cargando...</td></tr>'; tMob.innerHTML='<div class="text-center p-4">Cargando...</div>';
-    callGasApi('operaciones', 'obtenerDatosProgramacion').then(res => { 
-        if (res.status !== 'success') return;
-        datosProg = res.data; 
+    tDesk.innerHTML='<tr><td colspan="5" class="text-center py-8 text-slate-500">Cargando...</td></tr>'; 
+    tMob.innerHTML='<div class="text-center py-8 text-slate-500">Cargando...</div>';
+
+    google.script.run.withSuccessHandler(d => { 
+        datosProg = d; 
         tDesk.innerHTML = ''; tMob.innerHTML = '';
-        if(datosProg.length === 0) { tDesk.innerHTML='<tr><td colspan="5" class="text-center">Sin datos</td></tr>'; return; } 
-        datosProg.forEach((r,i) => { 
-            let c = "bg-white"; 
-            if(r.estado.includes("FINAL") || r.estado.includes("ENTREGADO")) c = "bg-green-50 border-l-4 border-green-500";
-            else if(r.estado.includes("PROCESO")) c = "bg-blue-50 border-l-4 border-blue-500";
+        if(d.length === 0) { const empty = '<div class="text-center py-4 text-slate-400">No hay datos recientes.</div>'; tDesk.innerHTML = `<tr><td colspan="5">${empty}</td></tr>`; tMob.innerHTML = empty; return; } 
+
+        d.forEach((r,i) => { 
+            let c = "row-default", badgeColor = "bg-slate-100 text-slate-600";
+            const s = (r.estado || "").toUpperCase(); 
+            if(s.includes("FINAL") || s.includes("ENTREGADO")) { c = "row-finalizado"; badgeColor = "bg-green-100 text-green-700"; }
+            else if(s.includes("PROCESO") || s.includes("AUTO")) { c = "row-proceso"; badgeColor = "bg-blue-100 text-blue-700"; }
+            else if(s.includes("PEND") || s.includes("SIN")) { c = "row-pendiente"; badgeColor = "bg-orange-100 text-orange-700"; }
             
-            let b = `<b>${r.idJLB||'--'}</b>`; if(r.idGroup) b += `<br><span class="text-xs bg-orange-100 px-1 rounded">G:${r.idGroup}</span>`;
-            
-            // Desktop
-            tDesk.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3">${b}</td><td class="p-3">${r.fecha}</td><td class="p-3">${r.cliente}</td><td class="p-3"><span class="text-xs px-2 py-1 rounded bg-slate-200">${r.estado}</span></td><td class="p-3 text-center"><button onclick="abrirModal(${i})" class="text-blue-600">✏️</button></td></tr>`); 
-            // Mobile
-            tMob.insertAdjacentHTML('beforeend', `<div class="${c} p-4 rounded shadow mb-2" onclick="abrirModal(${i})"><div class="flex justify-between"><span><b>#${r.idJLB||r.idGroup}</b></span><span class="text-xs bg-white px-2 rounded border">${r.estado}</span></div><h4 class="font-bold text-blue-900">${r.cliente}</h4><p class="text-sm truncate">${r.desc}</p></div>`);
+            let b = `<span class="font-mono font-bold text-slate-700">${r.idJLB||'--'}</span>`; 
+            if(r.idGroup) b += `<br><span class="bg-orange-100 text-orange-800 px-1 rounded text-[10px] font-bold">G:${r.idGroup}</span>`; 
+
+            tDesk.insertAdjacentHTML('beforeend', `<tr class="border-b ${c} hover:bg-slate-50"><td class="px-6 py-4">${b}</td><td class="px-6 py-4 text-xs font-mono text-slate-600">${r.fecha||'S/F'}</td><td class="px-6 py-4 font-medium">${r.cliente}</td><td class="px-6 py-4"><span class="text-xs font-bold px-2 py-1 rounded ${badgeColor}">${r.estado}</span></td><td class="px-6 py-4 text-center"><button onclick="abrirModal(${i})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); 
+            tMob.insertAdjacentHTML('beforeend', `<div class="mobile-card relative ${c} p-4" onclick="abrirModal(${i})"><div class="flex justify-between items-start mb-2"><div><span class="font-black text-lg text-slate-800">#${r.idJLB || r.idGroup}</span><span class="text-xs text-slate-500 block">${r.fecha}</span></div><span class="text-[10px] font-bold px-2 py-1 rounded ${badgeColor} uppercase tracking-wide">${r.estado}</span></div><h4 class="font-bold text-blue-900 text-base mb-1">${r.cliente}</h4><p class="text-sm text-slate-600 truncate">${r.desc}</p><div class="mt-3 pt-2 border-t border-slate-200/50 flex justify-end"><button class="text-blue-600 text-xs font-bold flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-blue-100 shadow-sm"><i data-lucide="pencil" class="w-3 h-3"></i> EDITAR / VER</button></div></div>`);
         }); 
-        if(typeof lucide !== 'undefined') lucide.createIcons();
-    }); 
+        lucide.createIcons(); 
+    }).obtenerDatosProgramacion(); 
 }
 
 function abrirModal(i){ 
-    indiceActual = i; const d = datosProg[i]; document.getElementById('modal-detalle').classList.remove('hidden'); 
+    indiceActual = i; 
+    const d = datosProg[i]; 
+    document.getElementById('modal-detalle').classList.remove('hidden'); 
     document.getElementById('m-cliente').innerText = d.cliente; 
-    document.getElementById('in-idgroup').value = d.idGroup; document.getElementById('in-serie').value = d.serie; document.getElementById('in-desc').value = d.desc;
-    // (Resto del llenado de campos igual que antes, resumido para brevedad pero funciona igual)
-}
-function guardarCambios(){ 
-    const c = { idGroup: document.getElementById('in-idgroup').value, serie: document.getElementById('in-serie').value, desc: document.getElementById('in-desc').value }; 
-    // Añadir todos los campos necesarios aquí
-    callGasApi('operaciones', 'guardarAvance', {rowIndex: datosProg[indiceActual].rowIndex, cambios: c}).then(r => {
-        if(r.status === 'success') { document.getElementById('modal-detalle').classList.add('hidden'); cargarProgramacion(); showToast("Guardado"); }
-    }); 
-}
-
-// --- Operaciones: Nueva Entrada ---
-function abrirModalNuevaEntrada() { document.getElementById('modal-nueva-entrada').classList.remove('hidden'); setTimeout(initCanvas, 100); }
-function cerrarModalNueva() { document.getElementById('modal-nueva-entrada').classList.add('hidden'); }
-function enviarFormulario(){
-    const f = document.getElementById('form-entrada'); const d = new FormData(f);
-    const dt = { empresa: d.get('empresa'), cliente: d.get('cliente'), descripcion: d.get('descripcion'), cantidad: d.get('cantidad'), codigo: d.get('codigo'), firmaBase64: getFirmaBase64() }; // Añadir resto de campos
-    callGasApi('operaciones', 'registrarEntradaRapida', dt).then(r => {
-        if(r.status === 'success'){ cerrarModalNueva(); showToast("Entrada creada"); cargarEntradas(); }
-    });
-}
-function cargarEntradas() { 
-    const g = document.getElementById('grid-entradas'); g.innerHTML='Loading...'; 
-    callGasApi('operaciones', 'obtenerDatosEntradas').then(res => { 
-        g.innerHTML = ''; res.data.forEach(i => {
-            const pdf = i.pdf ? `<a href="${i.pdf}" target="_blank" class="text-red-600 font-bold text-xs">PDF</a>` : `<button onclick="genPDF(${i.id},${i.rowIndex})" class="text-blue-600 text-xs">Generar</button>`;
-            g.insertAdjacentHTML('beforeend', `<div class="bg-white p-4 rounded shadow border"><div class="flex justify-between"><b>#${i.id}</b> <span class="text-xs">${i.fecha}</span></div><div class="text-blue-800 font-bold">${i.cliente}</div><div class="text-sm">${i.descripcion}</div><div class="mt-2" id="act-${i.id}">${pdf}</div></div>`);
-        });
-    }); 
-}
-function genPDF(id, rix){ 
-    document.getElementById(`act-${id}`).innerHTML = "Creando...";
-    callGasApi('operaciones', 'generarPDFBackground', {id, rowIndex: rix}).then(r => { 
-        if(r.status==='success') document.getElementById(`act-${id}`).innerHTML = `<a href="${r.data.url}" target="_blank" class="text-red-600 font-bold">VER PDF</a>`;
-    }); 
-}
-
-// --- Operaciones: Canvas Firma ---
-function initCanvas() { canvas = document.getElementById('signature-pad'); ctx = canvas.getContext('2d'); canvas.width = canvas.parentElement.offsetWidth; canvas.height = 150; ctx.lineWidth = 2; 
-    canvas.addEventListener('touchstart', (e)=>{e.preventDefault(); isDrawing=true; const r=canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(e.touches[0].clientX-r.left, e.touches[0].clientY-r.top);});
-    canvas.addEventListener('touchmove', (e)=>{e.preventDefault(); if(isDrawing){const r=canvas.getBoundingClientRect(); ctx.lineTo(e.touches[0].clientX-r.left, e.touches[0].clientY-r.top); ctx.stroke();}});
-    canvas.addEventListener('touchend', ()=>{isDrawing=false;});
-    // Mouse support
-    canvas.addEventListener('mousedown', (e)=>{isDrawing=true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY);});
-    canvas.addEventListener('mousemove', (e)=>{if(isDrawing){ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke();}});
-    canvas.addEventListener('mouseup', ()=>{isDrawing=false;});
-}
-function limpiarFirma() { ctx.clearRect(0,0,canvas.width,canvas.height); }
-function getFirmaBase64() { return canvas.toDataURL(); }
-
-
-// ==========================================
-// 5. LÓGICA: INVENTARIO (ALMACÉN)
-// ==========================================
-let INV_DATA = {}, INV_ITEMS = [], INV_ITEMS_REQ = [], INV_PROVS = [];
-
-function initInventario() {
-    document.getElementById('inv-fecha').valueAsDate = new Date();
-    callGasApi('almacen', 'cargarOpciones').then(r => {
-        if(r.status === 'success') {
-            INV_DATA = r.data;
-            invFill('inv-responsableEntrega', INV_DATA.responsables);
-            invFill('inv-responsableRecepcion', INV_DATA.responsables);
-            invFill('admInsUnd', INV_DATA.unidadesCatalogo);
-            invLoadNames();
-            invCargarHistorial();
-        }
-    });
-}
-
-function invGo(tabId, btn) {
-    document.querySelectorAll('#view-app-almacen .inv-content').forEach(e=>e.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    document.querySelectorAll('.tab-inv').forEach(b=>b.classList.remove('active-tab'));
-    btn.classList.add('active-tab');
-    if(tabId === 'inv-tab-req') invCargarReq();
-    if(tabId === 'inv-tab-prov') invCargarProvs();
-}
-
-function invGuardarMov() {
-    if(!INV_ITEMS.length) return alert("Agrega items");
-    const p = {
-        fecha: document.getElementById('inv-fecha').value,
-        tipoMovimiento: document.getElementById('inv-tipoMovimiento').value,
-        responsable: document.getElementById('inv-responsableEntrega').value,
-        responsableRecepcion: document.getElementById('inv-responsableRecepcion').value,
-        proyecto: document.getElementById('inv-proyecto').value,
-        sectorDestino: document.getElementById('inv-sectorDestino').value,
-        generarRemision: document.getElementById('inv-generarRemision').checked,
-        observaciones: document.getElementById('inv-obsGeneral').value,
-        items: JSON.stringify(INV_ITEMS.map(i=>`${i.tipo}::${i.nom}::${i.cant}::${i.und}::${i.obs}`))
-    };
-    callGasApi('almacen', 'registrarMovimiento', p).then(r => {
-        if(r.status === 'success') {
-            showToast("Movimiento registrado");
-            if(r.data.url) window.open(r.data.url, '_blank');
-            INV_ITEMS=[]; invRenderItems(); invCargarHistorial();
-        } else alert(r.message);
-    });
-}
-
-function invCargarHistorial() {
-    callGasApi('almacen', 'obtenerUltimosMovimientos').then(r => {
-        const tb = document.getElementById('inv-tablaHistorialBody');
-        if(!r.data || !r.data.length) { tb.innerHTML='<tr><td colspan="7">Sin datos</td></tr>'; return; }
-        tb.innerHTML = r.data.map(row => `<tr><td>${row.fecha}</td><td>${row.tipo}</td><td>${row.item}</td><td>${row.cantidad}</td><td>${row.responsable}</td><td>${row.proyecto}</td><td><button onclick="invEliminar('${row.id}','${row.item}','${row.cantidad}','${row.tipo}')">🗑️</button></td></tr>`).join('');
-    });
-}
-
-function invEliminar(id, item, cant, tipo) {
-    if(confirm("¿Eliminar?")) callGasApi('almacen', 'eliminarMovimiento', {id, tipoItem: 'Insumo', nombre: item, cant, tipoMov: tipo}).then(()=>invCargarHistorial());
-}
-
-function invAddItem() {
-    const n = document.getElementById('inv-mNombre').value, c = document.getElementById('inv-mCant').value, u = document.getElementById('inv-mUnidad').value;
-    if(!n || !c) return alert("Faltan datos");
-    INV_ITEMS.push({tipo: document.getElementById('inv-mTipo').value, nom:n, cant:c, und:u, obs: document.getElementById('inv-mObs').value});
-    invRenderItems(); document.getElementById('modalItemInv').style.display='none';
-}
-
-function invRenderItems() {
-    document.getElementById('inv-listaItems').innerHTML = INV_ITEMS.map((i,x) => `<div class="bg-gray-100 p-2 mb-1 rounded flex justify-between"><span>${i.nom} (${i.cant})</span><button onclick="INV_ITEMS.splice(${x},1);invRenderItems()" class="text-red-500">×</button></div>`).join('');
-}
-
-function invOpenModal() {
-    document.getElementById('modalItemInv').style.display='flex';
-    invLoadNames();
-}
-
-function invLoadNames() {
-    const t = document.getElementById('inv-mTipo').value;
-    invFill('inv-mNombre', t==='Insumo'? INV_DATA.insumos : INV_DATA.equipos);
-}
-
-function invFill(id, arr) { document.getElementById(id).innerHTML = arr&&arr.length ? arr.map(x=>`<option>${x}</option>`).join('') : '<option>Vacío</option>'; }
-
-
-// ==========================================
-// 6. LÓGICA: TÉCNICO (CAMPO)
-// ==========================================
-let TEC_DATA = {};
-
-function tecBuscar() {
-    const val = document.getElementById('tec-search').value;
-    if(!val) return alert("Ingrese Entrada");
-    callGasApi('campo', 'buscarInfoEntrada', {entrada: val}).then(r => {
-        if(r.status === 'success' && r.data.found) {
-            TEC_DATA = r.data;
-            document.getElementById('tec-info-panel').classList.remove('hidden');
-            document.getElementById('lbl-tec-entrada').innerText = TEC_DATA.entrada;
-            document.getElementById('lbl-tec-cliente').innerText = TEC_DATA.cliente;
-            document.getElementById('lbl-tec-kva').innerText = TEC_DATA.kva;
-        } else {
-            alert("No encontrada. Debe registrarla primero.");
-        }
-    });
-}
-
-function tecGuardarInsp() {
-    const f = { ...TEC_DATA, servicio: document.getElementById('tec-servicio').value, observaciones: document.getElementById('tec-obs').value, realizado: document.getElementById('tec-realizado').value };
-    // Mapear checks
-    ['placa','pintura','cuba','bujesat','bujesbt'].forEach(k => f[k] = document.getElementById('chk-'+k).value);
+    document.getElementById('m-ids-badge').innerText = `ID: ${d.idJLB} | GRUPO: ${d.idGroup||'N/A'}`; 
+    document.getElementById('date-f-oferta').value = fechaParaInput(d.f_oferta); 
+    document.getElementById('input-obs-prog').value = d.observacion; 
+    document.getElementById('input-remision-prog').value = d.remision; 
+    document.getElementById('date-entrega').value = fechaParaInput(d.f_entrega); 
+    document.getElementById('in-idgroup').value = d.idGroup; document.getElementById('in-serie').value = d.serie; 
+    document.getElementById('in-ods').value = d.ods; document.getElementById('in-desc').value = d.desc; document.getElementById('in-tipo').value = d.tipo;
     
-    callGasApi('campo', 'guardarInspeccion', {form: f, pdf: true}).then(r => {
-        if(r.status === 'success') { showToast("Inspección Guardada"); if(r.url) window.open(r.url, '_blank'); }
-        else alert(r.message);
-    });
+    // Render Steps
+    const ps = [{id:'pruebas_ini',l:'1. Pruebas Iniciales'},{id:'desencube',l:'2. Desencube'},{id:'desensamble',l:'3. Desensamble'},{id:'bobinado',l:'4. Bobinado'},{id:'ensamble',l:'5. Ensamble'},{id:'horno',l:'6. Horno'},{id:'encube',l:'7. Encube'},{id:'pruebas_fin',l:'8. Pruebas Finales'},{id:'pintura',l:'9. Pintura'},{id:'listo',l:'10. Listo'}]; 
+    const c = document.getElementById('steps-container'); c.innerHTML = ''; 
+    ps.forEach(p => { 
+        let hid = ""; 
+        if(d.esAceite && p.id!=='listo' && p.id!=='pruebas_ini' && p.id!=='pruebas_fin') hid = "hidden"; 
+        const v = fechaParaInput(d.fases[p.id]) || (p.id==='listo'?fechaParaInput(d.f_listo):""); 
+        const dn = v !== ""; 
+        c.insertAdjacentHTML('beforeend', `<div class="step-card ${dn?'done':''} ${hid}"><label class="text-[10px] font-bold uppercase mb-1 ${dn?'text-green-700':'text-slate-400'}">${p.l}</label><input type="date" id="date-${p.id}" value="${v}" class="date-input"></div>`); 
+    }); 
+    
+    // CARGAR REQUERIMIENTOS (NUEVO)
+    const idParaReq = d.idJLB && d.idJLB.toString().length > 1 ? d.idJLB : d.idGroup;
+    cargarRequerimientosModal(idParaReq);
+    
+    switchTab('seg'); 
 }
+
+// LOGICA REQUERIMIENTOS
+function cargarRequerimientosModal(idTrafo) {
+    const c = document.getElementById('lista-reqs');
+    c.innerHTML = '<p class="text-center text-slate-400 text-xs py-4 animate-pulse">Cargando lista...</p>';
+    google.script.run.withSuccessHandler(lista => renderListaReqs(lista)).obtenerRequerimientos(idTrafo);
+}
+
+function renderListaReqs(lista) {
+    const c = document.getElementById('lista-reqs');
+    c.innerHTML = '';
+    if(lista.length === 0) { c.innerHTML = '<p class="text-center text-slate-400 text-xs py-4">Sin requerimientos.</p>'; return; }
+    lista.forEach(r => {
+        c.insertAdjacentHTML('beforeend', `
+            <div class="bg-white p-2 rounded border border-slate-200 flex justify-between items-start mb-2">
+                <div><p class="text-sm font-bold text-slate-700">${r.texto}</p><p class="text-[10px] text-slate-400">${r.fecha} - ${r.autor}</p></div>
+                <button onclick="borrarReq(${r.idReq})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+            </div>`);
+    });
+    lucide.createIcons();
+}
+
+function guardarNuevoReq() {
+    const txt = document.getElementById('txt-nuevo-req').value;
+    if(!txt.trim()) return;
+    const ids = document.getElementById('m-ids-badge').innerText; 
+    // Extraer el ID correcto (JLB o Group)
+    let idTrafo = ids.split('|')[0].replace('ID:', '').trim();
+    if(idTrafo === 'undefined' || idTrafo === '') idTrafo = ids.split('|')[1].replace('GRUPO:', '').trim();
+
+    const btn = document.querySelector('#view-req button'); btn.disabled = true;
+    google.script.run.withSuccessHandler(lista => {
+        document.getElementById('txt-nuevo-req').value = ''; renderListaReqs(lista); btn.disabled = false; showToast("Agregado");
+    }).guardarRequerimiento({ idTrafo: idTrafo, texto: txt, autor: "OPERACIONES" });
+}
+function borrarReq(idReq) { 
+    if(!confirm("¿Borrar?")) return;
+    const ids = document.getElementById('m-ids-badge').innerText; 
+    let idTrafo = ids.split('|')[0].replace('ID:', '').trim();
+    if(idTrafo === 'undefined' || idTrafo === '') idTrafo = ids.split('|')[1].replace('GRUPO:', '').trim();
+    google.script.run.withSuccessHandler(lista => renderListaReqs(lista)).borrarRequerimiento(idReq, idTrafo);
+}
+
+function guardarCambios(){ 
+    const b = document.getElementById('btn-guardar-prog'); const txtOriginal = b.innerHTML; b.innerHTML = 'GUARDANDO...'; b.disabled = true; 
+    const c = { f_oferta: document.getElementById('date-f-oferta').value, observacion: document.getElementById('input-obs-prog').value, remision: document.getElementById('input-remision-prog').value, entrega: document.getElementById('date-entrega').value, pruebas_ini: document.getElementById('date-pruebas_ini').value, desencube: document.getElementById('date-desencube').value, desensamble: document.getElementById('date-desensamble').value, bobinado: document.getElementById('date-bobinado').value, ensamble: document.getElementById('date-ensamble').value, horno: document.getElementById('date-horno').value, encube: document.getElementById('date-encube').value, pruebas_fin: document.getElementById('date-pruebas_fin').value, pintura: document.getElementById('date-pruebas_fin').value, listo: document.getElementById('date-listo').value, idGroup: document.getElementById('in-idgroup').value, serie: document.getElementById('in-serie').value, ods: document.getElementById('in-ods').value, desc: document.getElementById('in-desc').value, tipo: document.getElementById('in-tipo').value }; 
+    google.script.run.withSuccessHandler(() => { b.innerHTML = txtOriginal; b.disabled = false; cerrarModal(); cargarProgramacion(); showToast("Cambios guardados"); }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).guardarAvance({rowIndex: datosProg[indiceActual].rowIndex, cambios: c}); 
+}
+
+// --- MODULO ENTRADAS (ASINCRONO) ---
+function enviarFormulario(){
+    const b = document.getElementById('btn-crear'); const txtOriginal = b.innerHTML; b.innerHTML = 'PROCESANDO...'; b.disabled = true;
+    const f = document.getElementById('form-entrada'); const d = new FormData(f);
+    const dt = { empresa: d.get('empresa'), cliente: d.get('cliente'), cedula: d.get('cedula'), contacto: d.get('contacto'), telefono: d.get('telefono'), ciudad: d.get('ciudad'), descripcion: d.get('descripcion'), cantidad: d.get('cantidad'), observaciones: d.get('observaciones'), quienEntrega: d.get('quienEntrega'), quienRecibe: d.get('quienRecibe'), codigo: d.get('codigo'), firmaBase64: getFirmaBase64() };
+    
+    // 1. Guardado Rápido
+    google.script.run.withSuccessHandler(r => {
+        if(r.exito) {
+            cerrarModalNueva(); b.innerHTML = txtOriginal; b.disabled = false;
+            // UI Update Immediate
+            renderCardEntrada({ id: r.id, fecha: r.fecha, cliente: dt.cliente, descripcion: dt.descripcion, codigo: r.datosCompletos.codigo, cantidad: dt.cantidad, pdf: null, rowIndex: r.rowIndex }, document.getElementById('grid-entradas'), true);
+            showToast("Entrada guardada. Generando PDF...");
+            if(!dbClientes.find(c => c.nombre === dt.cliente.toUpperCase())) { dbClientes.push({nombre: dt.cliente.toUpperCase(), nit: dt.cedula, telefono: dt.telefono, contacto: dt.contacto, ciudad: dt.ciudad}); actualizarDatalistClientes(); }
+            
+            // 2. Generación PDF (Fondo)
+            const cardAct = document.getElementById(`act-${r.id}`);
+            if(cardAct) { cardAct.innerHTML = '<div class="text-xs text-yellow-600 font-bold text-center animate-pulse">CREANDO PDF...</div>'; google.script.run.withSuccessHandler(x => { if(x.exito && cardAct) { cardAct.innerHTML = `<a href="${x.url}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>`; lucide.createIcons(); showToast("PDF Listo"); } }).generarPDFBackground(r.id, r.rowIndex, r.datosCompletos); }
+        } else { alert("Error: " + r.error); b.innerHTML = txtOriginal; b.disabled = false; }
+    }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).registrarEntradaRapida(dt);
+}
+
+function cargarEntradas() { const g = document.getElementById('grid-entradas'); g.innerHTML='<p class="col-span-full text-center py-4">Cargando...</p>'; google.script.run.withSuccessHandler(d => { datosEntradas = d; g.innerHTML = ''; if(d.length === 0) g.innerHTML = '<p class="col-span-full text-center">Sin registros.</p>'; d.forEach(i => renderCardEntrada(i, g, false)); lucide.createIcons(); }).obtenerDatosEntradas(); }
+function renderCardEntrada(i, c, p){ const cid = `card-${i.id}`; const pdf = (i.pdf && i.pdf.length > 5) ? `<a href="${i.pdf}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>` : `<button id="btn-gen-${i.id}" onclick="genPDF(${i.id},${i.rowIndex})" class="w-full bg-slate-800 text-white hover:bg-slate-900 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-plus" class="w-4 h-4"></i> GENERAR</button>`; const ziur = `${i.cantidad||1} / ${i.codigo||'S/C'} / ${i.descripcion}`; const h = `<div id="${cid}" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative"><button onclick="copiarTexto('${ziur}')" class="absolute top-4 right-4 text-slate-400 hover:text-blue-600"><i data-lucide="copy" class="w-5 h-5"></i></button><div><div class="flex justify-between mb-2"><span class="font-bold text-lg">#${i.id}</span><span class="text-xs bg-slate-100 px-2 py-1 rounded">${i.fecha}</span></div><div class="bg-blue-50 text-blue-800 text-xs font-mono px-2 py-1 rounded w-fit mb-2">🏷️ ${i.codigo||'---'}</div><h4 class="font-bold text-blue-600 mb-1">${i.cliente}</h4><p class="text-sm text-slate-500 line-clamp-2">${i.descripcion}</p></div><div class="pt-3 border-t mt-4" id="act-${i.id}">${pdf}</div></div>`; if(p) c.insertAdjacentHTML('afterbegin', h); else c.insertAdjacentHTML('beforeend', h); }
+function genPDF(id, rix){ const b = document.getElementById(`btn-gen-${id}`); if(b) { const o = b.innerHTML; b.innerHTML = '...'; b.disabled = true; google.script.run.withSuccessHandler(r => { if(r.exito) { b.parentElement.innerHTML = `<a href="${r.url}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>`; lucide.createIcons(); } else { alert(r.error); b.innerHTML = o; b.disabled = false; } }).generarPDFBackground(id, rix, null); } }
+
+// --- UTILS COMPARTIDOS ---
+function showToast(msg, type = 'success') { const container = document.getElementById('toast-container'); const el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = type === 'success' ? `<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i><span class="font-bold text-sm text-slate-700">${msg}</span>` : `<i data-lucide="alert-circle" class="w-5 h-5 text-red-600"></i><span class="font-bold text-sm text-slate-700">${msg}</span>`; container.appendChild(el); lucide.createIcons(); setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000); }
+function fechaParaInput(f){ if(!f) return ""; if(f.includes("-") && f.length===10) return f; if(f.includes("/")){ const p = f.split("/"); return `${p[2]}-${p[1]}-${p[0]}`; } return ""; }
+function copiarTexto(t){ navigator.clipboard.writeText(t).then(()=>showToast("Copiado")); }
+function switchTab(t){ document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+t).classList.add('active'); document.getElementById('tab-btn-'+t).classList.add('active'); }
+function cerrarModal() { document.getElementById('modal-detalle').classList.add('hidden'); }
+function subLog(id) { document.querySelectorAll('.log-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.log-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-log-'+id).classList.add('active'); if(id==='term') cargarTerminados(); if(id==='alq') cargarAlquiler(); if(id==='pat') cargarPatio(); }
+function subNav(id) { document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.cp-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-cp-'+id).classList.add('active'); }
+
+// (Incluir aquí resto de funciones: Logistica, Clientes, Fotos, Tareas... Están en el JS original, se copian igual)
+function cargarTerminados() { google.script.run.withSuccessHandler(d => { const c = document.getElementById('lista-terminados'); c.innerHTML = ''; if(d.length === 0) c.innerHTML = '<p class="text-center text-slate-400 py-4">Sin pendientes.</p>'; d.forEach(i => { const txt = `ENTRADA: ${i.id} | CLIENTE: ${i.cliente} | EQUIPO: ${i.desc} | ODS: ${i.ods}`; c.insertAdjacentHTML('beforeend', `<div class="bg-white border border-green-200 p-4 rounded-lg shadow-sm flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i data-lucide="check" class="w-6 h-6"></i></div><div><h4 class="font-bold text-slate-700">${i.cliente}</h4><p class="text-xs text-slate-500">${i.desc} (ID: ${i.id})</p></div></div><button onclick="copiarTexto('${txt}')" class="bg-slate-100 text-slate-600 p-2 rounded hover:bg-slate-200"><i data-lucide="copy" class="w-4 h-4"></i></button></div>`); }); lucide.createIcons(); }).obtenerLogistica('TERMINADOS'); }
+// ... (Resto de funciones utilitarias se mantienen igual, solo asegúrate de copiar todo el bloque de JS del index.html anterior)
+function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
+function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
+function abrirModalNuevaEntrada() { document.getElementById('modal-nueva-entrada').classList.remove('hidden'); setTimeout(initCanvas, 100); }
+function cerrarModalNueva() { document.getElementById('modal-nueva-entrada').classList.add('hidden'); document.getElementById('form-entrada').reset(); limpiarFirma(); }
+function filtrarProg() { const q = document.getElementById('searchProg').value.toLowerCase(); if(datosProg.length === 0) return; const f = datosProg.filter(r => ((r.idJLB || "") + " " + (r.idGroup || "") + " " + (r.cliente || "") + " " + (r.desc || "") + " " + (r.estado || "") + " " + (r.tipo || "") + " " + (r.serie || "")).toLowerCase().includes(q)); const tDesk = document.getElementById('tabla-prog-desktop'); const tMob = document.getElementById('lista-prog-mobile'); tDesk.innerHTML = ''; tMob.innerHTML = ''; f.forEach((r) => { const indexReal = datosProg.indexOf(r); let c = "row-default"; let badgeColor = "bg-slate-100 text-slate-600"; const s = (r.estado || "").toUpperCase(); if(s.includes("FINAL") || s.includes("ENTREGADO")) { c = "row-finalizado"; badgeColor = "bg-green-100 text-green-700"; } else if(s.includes("PROCESO") || s.includes("AUTO")) { c = "row-proceso"; badgeColor = "bg-blue-100 text-blue-700"; } else if(s.includes("PEND") || s.includes("SIN")) { c = "row-pendiente"; badgeColor = "bg-orange-100 text-orange-700"; } let b = `<span class="font-mono font-bold text-slate-700">${r.idJLB||'--'}</span>`; if(r.idGroup) b += `<br><span class="bg-orange-100 text-orange-800 px-1 rounded text-[10px] font-bold">G:${r.idGroup}</span>`; tDesk.insertAdjacentHTML('beforeend', `<tr class="border-b ${c} hover:bg-slate-50"><td class="px-6 py-4">${b}</td><td class="px-6 py-4 text-xs font-mono text-slate-600">${r.fecha||'S/F'}</td><td class="px-6 py-4 font-medium">${r.cliente}</td><td class="px-6 py-4"><span class="text-xs font-bold px-2 py-1 rounded ${badgeColor}">${r.estado}</span></td><td class="px-6 py-4 text-center"><button onclick="abrirModal(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); tMob.insertAdjacentHTML('beforeend', `<div class="mobile-card relative ${c} p-4" onclick="abrirModal(${indexReal})"><div class="flex justify-between items-start mb-2"><div><span class="font-black text-lg text-slate-800">#${r.idJLB || r.idGroup}</span><span class="text-xs text-slate-500 block">${r.fecha}</span></div><span class="text-[10px] font-bold px-2 py-1 rounded ${badgeColor} uppercase tracking-wide">${r.estado}</span></div><h4 class="font-bold text-blue-900 text-base mb-1">${r.cliente}</h4><p class="text-sm text-slate-600 truncate">${r.desc}</p><div class="mt-3 pt-2 border-t border-slate-200/50 flex justify-end"><button class="text-blue-600 text-xs font-bold flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-blue-100 shadow-sm"><i data-lucide="pencil" class="w-3 h-3"></i> EDITAR / VER</button></div></div>`); }); lucide.createIcons(); }
+function cargarActividades() { google.script.run.withSuccessHandler(list => { const s = document.getElementById('task-resp'); const sel = s.value; let html = list.map(n => `<option value="${n}">${n}</option>`).join(''); html += `<option value="CREAR_NUEVO" class="font-bold text-blue-600 bg-blue-50">[ + CREAR NUEVO ]</option>`; s.innerHTML = html; if(list.includes(sel)) s.value = sel; }).obtenerTrabajadores(); google.script.run.withSuccessHandler(d => { tareasCache = d; renderizarTareas(d); }).obtenerActividades(); }
+function verificarNuevoResponsable(selectElement) { if (selectElement.value === 'CREAR_NUEVO') { const nuevoNombre = prompt("Ingrese el nombre del nuevo integrante:"); if (nuevoNombre && nuevoNombre.trim().length > 0) { const nombreFinal = nuevoNombre.trim().toUpperCase(); const opcionCarga = document.createElement("option"); opcionCarga.text = "Guardando..."; selectElement.add(opcionCarga, selectElement[0]); selectElement.selectedIndex = 0; selectElement.disabled = true; google.script.run.withSuccessHandler(nuevaLista => { let html = nuevaLista.map(n => `<option value="${n}">${n}</option>`).join(''); html += `<option value="CREAR_NUEVO" class="font-bold text-blue-600 bg-blue-50">[ + CREAR NUEVO ]</option>`; selectElement.innerHTML = html; selectElement.value = nombreFinal; if (selectElement.value !== nombreFinal) selectElement.selectedIndex = 0; selectElement.disabled = false; showToast("Trabajador creado"); }).crearTrabajador(nombreFinal); } else { selectElement.selectedIndex = 0; } } }
+function abrirModalTarea(editar) { document.getElementById('modal-tarea').classList.remove('hidden'); const titulo = document.getElementById('title-modal-tarea'); if(editar) { titulo.innerText = "Editar Actividad"; } else { titulo.innerText = "Nueva Actividad"; document.getElementById('form-tarea').reset(); document.getElementById('task-rowIndex').value = ""; } }
+function editarTarea(index) { const t = tareasCache[index]; if(!t) return; abrirModalTarea(true); document.getElementById('task-rowIndex').value = t.rowIndex; document.getElementById('task-desc').value = t.actividad; document.getElementById('task-resp').value = t.responsable; document.getElementById('task-trafo').value = t.idTrafo; document.getElementById('task-prio').value = t.prioridad; }
+function borrarTarea(rowIndex) { if(confirm("¿Eliminar esta actividad?")) { google.script.run.withSuccessHandler((listaActualizada) => { tareasCache = listaActualizada; renderizarTareas(listaActualizada); showToast("Actividad eliminada"); }).borrarActividad(rowIndex); } }
+function cerrarModalTarea() { document.getElementById('modal-tarea').classList.add('hidden'); document.getElementById('form-tarea').reset(); }
+function guardarTarea() { const datos = { rowIndex: document.getElementById('task-rowIndex').value, actividad: document.getElementById('task-desc').value, responsable: document.getElementById('task-resp').value, idTrafo: document.getElementById('task-trafo').value, prioridad: document.getElementById('task-prio').value }; const btn = document.querySelector('#modal-tarea button:last-child'); const txtOriginal = btn.innerText; btn.innerText = "Guardando..."; btn.disabled = true; google.script.run.withSuccessHandler((listaActualizada) => { cerrarModalTarea(); tareasCache = listaActualizada; renderizarTareas(listaActualizada); showToast(datos.rowIndex ? "Tarea actualizada" : "Tarea creada"); btn.innerText = txtOriginal; btn.disabled = false; }).crearNuevaActividad(datos); }
+function moverTarea(ix, est) { google.script.run.withSuccessHandler((listaActualizada) => { tareasCache = listaActualizada; renderizarTareas(listaActualizada); }).actualizarEstadoActividad(ix, est); }
+function renderizarTareas(d) { ['pendiente', 'proceso', 'terminado'].forEach(k => document.getElementById('col-' + k).innerHTML = ''); d.forEach((t, index) => { const col = t.estado === 'PENDIENTE' ? 'pendiente' : (t.estado === 'EN PROCESO' ? 'proceso' : 'terminado'); let botonAvance = ''; if(t.estado === 'PENDIENTE') { botonAvance = `<button onclick="moverTarea(${t.rowIndex},'EN PROCESO')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 p-1.5 rounded-full shadow-sm" title="Iniciar Tarea"><i data-lucide="play" class="w-3 h-3"></i></button>`; } else if (t.estado === 'EN PROCESO') { botonAvance = `<button onclick="moverTarea(${t.rowIndex},'TERMINADO')" class="bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 p-1.5 rounded-full shadow-sm" title="Finalizar Tarea"><i data-lucide="check" class="w-3 h-3"></i></button>`; } const html = `<div class="task-card relative group bg-white p-3 rounded shadow-sm border border-slate-200 hover:shadow-md transition-all"><div class="text-[10px] text-slate-400 mb-1 flex justify-between font-mono"><span>${t.fecha}</span><span class="font-bold text-slate-600 bg-slate-100 px-1 rounded">${t.idTrafo||'S/N'}</span></div><p class="font-bold text-slate-800 text-sm mb-2 leading-tight pr-6">${t.actividad}</p><div class="absolute top-2 right-2">${botonAvance}</div><div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100"><div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700 border border-blue-200">${t.responsable ? t.responsable.charAt(0) : '?'}</div><span class="text-xs text-slate-500 font-medium truncate max-w-[100px]">${t.responsable}</span><div class="ml-auto flex gap-1 items-center">${t.prioridad === 'Alta' ? '<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">ALTA</span>' : ''}<button onclick="editarTarea(${index})" class="p-1 text-slate-400 hover:text-blue-600"><i data-lucide="pencil" class="w-3 h-3"></i></button><button onclick="borrarTarea(${t.rowIndex})" class="p-1 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button></div></div></div>`; document.getElementById('col-' + col).insertAdjacentHTML('beforeend', html); }); lucide.createIcons(); }
+function initCanvas() { canvas = document.getElementById('signature-pad'); ctx = canvas.getContext('2d'); const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#000'; canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', endDraw); canvas.addEventListener('mouseout', endDraw); canvas.addEventListener('touchstart', (e)=>{e.preventDefault();startDraw(e.touches[0])}); canvas.addEventListener('touchmove', (e)=>{e.preventDefault();draw(e.touches[0])}); canvas.addEventListener('touchend', (e)=>{e.preventDefault();endDraw()}); }
+function startDraw(e) { isDrawing = true; const r = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo((e.clientX||e.pageX)-r.left, (e.clientY||e.pageY)-r.top); }
+function draw(e) { if(!isDrawing)return; const r = canvas.getBoundingClientRect(); ctx.lineTo((e.clientX||e.pageX)-r.left, (e.clientY||e.pageY)-r.top); ctx.stroke(); }
+function endDraw() { isDrawing = false; }
+function limpiarFirma() { ctx.clearRect(0,0,canvas.width,canvas.height); }
+function getFirmaBase64() { const b = document.createElement('canvas'); b.width = canvas.width; b.height = canvas.height; return canvas.toDataURL() === b.toDataURL() ? null : canvas.toDataURL('image/png'); }
+function abrirModalHistorico() { document.getElementById('modal-historico').classList.remove('hidden'); }
+function guardarHistorico() { const d = { idJLB: document.getElementById('hist-idjlb').value, idGroup: document.getElementById('hist-idgroup').value, fecha: document.getElementById('hist-fecha').value, cliente: document.getElementById('hist-cliente').value, desc: document.getElementById('hist-desc').value, serie: document.getElementById('hist-serie').value, estado: document.getElementById('hist-estado').value }; google.script.run.withSuccessHandler(() => { document.getElementById('modal-historico').classList.add('hidden'); cargarProgramacion(); showToast("Histórico cargado"); }).cargarHistoricoManual(d); }
+function cargarAlquiler() { google.script.run.withSuccessHandler(d => { datosAlq = d; const t = document.getElementById('tabla-alq'); t.innerHTML = ''; d.forEach((r, i) => { const btnFoto = r.foto ? `<a href="${r.foto}" target="_blank" class="text-blue-600"><i data-lucide="image" class="w-4 h-4"></i></a>` : '-'; let badgeClass = 'bg-gray-100 text-slate-700'; if (r.estado.includes("DISPONIBLE")) badgeClass = 'bg-green-100 text-green-700'; else if (r.estado === "PRESTADO") badgeClass = 'bg-blue-100 text-blue-700'; else if (r.estado.includes("MANTENIMIENTO")) badgeClass = 'bg-orange-100 text-orange-700'; else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700'; t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${i})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); }); lucide.createIcons(); }).obtenerLogistica('ALQUILER'); }
+function editarAlquiler(i) { const d = datosAlq[i]; abrirModalAlq(false); document.getElementById('title-modal-alq').innerText = "Editar Alquiler"; document.getElementById('alq-codigo').value = d.codigo; document.getElementById('alq-codigo').readOnly = true; document.getElementById('alq-kva').value = d.kva; document.getElementById('alq-marca').value = d.marca; document.getElementById('alq-volt').value = d.voltajes; document.getElementById('alq-cliente').value = d.cliente; document.getElementById('alq-salida').value = fechaParaInput(d.salida); document.getElementById('alq-regreso').value = fechaParaInput(d.regreso); const sel = document.getElementById('alq-estado-manual'); if(d.estado.includes("DISPONIBLE") || d.estado.includes("MANTENIMIENTO") || d.estado.includes("REPARACION")) { sel.value = d.estado; } else { sel.value = "TALLER / DISPONIBLE"; } if(d.foto) { document.getElementById('alq-preview').src = d.foto; document.getElementById('alq-preview').classList.remove('hidden'); } else { document.getElementById('alq-preview').classList.add('hidden'); } alqFotoBase64 = null; }
+function abrirModalAlq(nuevo) { document.getElementById('modal-alq').classList.remove('hidden'); const btn = document.getElementById('btn-alq-save'); btn.innerText = "Guardar"; btn.disabled = false; if(nuevo) { document.getElementById('title-modal-alq').innerText = "Registrar Nuevo"; document.getElementById('form-alq').reset(); document.getElementById('alq-codigo').readOnly = false; document.getElementById('alq-preview').classList.add('hidden'); alqFotoBase64 = null; } }
+function cerrarModalAlq() { document.getElementById('modal-alq').classList.add('hidden'); }
+function guardarAlquiler() { const d = { codigo: document.getElementById('alq-codigo').value, kva: document.getElementById('alq-kva').value, marca: document.getElementById('alq-marca').value, voltajes: document.getElementById('alq-volt').value, cliente: document.getElementById('alq-cliente').value, salida: document.getElementById('alq-salida').value, regreso: document.getElementById('alq-regreso').value, estadoManual: document.getElementById('alq-estado-manual').value }; const btn = document.getElementById('btn-alq-save'); btn.innerText = "Guardando..."; btn.disabled = true; if(alqFotoBase64) { google.script.run.withSuccessHandler(url => { d.fotoUrl = url; enviarAlquiler(d); }).withFailureHandler(e => { btn.innerText = "Guardar"; btn.disabled = false; showToast("Error foto: " + e, 'error'); }).subirFotoAlquiler(alqFotoBase64, d.codigo); } else { enviarAlquiler(d); } }
+function enviarAlquiler(d){ const btn = document.getElementById('btn-alq-save'); google.script.run.withSuccessHandler(() => { cerrarModalAlq(); cargarAlquiler(); alqFotoBase64=null; showToast("Alquiler guardado"); btn.innerText = "Guardar"; btn.disabled = false; }).withFailureHandler(e => { btn.innerText = "Guardar"; btn.disabled = false; showToast("Error guardar: " + e, 'error'); }).guardarAlquiler(d); }
+function previewAlqFoto(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById('alq-preview').src = e.target.result; document.getElementById('alq-preview').classList.remove('hidden'); alqFotoBase64 = e.target.result; }; reader.readAsDataURL(input.files[0]); } }
+function cargarPatio() { google.script.run.withSuccessHandler(d => { const t = document.getElementById('tabla-pat'); t.innerHTML = ''; d.forEach(r => { t.insertAdjacentHTML('beforeend', `<tr class="border-b"><td class="p-3 font-mono text-blue-600">${r.id}</td><td class="p-3">${r.cliente}</td><td class="p-3 text-xs text-red-500">${r.motivo}</td></tr>`); }); }).obtenerLogistica('PATIO'); }
+function procesarFotosInmediato(input) { const idTrafo = document.getElementById('foto-trafo').value; if(!idTrafo) { alert("¡Escribe primero el ID del Trafo!"); input.value = ""; return; } if (input.files && input.files.length > 0) { const statusDiv = document.getElementById('status-fotos'); const listaDiv = document.getElementById('lista-fotos'); const etapa = document.getElementById('foto-etapa').value; statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Subiendo imagen...</span>'; Array.from(input.files).forEach(file => { const reader = new FileReader(); reader.onload = function(e) { const base64 = e.target.result; const divPreview = document.createElement('div'); divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50"; divPreview.innerHTML = `<span class="text-xs truncate font-bold">${file.name}</span><span class="text-xs text-blue-500">Subiendo...</span>`; listaDiv.prepend(divPreview); google.script.run.withSuccessHandler(res => { if(res.exito){ divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200"; divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`; statusDiv.innerHTML = ''; lucide.createIcons(); showToast("Foto guardada"); } else { divPreview.className = "bg-red-50 p-2 rounded border border-red-200"; divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`; } }).withFailureHandler(err => { divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`; }).subirFotoProceso(base64, idTrafo, etapa); }; reader.readAsDataURL(file); }); input.value = ""; } }
