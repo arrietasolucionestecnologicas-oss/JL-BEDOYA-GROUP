@@ -4,7 +4,7 @@
 // 1. CONFIGURACIÓN DE CONEXIÓN
 // =============================================================
 // 👇 PEGA AQUÍ TU URL DE LA IMPLEMENTACIÓN (EXEC) 👇
-const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxEJ7AKN6Qn8VhELXGdluYDsm2Of49bGJV0h28GWCSpKu9lv1YWbWIosq6gQ-jcKNYsJg/exec"; 
+const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbytazrRFbDyLCbxelVnATNRLUaGwSYjuVMHVt5AyfSMD6ColMHcWl12mIFH9l0s3DsrVA/exec"; 
 
 // =============================================================
 // 2. ADAPTADOR GOOGLE -> GITHUB (CORE FIX)
