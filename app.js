@@ -1,71 +1,140 @@
-/* JLB OPERACIONES - APP.JS (V5.1 - WORKFLOW ADMIN) */
+/* JLB OPERACIONES - APP.JS (V5.2 - PROXY FIX FINAL) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
 // =============================================================
+// 👇 PEGA AQUÍ TU URL DE LA IMPLEMENTACIÓN (EXEC) 👇
 const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxEJ7AKN6Qn8VhELXGdluYDsm2Of49bGJV0h28GWCSpKu9lv1YWbWIosq6gQ-jcKNYsJg/exec"; 
 
 // =============================================================
-// 2. ADAPTADOR GOOGLE -> GITHUB
+// 2. ADAPTADOR GOOGLE -> GITHUB (CORE FIX)
 // =============================================================
 
 class GasRunner {
     constructor() {
         this._successHandler = null;
         this._failureHandler = null;
+
+        // Retornamos el Proxy para interceptar TODO
         return new Proxy(this, {
-            get: (target, prop) => {
-                if (prop in target || typeof prop === 'symbol') return target[prop];
-                if (prop === 'withSuccessHandler') return (cb) => { target._successHandler = cb; return target; };
-                if (prop === 'withFailureHandler') return (cb) => { target._failureHandler = cb; return target; };
-                return (...args) => { const payload = args[0] || {}; target._execute(prop, payload); };
+            get: (target, prop, receiver) => {
+                // Si es una propiedad interna, la devolvemos tal cual
+                if (prop in target || typeof prop === 'symbol') {
+                    return target[prop];
+                }
+
+                // 1. Configuración de Handlers (Encadenamiento)
+                if (prop === 'withSuccessHandler') {
+                    return (cb) => {
+                        target._successHandler = cb;
+                        return receiver; // 👈 CLAVE: Retornamos el PROXY, no el objeto base
+                    };
+                }
+
+                if (prop === 'withFailureHandler') {
+                    return (cb) => {
+                        target._failureHandler = cb;
+                        return receiver; // 👈 CLAVE: Mantiene la magia viva
+                    };
+                }
+
+                // 2. Ejecución de la Función Remota
+                // Si llegamos aquí, es porque llamaron a una función del backend (ej: obtenerDatos...)
+                return (...args) => {
+                    const payload = args[0] || {}; 
+                    target._execute(prop, payload);
+                };
             }
         });
     }
+
     _execute(actionName, payload) {
-        const requestBody = JSON.stringify({ action: actionName, payload: payload });
-        fetch(API_ENDPOINT, { method: 'POST', redirect: 'follow', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: requestBody })
+        // console.log(`🚀 Call: ${actionName}`); // Debug
+
+        // Hack CORS: text/plain
+        const requestBody = JSON.stringify({
+            action: actionName,
+            payload: payload
+        });
+
+        fetch(API_ENDPOINT, {
+            method: 'POST',
+            redirect: 'follow',
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8" 
+            },
+            body: requestBody
+        })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'error') {
                 console.error(`❌ Error Backend (${actionName}):`, data.message);
-                if (this._failureHandler) this._failureHandler(data.message);
+                if (this._failureHandler) {
+                    this._failureHandler(data.message);
+                }
             } else {
                 if (this._successHandler) {
+                    // Normalización de respuesta
                     const respuestaFinal = (data.data !== undefined) ? data.data : data;
                     this._successHandler(respuestaFinal);
                 }
             }
         })
-        .catch(error => { console.error(`❌ Error Red (${actionName}):`, error); if (this._failureHandler) this._failureHandler(error.toString()); });
+        .catch(error => {
+            console.error(`❌ Error Red (${actionName}):`, error);
+            if (this._failureHandler) {
+                this._failureHandler(error.toString());
+            }
+        });
     }
 }
-const google = { script: { get run() { return new GasRunner(); } } };
+
+// Simulamos el objeto global
+const google = {
+    script: {
+        get run() {
+            return new GasRunner();
+        }
+    }
+};
+
 
 // =============================================================
-// 3. LÓGICA DE NEGOCIO (MODIFICADA PARA FLUJO DE ESTADOS)
+// 3. LÓGICA DE NEGOCIO (WORKFLOW + CORE)
 // =============================================================
 
 let datosProg=[], datosEntradas=[], datosAlq=[], dbClientes = [], tareasCache = [];
 let alqFotoBase64=null;
 let canvas, ctx, isDrawing=false, indiceActual=-1;
 
+// --- INIT ---
 window.onload = function() { 
     if(typeof lucide !== 'undefined') lucide.createIcons();
+    
+    // Solo inicia si estamos en la App Principal (no en Dashboard)
     if(document.getElementById('wrapper-operaciones')) {
         nav('programacion');
-        google.script.run.withSuccessHandler(d => { dbClientes = d; actualizarDatalistClientes(); }).obtenerClientesDB();
+        google.script.run.withSuccessHandler(d => {
+            dbClientes = d;
+            actualizarDatalistClientes();
+        }).obtenerClientesDB();
     }
 };
 
+// --- NAVEGACION ---
 function nav(id) { 
     document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active')); 
     const sec = document.getElementById(id); if(sec) sec.classList.add('active'); 
-    const headerTitle = document.getElementById('header-title'); if(headerTitle) headerTitle.innerText = id.toUpperCase(); 
+    
+    const headerTitle = document.getElementById('header-title');
+    if(headerTitle) headerTitle.innerText = id.toUpperCase(); 
+    
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active')); 
     const btn = document.getElementById('btn-'+id); if(btn) btn.classList.add('nav-active'); 
+    
     document.querySelectorAll('.nav-btn-mob').forEach(b => b.classList.remove('mobile-nav-active'));
     const mobBtn = document.getElementById('mob-'+id); if(mobBtn) mobBtn.classList.add('mobile-nav-active');
+
     if(id==='programacion') cargarProgramacion(); 
     if(id==='entradas') cargarEntradas(); 
     if(id==='logistica') subLog('term'); 
@@ -77,22 +146,65 @@ function irAlDashboard() { google.script.run.withSuccessHandler(url => window.op
 function abrirLaboratorio() { google.script.run.withSuccessHandler(url => window.open(url, '_blank')).getUrlLaboratorio(); }
 function recargarActual() { const active = document.querySelector('.view-section.active'); if(active) nav(active.id); }
 
+// --- MODULO PROGRAMACION & WORKFLOW ---
 function cargarProgramacion(){ 
-    const tDesk = document.getElementById('tabla-prog-desktop'); const tMob = document.getElementById('lista-prog-mobile');
+    const tDesk = document.getElementById('tabla-prog-desktop'); 
+    const tMob = document.getElementById('lista-prog-mobile');
+    
     if(tDesk) tDesk.innerHTML='<tr><td colspan="5" class="text-center py-8 text-slate-500">Cargando...</td></tr>'; 
     if(tMob) tMob.innerHTML='<div class="text-center py-8 text-slate-500">Cargando...</div>';
+
     google.script.run.withSuccessHandler(d => { 
-        datosProg = d; if(tDesk) tDesk.innerHTML = ''; if(tMob) tMob.innerHTML = '';
-        if(d.length === 0) { const empty = '<div class="text-center py-4 text-slate-400">No hay datos recientes.</div>'; if(tDesk) tDesk.innerHTML = `<tr><td colspan="5">${empty}</td></tr>`; if(tMob) tMob.innerHTML = empty; return; } 
+        datosProg = d; 
+        if(tDesk) tDesk.innerHTML = ''; 
+        if(tMob) tMob.innerHTML = '';
+        
+        if(d.length === 0) { 
+            const empty = '<div class="text-center py-4 text-slate-400">No hay datos recientes.</div>'; 
+            if(tDesk) tDesk.innerHTML = `<tr><td colspan="5">${empty}</td></tr>`; 
+            if(tMob) tMob.innerHTML = empty; 
+            return; 
+        } 
+
         d.forEach((r,i) => { 
             let c = "row-default", badgeColor = "bg-slate-100 text-slate-600";
             const s = (r.estado || "").toUpperCase(); 
+            
+            // Colores según estado
             if(s.includes("FINAL") || s.includes("ENTREGADO")) { c = "row-finalizado"; badgeColor = "bg-green-100 text-green-700"; }
             else if(s.includes("PROCESO") || s.includes("AUTO")) { c = "row-proceso"; badgeColor = "bg-blue-100 text-blue-700"; }
-            else if(s.includes("PEND") || s.includes("SIN")) { c = "row-pendiente"; badgeColor = "bg-orange-100 text-orange-700"; }
-            let b = `<span class="font-mono font-bold text-slate-700">${r.idJLB||'--'}</span>`; if(r.idGroup) b += `<br><span class="bg-orange-100 text-orange-800 px-1 rounded text-[10px] font-bold">G:${r.idGroup}</span>`; 
-            if(tDesk) tDesk.insertAdjacentHTML('beforeend', `<tr class="border-b ${c} hover:bg-slate-50"><td class="px-6 py-4">${b}</td><td class="px-6 py-4 text-xs font-mono text-slate-600">${r.fecha||'S/F'}</td><td class="px-6 py-4 font-medium">${r.cliente}</td><td class="px-6 py-4"><span class="text-xs font-bold px-2 py-1 rounded ${badgeColor}">${r.estado}</span></td><td class="px-6 py-4 text-center"><button onclick="abrirModal(${i})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); 
-            if(tMob) tMob.insertAdjacentHTML('beforeend', `<div class="mobile-card relative ${c} p-4" onclick="abrirModal(${i})"><div class="flex justify-between items-start mb-2"><div><span class="font-black text-lg text-slate-800">#${r.idJLB || r.idGroup}</span><span class="text-xs text-slate-500 block">${r.fecha}</span></div><span class="text-[10px] font-bold px-2 py-1 rounded ${badgeColor} uppercase tracking-wide">${r.estado}</span></div><h4 class="font-bold text-blue-900 text-base mb-1">${r.cliente}</h4><p class="text-sm text-slate-600 truncate">${r.desc}</p><div class="mt-3 pt-2 border-t border-slate-200/50 flex justify-end"><button class="text-blue-600 text-xs font-bold flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-blue-100 shadow-sm"><i data-lucide="pencil" class="w-3 h-3"></i> EDITAR / VER</button></div></div>`);
+            else if(s.includes("PENDIENTE") || s.includes("SIN")) { c = "row-pendiente"; badgeColor = "bg-orange-100 text-orange-700"; }
+            
+            let b = `<span class="font-mono font-bold text-slate-700">${r.idJLB||'--'}</span>`; 
+            if(r.idGroup) b += `<br><span class="bg-orange-100 text-orange-800 px-1 rounded text-[10px] font-bold">G:${r.idGroup}</span>`; 
+
+            // Render Desktop
+            if(tDesk) tDesk.insertAdjacentHTML('beforeend', `
+                <tr class="border-b ${c} hover:bg-slate-50">
+                    <td class="px-6 py-4">${b}</td>
+                    <td class="px-6 py-4 text-xs font-mono text-slate-600">${r.fecha||'S/F'}</td>
+                    <td class="px-6 py-4 font-medium">${r.cliente}</td>
+                    <td class="px-6 py-4"><span class="text-xs font-bold px-2 py-1 rounded ${badgeColor}">${r.estado}</span></td>
+                    <td class="px-6 py-4 text-center">
+                        <button onclick="abrirModal(${i})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>`); 
+            
+            // Render Mobile
+            if(tMob) tMob.insertAdjacentHTML('beforeend', `
+                <div class="mobile-card relative ${c} p-4" onclick="abrirModal(${i})">
+                    <div class="flex justify-between items-start mb-2">
+                        <div><span class="font-black text-lg text-slate-800">#${r.idJLB || r.idGroup}</span><span class="text-xs text-slate-500 block">${r.fecha}</span></div>
+                        <span class="text-[10px] font-bold px-2 py-1 rounded ${badgeColor} uppercase tracking-wide">${r.estado}</span>
+                    </div>
+                    <h4 class="font-bold text-blue-900 text-base mb-1">${r.cliente}</h4>
+                    <p class="text-sm text-slate-600 truncate">${r.desc}</p>
+                    <div class="mt-3 pt-2 border-t border-slate-200/50 flex justify-end">
+                        <button class="text-blue-600 text-xs font-bold flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-blue-100 shadow-sm">
+                            <i data-lucide="pencil" class="w-3 h-3"></i> EDITAR / VER
+                        </button>
+                    </div>
+                </div>`);
         }); 
         if(typeof lucide !== 'undefined') lucide.createIcons();
     }).obtenerDatosProgramacion(); 
@@ -108,13 +220,16 @@ function abrirModal(i){
     document.getElementById('input-obs-prog').value = d.observacion; 
     document.getElementById('input-remision-prog').value = d.remision; 
     document.getElementById('date-entrega').value = fechaParaInput(d.f_entrega); 
-    document.getElementById('in-idgroup').value = d.idGroup; document.getElementById('in-serie').value = d.serie; 
-    document.getElementById('in-ods').value = d.ods; document.getElementById('in-desc').value = d.desc; document.getElementById('in-tipo').value = d.tipo;
+    document.getElementById('in-idgroup').value = d.idGroup; 
+    document.getElementById('in-serie').value = d.serie; 
+    document.getElementById('in-ods').value = d.ods; 
+    document.getElementById('in-desc').value = d.desc; 
+    document.getElementById('in-tipo').value = d.tipo;
     
     const stepsContainer = document.getElementById('steps-container'); 
     stepsContainer.innerHTML = ''; 
 
-    // --- MODIFICACIÓN: BOTONES DE FLUJO ADMINISTRATIVO ---
+    // --- RENDER FLUJO ADMINISTRATIVO ---
     const estado = (d.estado || "").toUpperCase().trim();
     let workflowHTML = "";
 
@@ -141,10 +256,9 @@ function abrirModal(i){
             </div>`;
     }
 
-    // Insertar Botones Administrativos antes de los pasos técnicos
     stepsContainer.insertAdjacentHTML('beforeend', workflowHTML);
 
-    // --- RENDER DE PASOS TÉCNICOS (Original) ---
+    // --- RENDER PASOS TÉCNICOS ---
     const ps = [{id:'pruebas_ini',l:'1. Pruebas Iniciales'},{id:'desencube',l:'2. Desencube'},{id:'desensamble',l:'3. Desensamble'},{id:'bobinado',l:'4. Bobinado'},{id:'ensamble',l:'5. Ensamble'},{id:'horno',l:'6. Horno'},{id:'encube',l:'7. Encube'},{id:'pruebas_fin',l:'8. Pruebas Finales'},{id:'pintura',l:'9. Pintura'},{id:'listo',l:'10. Listo'}]; 
     ps.forEach(p => { 
         let hid = ""; 
@@ -154,20 +268,23 @@ function abrirModal(i){
         stepsContainer.insertAdjacentHTML('beforeend', `<div class="step-card ${dn?'done':''} ${hid}"><label class="text-[10px] font-bold uppercase mb-1 ${dn?'text-green-700':'text-slate-400'}">${p.l}</label><input type="date" id="date-${p.id}" value="${v}" class="date-input"></div>`); 
     }); 
     
+    // Cargar Requerimientos
     const idParaReq = d.idJLB && d.idJLB.toString().length > 1 ? d.idJLB : d.idGroup;
     cargarRequerimientosModal(idParaReq);
+    
     switchTab('seg'); 
 }
 
-// --- NUEVA FUNCIÓN: AVANZAR ESTADO DESDE UI ---
+// --- ACCIÓN DE AVANCE DE ESTADO ---
 function avanzarEstado(nuevoEstado, accion) {
     if(!confirm("¿Confirmar cambio de estado?")) return;
     
     const d = datosProg[indiceActual];
-    const idParaTrafo = d.idJLB || d.idGroup; // Necesario para buscar en Lab
+    // Prioridad ID JLB, sino Group
+    const idParaTrafo = (d.idJLB && d.idJLB.toString().length > 0) ? d.idJLB : d.idGroup;
     
     const btn = document.querySelector('.step-card button') || document.activeElement;
-    if(btn) { btn.disabled = true; btn.innerText = "Procesando..."; }
+    if(btn && btn.tagName === 'BUTTON') { btn.disabled = true; btn.innerText = "Procesando..."; }
 
     google.script.run.withSuccessHandler(res => {
         if(res.exito) {
@@ -176,6 +293,7 @@ function avanzarEstado(nuevoEstado, accion) {
             cargarProgramacion();
         } else {
             alert("Error al actualizar");
+            if(btn) btn.disabled = false;
         }
     }).avanzarEstadoAdmin({
         rowIndex: d.rowIndex,
@@ -185,6 +303,7 @@ function avanzarEstado(nuevoEstado, accion) {
     });
 }
 
+// --- RESTO DE MÓDULOS (ENTRADAS, LOGÍSTICA, ETC.) ---
 function cargarRequerimientosModal(idTrafo) {
     const c = document.getElementById('lista-reqs');
     c.innerHTML = '<p class="text-center text-slate-400 text-xs py-4 animate-pulse">Cargando lista...</p>';
