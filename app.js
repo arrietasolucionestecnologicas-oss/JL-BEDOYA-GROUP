@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V5.5 - COMPRESIÓN DE FOTOS) */
+/* JLB OPERACIONES - APP.JS (V5.6 - CAMARA + GALERIA) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -213,7 +213,7 @@ function cargarTerminados() { google.script.run.withSuccessHandler(d => { const 
 function cargarPatio() { google.script.run.withSuccessHandler(d => { const t = document.getElementById('tabla-pat'); if(!t) return; t.innerHTML = ''; d.forEach(r => { t.insertAdjacentHTML('beforeend', `<tr class="border-b"><td class="p-3 font-mono text-blue-600">${r.id}</td><td class="p-3">${r.cliente}</td><td class="p-3 text-xs text-red-500">${r.motivo}</td></tr>`); }); }).obtenerLogistica({ tipo: 'PATIO' }); }
 
 // =============================================================
-// MODULO ALQUILER (CON FILTROS Y GALERÍA BACKGROUND)
+// MODULO ALQUILER (CON FILTROS, CÁMARA Y GALERÍA)
 // =============================================================
 
 function cargarAlquiler() { 
@@ -285,9 +285,7 @@ function editarAlquiler(i) {
         else sel.value = "DISPONIBLE"; 
     }
 
-    alqFotosNuevas = []; 
-    document.getElementById('alq-preview-container').innerHTML = '';
-    document.getElementById('alq-preview-container').classList.add('hidden');
+    limpiarFotosAlq();
 }
 
 function abrirModalAlq(nuevo) { 
@@ -299,34 +297,29 @@ function abrirModalAlq(nuevo) {
         document.getElementById('title-modal-alq').innerText = "Registrar Nuevo"; 
         document.getElementById('form-alq').reset(); 
         document.getElementById('alq-codigo').readOnly = false; 
-        alqFotosNuevas = [];
-        document.getElementById('alq-preview-container').innerHTML = '';
-        document.getElementById('alq-preview-container').classList.add('hidden');
+        limpiarFotosAlq();
     } 
 }
 
 function cerrarModalAlq() { document.getElementById('modal-alq').classList.add('hidden'); }
 
-// --- FUNCIÓN CLAVE: COMPRESIÓN DE IMÁGENES AL SELECCIONAR ---
+// --- FUNCIONES DE CÁMARA Y GALERÍA (ACUMULATIVAS) ---
 function previewAlqFoto(input) {
     if (input.files && input.files.length > 0) {
-        alqFotosNuevas = []; 
         const container = document.getElementById('alq-preview-container');
-        container.innerHTML = '';
         container.classList.remove('hidden');
+        document.getElementById('btn-limpiar-fotos').classList.remove('hidden');
 
         Array.from(input.files).forEach(file => {
             const reader = new FileReader();
             reader.onload = function(e) {
-                // AQUÍ OCURRE LA MAGIA DE LA COMPRESIÓN
+                // Compresión antes de previsualizar
                 const img = new Image();
                 img.src = e.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1000; // Reducir ancho máximo a 1000px
+                    const MAX_WIDTH = 1000;
                     const scaleSize = MAX_WIDTH / img.width;
-                    
-                    // Si la imagen es más pequeña que 1000px, no la agrandamos
                     if (img.width > MAX_WIDTH) {
                         canvas.width = MAX_WIDTH;
                         canvas.height = img.height * scaleSize;
@@ -334,16 +327,12 @@ function previewAlqFoto(input) {
                         canvas.width = img.width;
                         canvas.height = img.height;
                     }
-
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
-                    // Convertir a JPEG calidad 0.6 (60%) = Mucho más liviano
                     const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
-                    
                     alqFotosNuevas.push(compressedDataUrl); 
                     
-                    // Mostrar preview visual
                     const div = document.createElement('div');
                     div.className = "aspect-square rounded border border-slate-200 overflow-hidden relative";
                     div.innerHTML = `<img src="${compressedDataUrl}" class="w-full h-full object-cover">`;
@@ -352,10 +341,20 @@ function previewAlqFoto(input) {
             };
             reader.readAsDataURL(file);
         });
+        
+        // Limpiamos el input para permitir seleccionar la misma foto si se borra y se quiere de nuevo
+        input.value = "";
     }
 }
 
-// --- LOGICA DE GUARDADO ASÍNCRONO ---
+function limpiarFotosAlq() {
+    alqFotosNuevas = [];
+    const container = document.getElementById('alq-preview-container');
+    container.innerHTML = '';
+    container.classList.add('hidden');
+    document.getElementById('btn-limpiar-fotos').classList.add('hidden');
+}
+
 function guardarAlquiler() { 
     const estadoSeleccionado = document.getElementById('alq-estado-manual').value;
     let cliente = document.getElementById('alq-cliente').value;
@@ -372,23 +371,20 @@ function guardarAlquiler() {
         estadoManual: estadoSeleccionado 
     }; 
     
-    // 1. GUARDAMOS DATOS DE TEXTO INMEDIATAMENTE
+    // 1. GUARDAMOS DATOS DE TEXTO
     enviarAlquiler(d);
     
-    // 2. CERRAMOS MODAL
     cerrarModalAlq();
     showToast("Datos guardados. Procesando fotos...");
 
-    // 3. SUBIDA FOTOS EN SEGUNDO PLANO
+    // 2. SUBIDA FOTOS BACKGROUND
     if(alqFotosNuevas.length > 0) {
          showToast("Subiendo fotos en segundo plano...", "info");
-         // Llamada sin bloquear la UI principal
          google.script.run.withSuccessHandler(res => {
              if(res.exito) {
-                 // 4. ACTUALIZAR URL EN SILENCIO CUANDO TERMINE
                  google.script.run.withSuccessHandler(() => {
                      showToast("✅ Fotos subidas y vinculadas.");
-                     cargarAlquiler(); // Refrescar tabla silenciosamente
+                     cargarAlquiler(); 
                  }).actualizarFotoAlquiler({ codigo: d.codigo, url: res.url });
              } else {
                  showToast("Error subiendo fotos: " + res.error, 'error');
@@ -398,7 +394,6 @@ function guardarAlquiler() {
 }
 
 function enviarAlquiler(d){ 
-    // Guardado de datos de texto
     google.script.run.withSuccessHandler(() => { 
         cargarAlquiler(); 
         alqFotosNuevas=[]; 
@@ -407,7 +402,7 @@ function enviarAlquiler(d){
     }).guardarAlquiler(d); 
 }
 
-// RESTO DE FUNCIONES...
+// RESTO DE FUNCIONES (SIN CAMBIOS) ...
 function procesarFotosInmediato(input) { const idTrafo = document.getElementById('foto-trafo').value; if(!idTrafo) { alert("¡Escribe primero el ID del Trafo!"); input.value = ""; return; } if (input.files && input.files.length > 0) { const statusDiv = document.getElementById('status-fotos'); const listaDiv = document.getElementById('lista-fotos'); const etapa = document.getElementById('foto-etapa').value; statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Subiendo imagen...</span>'; Array.from(input.files).forEach(file => { const reader = new FileReader(); reader.onload = function(e) { const base64 = e.target.result; const divPreview = document.createElement('div'); divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50"; divPreview.innerHTML = `<span class="text-xs truncate font-bold">${file.name}</span><span class="text-xs text-blue-500">Subiendo...</span>`; listaDiv.prepend(divPreview); google.script.run.withSuccessHandler(res => { if(res.exito){ divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200"; divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`; statusDiv.innerHTML = ''; if(typeof lucide !== 'undefined') lucide.createIcons(); showToast("Foto guardada"); } else { divPreview.className = "bg-red-50 p-2 rounded border border-red-200"; divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`; } }).withFailureHandler(err => { divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`; }).subirFotoProceso(base64, idTrafo, etapa); }; reader.readAsDataURL(file); }); input.value = ""; } }
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); if(!dl) return; dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
