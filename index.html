@@ -269,12 +269,22 @@
 
                 <div class="bg-blue-50 p-4 rounded-lg space-y-3"><div><label class="text-xs font-bold text-slate-500">Cliente (Solo si es PRESTADO)</label><input type="text" id="alq-cliente" class="w-full border rounded p-3" placeholder="Nombre cliente"></div><div class="grid grid-cols-2 gap-4"><div><label class="text-xs font-bold text-slate-500">F. Salida</label><input type="date" id="alq-salida" class="w-full border rounded p-3"></div><div><label class="text-xs font-bold text-slate-500">F. Regreso</label><input type="date" id="alq-regreso" class="w-full border rounded p-3"></div></div></div>
                 
-                <div class="border-2 dashed border-slate-300 p-4 text-center cursor-pointer" onclick="document.getElementById('alq-foto-input').click()">
-                    <i data-lucide="images" class="w-6 h-6 mx-auto mb-1 text-slate-400"></i>
-                    <p class="text-xs text-slate-500">Clic para subir fotos (Modo Galería)</p>
-                    <input type="file" id="alq-foto-input" accept="image/*" class="hidden" multiple onchange="previewAlqFoto(this)">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="border-2 border-dashed border-blue-300 bg-blue-50 rounded-xl p-4 text-center cursor-pointer hover:bg-blue-100 active:bg-blue-200 transition-colors" onclick="document.getElementById('alq-camara').click()">
+                        <i data-lucide="camera" class="w-8 h-8 mx-auto mb-2 text-blue-600"></i>
+                        <p class="font-bold text-xs text-blue-700">📸 USAR CÁMARA</p>
+                    </div>
+                    <div class="border-2 border-dashed border-green-300 bg-green-50 rounded-xl p-4 text-center cursor-pointer hover:bg-green-100 active:bg-green-200 transition-colors" onclick="document.getElementById('alq-galeria').click()">
+                        <i data-lucide="image" class="w-8 h-8 mx-auto mb-2 text-green-600"></i>
+                        <p class="font-bold text-xs text-green-700">🖼️ SUBIR GALERÍA</p>
+                    </div>
                 </div>
-                <div id="alq-preview-container" class="grid grid-cols-4 gap-2 hidden"></div>
+                
+                <input type="file" id="alq-camara" accept="image/*" capture="environment" class="hidden" onchange="previewAlqFoto(this)">
+                <input type="file" id="alq-galeria" accept="image/*" multiple class="hidden" onchange="previewAlqFoto(this)">
+                
+                <div id="alq-preview-container" class="grid grid-cols-4 gap-2 hidden mt-2"></div>
+                <button type="button" onclick="limpiarFotosAlq()" id="btn-limpiar-fotos" class="hidden text-xs text-red-500 font-bold mt-2 w-full text-center hover:underline">🗑️ Limpiar fotos seleccionadas</button>
                 
             </form>
             <div class="p-4 bg-slate-50 flex justify-end gap-3 shrink-0"><button onclick="cerrarModalAlq()" class="px-4 py-2 hidden md:block">Cancelar</button><button onclick="guardarAlquiler()" id="btn-alq-save" class="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg">Guardar</button></div>
