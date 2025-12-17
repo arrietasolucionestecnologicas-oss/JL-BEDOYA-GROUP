@@ -78,7 +78,29 @@
                 <section id="logistica" class="view-section">
                      <div class="log-nav no-scrollbar"><button class="log-btn active" onclick="subLog('term')" id="btn-log-term">Terminados</button><button class="log-btn" onclick="subLog('alq')" id="btn-log-alq">Alquiler JLB</button><button class="log-btn" onclick="subLog('pat')" id="btn-log-pat">Patio</button></div>
                      <div id="view-term" class="log-view active"><div class="bg-white rounded-xl border border-slate-200 p-4"><div id="lista-terminados" class="space-y-3"></div></div></div>
-                     <div id="view-alq" class="log-view"><div class="flex justify-end mb-4"><button onclick="abrirModalAlq(true)" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Registrar Nuevo</button></div><div class="bg-white rounded-xl border border-slate-200 overflow-hidden overflow-x-auto"><table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-50 border-b"><tr><th class="p-3">Código</th><th class="p-3">Equipo</th><th class="p-3">Estado</th><th class="p-3">Cliente</th><th class="p-3">Fechas</th><th class="p-3">Foto</th><th class="p-3 text-center">Editar</th></tr></thead><tbody id="tabla-alq"></tbody></table></div></div>
+                     
+                     <div id="view-alq" class="log-view">
+                         <div class="flex flex-col md:flex-row justify-between items-end mb-4 gap-4">
+                             <div class="flex gap-2 w-full md:w-auto">
+                                 <div class="w-full md:w-40">
+                                    <label class="text-[10px] font-bold text-slate-500 uppercase">Filtrar KVA</label>
+                                    <input id="filtro-kva" onkeyup="filtrarAlquiler()" class="w-full border rounded p-2 text-sm" placeholder="Ej: 75">
+                                 </div>
+                                 <div class="w-full md:w-40">
+                                    <label class="text-[10px] font-bold text-slate-500 uppercase">Filtrar Tensión</label>
+                                    <input id="filtro-voltaje" onkeyup="filtrarAlquiler()" class="w-full border rounded p-2 text-sm" placeholder="Ej: 13200">
+                                 </div>
+                             </div>
+                             <button onclick="abrirModalAlq(true)" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex gap-2 items-center"><i data-lucide="plus"></i> Registrar Nuevo</button>
+                         </div>
+                         <div class="bg-white rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
+                             <table class="w-full text-sm text-left min-w-[600px]">
+                                 <thead class="bg-slate-50 border-b"><tr><th class="p-3">Código</th><th class="p-3">Equipo</th><th class="p-3">Estado</th><th class="p-3">Cliente</th><th class="p-3">Fechas</th><th class="p-3">Carpeta Fotos</th><th class="p-3 text-center">Editar</th></tr></thead>
+                                 <tbody id="tabla-alq"></tbody>
+                             </table>
+                         </div>
+                     </div>
+                     
                      <div id="view-pat" class="log-view"><div class="bg-white rounded-xl border border-slate-200 overflow-hidden"><table class="w-full text-sm text-left"><thead class="bg-slate-50 border-b"><tr><th class="p-3">ID</th><th class="p-3">Cliente</th><th class="p-3">Motivo</th></tr></thead><tbody id="tabla-pat"></tbody></table></div></div>
                 </section>
                 
@@ -246,7 +268,14 @@
                 </div>
 
                 <div class="bg-blue-50 p-4 rounded-lg space-y-3"><div><label class="text-xs font-bold text-slate-500">Cliente (Solo si es PRESTADO)</label><input type="text" id="alq-cliente" class="w-full border rounded p-3" placeholder="Nombre cliente"></div><div class="grid grid-cols-2 gap-4"><div><label class="text-xs font-bold text-slate-500">F. Salida</label><input type="date" id="alq-salida" class="w-full border rounded p-3"></div><div><label class="text-xs font-bold text-slate-500">F. Regreso</label><input type="date" id="alq-regreso" class="w-full border rounded p-3"></div></div></div>
-                <div class="border-2 dashed border-slate-300 p-4 text-center cursor-pointer" onclick="document.getElementById('alq-foto-input').click()"><p class="text-xs text-slate-500">Clic para subir foto</p><input type="file" id="alq-foto-input" accept="image/*" class="hidden" onchange="previewAlqFoto(this)"></div><img id="alq-preview" class="hidden h-20 mx-auto rounded">
+                
+                <div class="border-2 dashed border-slate-300 p-4 text-center cursor-pointer" onclick="document.getElementById('alq-foto-input').click()">
+                    <i data-lucide="images" class="w-6 h-6 mx-auto mb-1 text-slate-400"></i>
+                    <p class="text-xs text-slate-500">Clic para subir fotos (Modo Galería)</p>
+                    <input type="file" id="alq-foto-input" accept="image/*" class="hidden" multiple onchange="previewAlqFoto(this)">
+                </div>
+                <div id="alq-preview-container" class="grid grid-cols-4 gap-2 hidden"></div>
+                
             </form>
             <div class="p-4 bg-slate-50 flex justify-end gap-3 shrink-0"><button onclick="cerrarModalAlq()" class="px-4 py-2 hidden md:block">Cancelar</button><button onclick="guardarAlquiler()" id="btn-alq-save" class="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg">Guardar</button></div>
         </div>
