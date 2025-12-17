@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V5.3 - GALERÍA + FILTROS) */
+/* JLB OPERACIONES - APP.JS (V5.4 - BACKGROUND UPLOAD) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -213,13 +213,13 @@ function cargarTerminados() { google.script.run.withSuccessHandler(d => { const 
 function cargarPatio() { google.script.run.withSuccessHandler(d => { const t = document.getElementById('tabla-pat'); if(!t) return; t.innerHTML = ''; d.forEach(r => { t.insertAdjacentHTML('beforeend', `<tr class="border-b"><td class="p-3 font-mono text-blue-600">${r.id}</td><td class="p-3">${r.cliente}</td><td class="p-3 text-xs text-red-500">${r.motivo}</td></tr>`); }); }).obtenerLogistica({ tipo: 'PATIO' }); }
 
 // =============================================================
-// MODULO ALQUILER (CON FILTROS Y GALERÍA)
+// MODULO ALQUILER (CON FILTROS Y GALERÍA BACKGROUND)
 // =============================================================
 
 function cargarAlquiler() { 
     google.script.run.withSuccessHandler(d => { 
         datosAlq = d; 
-        filtrarAlquiler(); // Llamar al filtro para renderizar
+        filtrarAlquiler(); 
     }).obtenerLogistica({ tipo: 'ALQUILER' }); 
 }
 
@@ -230,7 +230,6 @@ function filtrarAlquiler() {
     if(!t) return;
     t.innerHTML = '';
     
-    // Filtrar datos
     const filtrados = datosAlq.filter(item => {
         const matchKVA = kva === "" || item.kva.toString().toLowerCase().includes(kva);
         const matchVolt = volt === "" || item.voltajes.toString().toLowerCase().includes(volt);
@@ -243,7 +242,6 @@ function filtrarAlquiler() {
     }
 
     filtrados.forEach((r, i) => { 
-        // Si hay link de fotos, mostramos icono de carpeta o imagen
         const btnFoto = r.foto 
             ? `<a href="${r.foto}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="folder-open" class="w-5 h-5"></i></a>` 
             : '<span class="text-slate-300">-</span>'; 
@@ -254,7 +252,6 @@ function filtrarAlquiler() {
         else if (r.estado.includes("MANTENIMIENTO")) badgeClass = 'bg-orange-100 text-orange-700'; 
         else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700'; 
         
-        // El índice 'i' aquí es del array filtrado, necesitamos el índice real para editar
         const indexReal = datosAlq.indexOf(r);
 
         t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); 
@@ -288,7 +285,7 @@ function editarAlquiler(i) {
         else sel.value = "DISPONIBLE"; 
     }
 
-    alqFotosNuevas = []; // Reiniciar fotos
+    alqFotosNuevas = []; 
     document.getElementById('alq-preview-container').innerHTML = '';
     document.getElementById('alq-preview-container').classList.add('hidden');
 }
@@ -312,7 +309,7 @@ function cerrarModalAlq() { document.getElementById('modal-alq').classList.add('
 
 function previewAlqFoto(input) {
     if (input.files && input.files.length > 0) {
-        alqFotosNuevas = []; // Resetear array
+        alqFotosNuevas = []; 
         const container = document.getElementById('alq-preview-container');
         container.innerHTML = '';
         container.classList.remove('hidden');
@@ -320,8 +317,7 @@ function previewAlqFoto(input) {
         Array.from(input.files).forEach(file => {
             const reader = new FileReader();
             reader.onload = function(e) {
-                alqFotosNuevas.push(e.target.result); // Guardar Base64
-                // Renderizar miniatura
+                alqFotosNuevas.push(e.target.result); 
                 const div = document.createElement('div');
                 div.className = "aspect-square rounded border border-slate-200 overflow-hidden relative";
                 div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
@@ -332,6 +328,7 @@ function previewAlqFoto(input) {
     }
 }
 
+// --- LOGICA DE GUARDADO ASÍNCRONO ---
 function guardarAlquiler() { 
     const estadoSeleccionado = document.getElementById('alq-estado-manual').value;
     let cliente = document.getElementById('alq-cliente').value;
@@ -348,43 +345,42 @@ function guardarAlquiler() {
         estadoManual: estadoSeleccionado 
     }; 
     
-    const btn = document.getElementById('btn-alq-save'); 
-    btn.innerText = "Subiendo..."; 
-    btn.disabled = true; 
+    // 1. GUARDAMOS DATOS DE TEXTO INMEDIATAMENTE
+    enviarAlquiler(d);
     
-    // Si hay fotos nuevas, las subimos en lote a la carpeta
+    // 2. CERRAMOS MODAL
+    cerrarModalAlq();
+    showToast("Datos guardados. Procesando fotos...");
+
+    // 3. SUBIDA FOTOS EN SEGUNDO PLANO
     if(alqFotosNuevas.length > 0) {
+         showToast("Subiendo fotos en segundo plano...", "info");
+         // Llamada sin bloquear la UI principal
          google.script.run.withSuccessHandler(res => {
              if(res.exito) {
-                 d.fotoUrl = res.url; // URL de la carpeta
-                 enviarAlquiler(d);
+                 // 4. ACTUALIZAR URL EN SILENCIO CUANDO TERMINE
+                 google.script.run.withSuccessHandler(() => {
+                     showToast("✅ Fotos subidas y vinculadas.");
+                     cargarAlquiler(); // Refrescar tabla silenciosamente
+                 }).actualizarFotoAlquiler({ codigo: d.codigo, url: res.url });
              } else {
-                 btn.innerText = "Guardar"; btn.disabled = false;
-                 showToast("Error fotos: " + res.error, 'error');
+                 showToast("Error subiendo fotos: " + res.error, 'error');
              }
          }).subirFotosAlquilerBatch(alqFotosNuevas, d.codigo);
-    } else { 
-        enviarAlquiler(d); 
-    } 
+    }
 }
 
 function enviarAlquiler(d){ 
-    const btn = document.getElementById('btn-alq-save'); 
+    // Guardado de datos de texto
     google.script.run.withSuccessHandler(() => { 
-        cerrarModalAlq(); 
         cargarAlquiler(); 
         alqFotosNuevas=[]; 
-        showToast("Alquiler guardado"); 
-        btn.innerText = "Guardar"; 
-        btn.disabled = false; 
     }).withFailureHandler(e => { 
-        btn.innerText = "Guardar"; 
-        btn.disabled = false; 
         showToast("Error guardar: " + e, 'error'); 
     }).guardarAlquiler(d); 
 }
 
-// RESTO DE FUNCIONES DE APOYO...
+// RESTO DE FUNCIONES...
 function procesarFotosInmediato(input) { const idTrafo = document.getElementById('foto-trafo').value; if(!idTrafo) { alert("¡Escribe primero el ID del Trafo!"); input.value = ""; return; } if (input.files && input.files.length > 0) { const statusDiv = document.getElementById('status-fotos'); const listaDiv = document.getElementById('lista-fotos'); const etapa = document.getElementById('foto-etapa').value; statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Subiendo imagen...</span>'; Array.from(input.files).forEach(file => { const reader = new FileReader(); reader.onload = function(e) { const base64 = e.target.result; const divPreview = document.createElement('div'); divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50"; divPreview.innerHTML = `<span class="text-xs truncate font-bold">${file.name}</span><span class="text-xs text-blue-500">Subiendo...</span>`; listaDiv.prepend(divPreview); google.script.run.withSuccessHandler(res => { if(res.exito){ divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200"; divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`; statusDiv.innerHTML = ''; if(typeof lucide !== 'undefined') lucide.createIcons(); showToast("Foto guardada"); } else { divPreview.className = "bg-red-50 p-2 rounded border border-red-200"; divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`; } }).withFailureHandler(err => { divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`; }).subirFotoProceso(base64, idTrafo, etapa); }; reader.readAsDataURL(file); }); input.value = ""; } }
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); if(!dl) return; dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
