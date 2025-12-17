@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V5.4 - BACKGROUND UPLOAD) */
+/* JLB OPERACIONES - APP.JS (V5.5 - COMPRESIÓN DE FOTOS) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -307,6 +307,7 @@ function abrirModalAlq(nuevo) {
 
 function cerrarModalAlq() { document.getElementById('modal-alq').classList.add('hidden'); }
 
+// --- FUNCIÓN CLAVE: COMPRESIÓN DE IMÁGENES AL SELECCIONAR ---
 function previewAlqFoto(input) {
     if (input.files && input.files.length > 0) {
         alqFotosNuevas = []; 
@@ -317,11 +318,37 @@ function previewAlqFoto(input) {
         Array.from(input.files).forEach(file => {
             const reader = new FileReader();
             reader.onload = function(e) {
-                alqFotosNuevas.push(e.target.result); 
-                const div = document.createElement('div');
-                div.className = "aspect-square rounded border border-slate-200 overflow-hidden relative";
-                div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
-                container.appendChild(div);
+                // AQUÍ OCURRE LA MAGIA DE LA COMPRESIÓN
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1000; // Reducir ancho máximo a 1000px
+                    const scaleSize = MAX_WIDTH / img.width;
+                    
+                    // Si la imagen es más pequeña que 1000px, no la agrandamos
+                    if (img.width > MAX_WIDTH) {
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                    } else {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                    }
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Convertir a JPEG calidad 0.6 (60%) = Mucho más liviano
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                    
+                    alqFotosNuevas.push(compressedDataUrl); 
+                    
+                    // Mostrar preview visual
+                    const div = document.createElement('div');
+                    div.className = "aspect-square rounded border border-slate-200 overflow-hidden relative";
+                    div.innerHTML = `<img src="${compressedDataUrl}" class="w-full h-full object-cover">`;
+                    container.appendChild(div);
+                };
             };
             reader.readAsDataURL(file);
         });
