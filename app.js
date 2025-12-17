@@ -1,9 +1,8 @@
-/* JLB OPERACIONES - APP.JS (V5.2 - PROXY FIX FINAL) */
+/* JLB OPERACIONES - APP.JS (V5.3 - GALERÍA + FILTROS) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
 // =============================================================
-// 👇 PEGA AQUÍ TU URL DE LA IMPLEMENTACIÓN (EXEC) 👇
 const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxEJ7AKN6Qn8VhELXGdluYDsm2Of49bGJV0h28GWCSpKu9lv1YWbWIosq6gQ-jcKNYsJg/exec"; 
 
 // =============================================================
@@ -14,32 +13,17 @@ class GasRunner {
     constructor() {
         this._successHandler = null;
         this._failureHandler = null;
-
-        // Retornamos el Proxy para interceptar TODO
         return new Proxy(this, {
             get: (target, prop, receiver) => {
-                // Si es una propiedad interna, la devolvemos tal cual
                 if (prop in target || typeof prop === 'symbol') {
                     return target[prop];
                 }
-
-                // 1. Configuración de Handlers (Encadenamiento)
                 if (prop === 'withSuccessHandler') {
-                    return (cb) => {
-                        target._successHandler = cb;
-                        return receiver; // 👈 CLAVE: Retornamos el PROXY, no el objeto base
-                    };
+                    return (cb) => { target._successHandler = cb; return receiver; };
                 }
-
                 if (prop === 'withFailureHandler') {
-                    return (cb) => {
-                        target._failureHandler = cb;
-                        return receiver; // 👈 CLAVE: Mantiene la magia viva
-                    };
+                    return (cb) => { target._failureHandler = cb; return receiver; };
                 }
-
-                // 2. Ejecución de la Función Remota
-                // Si llegamos aquí, es porque llamaron a una función del backend (ej: obtenerDatos...)
                 return (...args) => {
                     const payload = args[0] || {}; 
                     target._execute(prop, payload);
@@ -49,32 +33,20 @@ class GasRunner {
     }
 
     _execute(actionName, payload) {
-        // console.log(`🚀 Call: ${actionName}`); // Debug
-
-        // Hack CORS: text/plain
-        const requestBody = JSON.stringify({
-            action: actionName,
-            payload: payload
-        });
-
+        const requestBody = JSON.stringify({ action: actionName, payload: payload });
         fetch(API_ENDPOINT, {
             method: 'POST',
             redirect: 'follow',
-            headers: {
-                "Content-Type": "text/plain;charset=utf-8" 
-            },
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: requestBody
         })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'error') {
                 console.error(`❌ Error Backend (${actionName}):`, data.message);
-                if (this._failureHandler) {
-                    this._failureHandler(data.message);
-                }
+                if (this._failureHandler) this._failureHandler(data.message);
             } else {
                 if (this._successHandler) {
-                    // Normalización de respuesta
                     const respuestaFinal = (data.data !== undefined) ? data.data : data;
                     this._successHandler(respuestaFinal);
                 }
@@ -82,36 +54,28 @@ class GasRunner {
         })
         .catch(error => {
             console.error(`❌ Error Red (${actionName}):`, error);
-            if (this._failureHandler) {
-                this._failureHandler(error.toString());
-            }
+            if (this._failureHandler) this._failureHandler(error.toString());
         });
     }
 }
 
-// Simulamos el objeto global
 const google = {
     script: {
-        get run() {
-            return new GasRunner();
-        }
+        get run() { return new GasRunner(); }
     }
 };
-
 
 // =============================================================
 // 3. LÓGICA DE NEGOCIO (WORKFLOW + CORE)
 // =============================================================
 
 let datosProg=[], datosEntradas=[], datosAlq=[], dbClientes = [], tareasCache = [];
-let alqFotoBase64=null;
+let alqFotosNuevas = []; // Array para múltiples fotos
 let canvas, ctx, isDrawing=false, indiceActual=-1;
 
 // --- INIT ---
 window.onload = function() { 
     if(typeof lucide !== 'undefined') lucide.createIcons();
-    
-    // Solo inicia si estamos en la App Principal (no en Dashboard)
     if(document.getElementById('wrapper-operaciones')) {
         nav('programacion');
         google.script.run.withSuccessHandler(d => {
@@ -125,13 +89,10 @@ window.onload = function() {
 function nav(id) { 
     document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active')); 
     const sec = document.getElementById(id); if(sec) sec.classList.add('active'); 
-    
     const headerTitle = document.getElementById('header-title');
     if(headerTitle) headerTitle.innerText = id.toUpperCase(); 
-    
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active')); 
     const btn = document.getElementById('btn-'+id); if(btn) btn.classList.add('nav-active'); 
-    
     document.querySelectorAll('.nav-btn-mob').forEach(b => b.classList.remove('mobile-nav-active'));
     const mobBtn = document.getElementById('mob-'+id); if(mobBtn) mobBtn.classList.add('mobile-nav-active');
 
@@ -150,7 +111,6 @@ function recargarActual() { const active = document.querySelector('.view-section
 function cargarProgramacion(){ 
     const tDesk = document.getElementById('tabla-prog-desktop'); 
     const tMob = document.getElementById('lista-prog-mobile');
-    
     if(tDesk) tDesk.innerHTML='<tr><td colspan="5" class="text-center py-8 text-slate-500">Cargando...</td></tr>'; 
     if(tMob) tMob.innerHTML='<div class="text-center py-8 text-slate-500">Cargando...</div>';
 
@@ -158,53 +118,23 @@ function cargarProgramacion(){
         datosProg = d; 
         if(tDesk) tDesk.innerHTML = ''; 
         if(tMob) tMob.innerHTML = '';
-        
         if(d.length === 0) { 
             const empty = '<div class="text-center py-4 text-slate-400">No hay datos recientes.</div>'; 
             if(tDesk) tDesk.innerHTML = `<tr><td colspan="5">${empty}</td></tr>`; 
             if(tMob) tMob.innerHTML = empty; 
             return; 
         } 
-
         d.forEach((r,i) => { 
             let c = "row-default", badgeColor = "bg-slate-100 text-slate-600";
             const s = (r.estado || "").toUpperCase(); 
-            
-            // Colores según estado
             if(s.includes("FINAL") || s.includes("ENTREGADO")) { c = "row-finalizado"; badgeColor = "bg-green-100 text-green-700"; }
             else if(s.includes("PROCESO") || s.includes("AUTO")) { c = "row-proceso"; badgeColor = "bg-blue-100 text-blue-700"; }
             else if(s.includes("PENDIENTE") || s.includes("SIN")) { c = "row-pendiente"; badgeColor = "bg-orange-100 text-orange-700"; }
-            
             let b = `<span class="font-mono font-bold text-slate-700">${r.idJLB||'--'}</span>`; 
             if(r.idGroup) b += `<br><span class="bg-orange-100 text-orange-800 px-1 rounded text-[10px] font-bold">G:${r.idGroup}</span>`; 
-
-            // Render Desktop
-            if(tDesk) tDesk.insertAdjacentHTML('beforeend', `
-                <tr class="border-b ${c} hover:bg-slate-50">
-                    <td class="px-6 py-4">${b}</td>
-                    <td class="px-6 py-4 text-xs font-mono text-slate-600">${r.fecha||'S/F'}</td>
-                    <td class="px-6 py-4 font-medium">${r.cliente}</td>
-                    <td class="px-6 py-4"><span class="text-xs font-bold px-2 py-1 rounded ${badgeColor}">${r.estado}</span></td>
-                    <td class="px-6 py-4 text-center">
-                        <button onclick="abrirModal(${i})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-                    </td>
-                </tr>`); 
             
-            // Render Mobile
-            if(tMob) tMob.insertAdjacentHTML('beforeend', `
-                <div class="mobile-card relative ${c} p-4" onclick="abrirModal(${i})">
-                    <div class="flex justify-between items-start mb-2">
-                        <div><span class="font-black text-lg text-slate-800">#${r.idJLB || r.idGroup}</span><span class="text-xs text-slate-500 block">${r.fecha}</span></div>
-                        <span class="text-[10px] font-bold px-2 py-1 rounded ${badgeColor} uppercase tracking-wide">${r.estado}</span>
-                    </div>
-                    <h4 class="font-bold text-blue-900 text-base mb-1">${r.cliente}</h4>
-                    <p class="text-sm text-slate-600 truncate">${r.desc}</p>
-                    <div class="mt-3 pt-2 border-t border-slate-200/50 flex justify-end">
-                        <button class="text-blue-600 text-xs font-bold flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-blue-100 shadow-sm">
-                            <i data-lucide="pencil" class="w-3 h-3"></i> EDITAR / VER
-                        </button>
-                    </div>
-                </div>`);
+            if(tDesk) tDesk.insertAdjacentHTML('beforeend', `<tr class="border-b ${c} hover:bg-slate-50"><td class="px-6 py-4">${b}</td><td class="px-6 py-4 text-xs font-mono text-slate-600">${r.fecha||'S/F'}</td><td class="px-6 py-4 font-medium">${r.cliente}</td><td class="px-6 py-4"><span class="text-xs font-bold px-2 py-1 rounded ${badgeColor}">${r.estado}</span></td><td class="px-6 py-4 text-center"><button onclick="abrirModal(${i})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); 
+            if(tMob) tMob.insertAdjacentHTML('beforeend', `<div class="mobile-card relative ${c} p-4" onclick="abrirModal(${i})"><div class="flex justify-between items-start mb-2"><div><span class="font-black text-lg text-slate-800">#${r.idJLB || r.idGroup}</span><span class="text-xs text-slate-500 block">${r.fecha}</span></div><span class="text-[10px] font-bold px-2 py-1 rounded ${badgeColor} uppercase tracking-wide">${r.estado}</span></div><h4 class="font-bold text-blue-900 text-base mb-1">${r.cliente}</h4><p class="text-sm text-slate-600 truncate">${r.desc}</p><div class="mt-3 pt-2 border-t border-slate-200/50 flex justify-end"><button class="text-blue-600 text-xs font-bold flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-blue-100 shadow-sm"><i data-lucide="pencil" class="w-3 h-3"></i> EDITAR / VER</button></div></div>`);
         }); 
         if(typeof lucide !== 'undefined') lucide.createIcons();
     }).obtenerDatosProgramacion(); 
@@ -228,38 +158,14 @@ function abrirModal(i){
     
     const stepsContainer = document.getElementById('steps-container'); 
     stepsContainer.innerHTML = ''; 
-
-    // --- RENDER FLUJO ADMINISTRATIVO (CON COMPATIBILIDAD LEGACY) ---
     const estado = (d.estado || "").toUpperCase().trim();
     let workflowHTML = "";
-
-    // MODIFICACION: Reconocer PENDIENTE o VACIO como 'SIN INGRESAR' para equipos antiguos
     if(estado === "SIN INGRESAR A SISTEMA" || estado === "PENDIENTE" || estado === "") {
-        workflowHTML = `
-            <div class="col-span-full mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex flex-col items-center justify-center gap-2">
-                <p class="text-orange-800 font-bold text-sm uppercase">⚠️ Equipo pendiente de ingreso a ZIUR</p>
-                <button onclick="avanzarEstado('SIN REGISTRO DE INSPECCION', 'CONFIRMAR_ZIUR')" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg w-full md:w-auto">
-                    ✅ CONFIRMAR INGRESO A ZIUR
-                </button>
-            </div>`;
+        workflowHTML = `<div class="col-span-full mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-orange-800 font-bold text-sm uppercase">⚠️ Equipo pendiente de ingreso a ZIUR</p><button onclick="avanzarEstado('SIN REGISTRO DE INSPECCION', 'CONFIRMAR_ZIUR')" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg w-full md:w-auto">✅ CONFIRMAR INGRESO A ZIUR</button></div>`;
     } else if (estado === "SIN REGISTRO DE INSPECCION") {
-        workflowHTML = `
-            <div class="col-span-full mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-col items-center justify-center gap-2">
-                <p class="text-blue-800 font-bold text-sm uppercase">ℹ️ Pendiente de Inspección Técnica</p>
-                <div class="flex gap-3 w-full md:w-auto">
-                    <button onclick="avanzarEstado('SIN AUTORIZAR', 'CONFIRMAR_INSPECCION')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-bold shadow-lg flex-1 md:flex-none">
-                        📝 INSPECCIÓN REALIZADA
-                    </button>
-                    <button onclick="avanzarEstado('SIN AUTORIZAR', 'OMITIR_INSPECCION')" class="bg-slate-300 hover:bg-slate-400 text-slate-700 px-4 py-3 rounded-lg font-bold shadow flex-1 md:flex-none">
-                        🚫 NO APLICA
-                    </button>
-                </div>
-            </div>`;
+        workflowHTML = `<div class="col-span-full mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-blue-800 font-bold text-sm uppercase">ℹ️ Pendiente de Inspección Técnica</p><div class="flex gap-3 w-full md:w-auto"><button onclick="avanzarEstado('SIN AUTORIZAR', 'CONFIRMAR_INSPECCION')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-bold shadow-lg flex-1 md:flex-none">📝 INSPECCIÓN REALIZADA</button><button onclick="avanzarEstado('SIN AUTORIZAR', 'OMITIR_INSPECCION')" class="bg-slate-300 hover:bg-slate-400 text-slate-700 px-4 py-3 rounded-lg font-bold shadow flex-1 md:flex-none">🚫 NO APLICA</button></div></div>`;
     }
-
     stepsContainer.insertAdjacentHTML('beforeend', workflowHTML);
-
-    // --- RENDER PASOS TÉCNICOS ---
     const ps = [{id:'pruebas_ini',l:'1. Pruebas Iniciales'},{id:'desencube',l:'2. Desencube'},{id:'desensamble',l:'3. Desensamble'},{id:'bobinado',l:'4. Bobinado'},{id:'ensamble',l:'5. Ensamble'},{id:'horno',l:'6. Horno'},{id:'encube',l:'7. Encube'},{id:'pruebas_fin',l:'8. Pruebas Finales'},{id:'pintura',l:'9. Pintura'},{id:'listo',l:'10. Listo'}]; 
     ps.forEach(p => { 
         let hid = ""; 
@@ -268,86 +174,30 @@ function abrirModal(i){
         const dn = v !== ""; 
         stepsContainer.insertAdjacentHTML('beforeend', `<div class="step-card ${dn?'done':''} ${hid}"><label class="text-[10px] font-bold uppercase mb-1 ${dn?'text-green-700':'text-slate-400'}">${p.l}</label><input type="date" id="date-${p.id}" value="${v}" class="date-input"></div>`); 
     }); 
-    
-    // Cargar Requerimientos
     const idParaReq = d.idJLB && d.idJLB.toString().length > 1 ? d.idJLB : d.idGroup;
     cargarRequerimientosModal(idParaReq);
-    
     switchTab('seg'); 
 }
 
-// --- ACCIÓN DE AVANCE DE ESTADO ---
 function avanzarEstado(nuevoEstado, accion) {
     if(!confirm("¿Confirmar cambio de estado?")) return;
-    
     const d = datosProg[indiceActual];
-    // Prioridad ID JLB, sino Group
     const idParaTrafo = (d.idJLB && d.idJLB.toString().length > 0) ? d.idJLB : d.idGroup;
-    
     const btn = document.querySelector('.step-card button') || document.activeElement;
     if(btn && btn.tagName === 'BUTTON') { btn.disabled = true; btn.innerText = "Procesando..."; }
-
     google.script.run.withSuccessHandler(res => {
-        if(res.exito) {
-            showToast("Estado actualizado");
-            cerrarModal();
-            cargarProgramacion();
-        } else {
-            alert("Error al actualizar");
-            if(btn) btn.disabled = false;
-        }
-    }).avanzarEstadoAdmin({
-        rowIndex: d.rowIndex,
-        nuevoEstado: nuevoEstado,
-        accion: accion,
-        idTrafo: idParaTrafo
-    });
+        if(res.exito) { showToast("Estado actualizado"); cerrarModal(); cargarProgramacion(); } 
+        else { alert("Error al actualizar"); if(btn) btn.disabled = false; }
+    }).avanzarEstadoAdmin({ rowIndex: d.rowIndex, nuevoEstado: nuevoEstado, accion: accion, idTrafo: idParaTrafo });
 }
 
-// --- RESTO DE MÓDULOS (ENTRADAS, LOGÍSTICA, ETC.) ---
-function cargarRequerimientosModal(idTrafo) {
-    const c = document.getElementById('lista-reqs');
-    c.innerHTML = '<p class="text-center text-slate-400 text-xs py-4 animate-pulse">Cargando lista...</p>';
-    google.script.run.withSuccessHandler(lista => renderListaReqs(lista)).obtenerRequerimientos(idTrafo);
-}
-function renderListaReqs(lista) {
-    const c = document.getElementById('lista-reqs'); c.innerHTML = '';
-    if(lista.length === 0) { c.innerHTML = '<p class="text-center text-slate-400 text-xs py-4">Sin requerimientos.</p>'; return; }
-    lista.forEach(r => { c.insertAdjacentHTML('beforeend', `<div class="bg-white p-2 rounded border border-slate-200 flex justify-between items-start mb-2"><div><p class="text-sm font-bold text-slate-700">${r.texto}</p><p class="text-[10px] text-slate-400">${r.fecha} - ${r.autor}</p></div><button onclick="borrarReq(${r.idReq})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button></div>`); });
-    if(typeof lucide !== 'undefined') lucide.createIcons();
-}
-function guardarNuevoReq() {
-    const txt = document.getElementById('txt-nuevo-req').value; if(!txt.trim()) return;
-    const ids = document.getElementById('m-ids-badge').innerText; 
-    let idTrafo = ids.split('|')[0].replace('ID:', '').trim(); if(idTrafo === 'undefined' || idTrafo === '') idTrafo = ids.split('|')[1].replace('GRUPO:', '').trim();
-    const btn = document.querySelector('#view-req button'); btn.disabled = true;
-    google.script.run.withSuccessHandler(lista => { document.getElementById('txt-nuevo-req').value = ''; renderListaReqs(lista); btn.disabled = false; showToast("Agregado"); }).guardarRequerimiento({ idTrafo: idTrafo, texto: txt, autor: "OPERACIONES" });
-}
-function borrarReq(idReq) { 
-    if(!confirm("¿Borrar?")) return;
-    const ids = document.getElementById('m-ids-badge').innerText; let idTrafo = ids.split('|')[0].replace('ID:', '').trim(); if(idTrafo === 'undefined' || idTrafo === '') idTrafo = ids.split('|')[1].replace('GRUPO:', '').trim();
-    google.script.run.withSuccessHandler(lista => renderListaReqs(lista)).borrarRequerimiento(idReq, idTrafo);
-}
-function guardarCambios(){ 
-    const b = document.getElementById('btn-guardar-prog'); const txtOriginal = b.innerHTML; b.innerHTML = 'GUARDANDO...'; b.disabled = true; 
-    const c = { f_oferta: document.getElementById('date-f-oferta').value, observacion: document.getElementById('input-obs-prog').value, remision: document.getElementById('input-remision-prog').value, entrega: document.getElementById('date-entrega').value, pruebas_ini: document.getElementById('date-pruebas_ini').value, desencube: document.getElementById('date-desencube').value, desensamble: document.getElementById('date-desensamble').value, bobinado: document.getElementById('date-bobinado').value, ensamble: document.getElementById('date-ensamble').value, horno: document.getElementById('date-horno').value, encube: document.getElementById('date-encube').value, pruebas_fin: document.getElementById('date-pruebas_fin').value, pintura: document.getElementById('date-pruebas_fin').value, listo: document.getElementById('date-listo').value, idGroup: document.getElementById('in-idgroup').value, serie: document.getElementById('in-serie').value, ods: document.getElementById('in-ods').value, desc: document.getElementById('in-desc').value, tipo: document.getElementById('in-tipo').value }; 
-    google.script.run.withSuccessHandler(() => { b.innerHTML = txtOriginal; b.disabled = false; cerrarModal(); cargarProgramacion(); showToast("Cambios guardados"); }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).guardarAvance({rowIndex: datosProg[indiceActual].rowIndex, cambios: c}); 
-}
-function enviarFormulario(){
-    const b = document.getElementById('btn-crear'); const txtOriginal = b.innerHTML; b.innerHTML = 'PROCESANDO...'; b.disabled = true;
-    const f = document.getElementById('form-entrada'); const d = new FormData(f);
-    const dt = { empresa: d.get('empresa'), cliente: d.get('cliente'), cedula: d.get('cedula'), contacto: d.get('contacto'), telefono: d.get('telefono'), ciudad: d.get('ciudad'), descripcion: d.get('descripcion'), cantidad: d.get('cantidad'), observaciones: d.get('observaciones'), quienEntrega: d.get('quienEntrega'), quienRecibe: d.get('quienRecibe'), codigo: d.get('codigo'), firmaBase64: getFirmaBase64() };
-    google.script.run.withSuccessHandler(r => {
-        if(r.exito) {
-            cerrarModalNueva(); b.innerHTML = txtOriginal; b.disabled = false;
-            if(document.getElementById('grid-entradas')) renderCardEntrada({ id: r.id, fecha: r.fecha, cliente: dt.cliente, descripcion: dt.descripcion, codigo: r.datosCompletos.codigo, cantidad: dt.cantidad, pdf: null, rowIndex: r.rowIndex }, document.getElementById('grid-entradas'), true);
-            showToast("Entrada guardada. Generando PDF...");
-            if(!dbClientes.find(c => c.nombre === dt.cliente.toUpperCase())) { dbClientes.push({nombre: dt.cliente.toUpperCase(), nit: dt.cedula, telefono: dt.telefono, contacto: dt.contacto, ciudad: dt.ciudad}); actualizarDatalistClientes(); }
-            const cardAct = document.getElementById(`act-${r.id}`);
-            if(cardAct) { cardAct.innerHTML = '<div class="text-xs text-yellow-600 font-bold text-center animate-pulse">CREANDO PDF...</div>'; google.script.run.withSuccessHandler(x => { if(x.exito && cardAct) { cardAct.innerHTML = `<a href="${x.url}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>`; if(typeof lucide !== 'undefined') lucide.createIcons(); showToast("PDF Listo"); } }).generarPDFBackground(r.id, r.rowIndex, r.datosCompletos); }
-        } else { alert("Error: " + r.error); b.innerHTML = txtOriginal; b.disabled = false; }
-    }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).registrarEntradaRapida(dt);
-}
+// --- RESTO DE MÓDULOS ---
+function cargarRequerimientosModal(idTrafo) { const c = document.getElementById('lista-reqs'); c.innerHTML = '<p class="text-center text-slate-400 text-xs py-4 animate-pulse">Cargando lista...</p>'; google.script.run.withSuccessHandler(lista => renderListaReqs(lista)).obtenerRequerimientos(idTrafo); }
+function renderListaReqs(lista) { const c = document.getElementById('lista-reqs'); c.innerHTML = ''; if(lista.length === 0) { c.innerHTML = '<p class="text-center text-slate-400 text-xs py-4">Sin requerimientos.</p>'; return; } lista.forEach(r => { c.insertAdjacentHTML('beforeend', `<div class="bg-white p-2 rounded border border-slate-200 flex justify-between items-start mb-2"><div><p class="text-sm font-bold text-slate-700">${r.texto}</p><p class="text-[10px] text-slate-400">${r.fecha} - ${r.autor}</p></div><button onclick="borrarReq(${r.idReq})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button></div>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }
+function guardarNuevoReq() { const txt = document.getElementById('txt-nuevo-req').value; if(!txt.trim()) return; const ids = document.getElementById('m-ids-badge').innerText; let idTrafo = ids.split('|')[0].replace('ID:', '').trim(); if(idTrafo === 'undefined' || idTrafo === '') idTrafo = ids.split('|')[1].replace('GRUPO:', '').trim(); const btn = document.querySelector('#view-req button'); btn.disabled = true; google.script.run.withSuccessHandler(lista => { document.getElementById('txt-nuevo-req').value = ''; renderListaReqs(lista); btn.disabled = false; showToast("Agregado"); }).guardarRequerimiento({ idTrafo: idTrafo, texto: txt, autor: "OPERACIONES" }); }
+function borrarReq(idReq) { if(!confirm("¿Borrar?")) return; const ids = document.getElementById('m-ids-badge').innerText; let idTrafo = ids.split('|')[0].replace('ID:', '').trim(); if(idTrafo === 'undefined' || idTrafo === '') idTrafo = ids.split('|')[1].replace('GRUPO:', '').trim(); google.script.run.withSuccessHandler(lista => renderListaReqs(lista)).borrarRequerimiento(idReq, idTrafo); }
+function guardarCambios(){ const b = document.getElementById('btn-guardar-prog'); const txtOriginal = b.innerHTML; b.innerHTML = 'GUARDANDO...'; b.disabled = true; const c = { f_oferta: document.getElementById('date-f-oferta').value, observacion: document.getElementById('input-obs-prog').value, remision: document.getElementById('input-remision-prog').value, entrega: document.getElementById('date-entrega').value, pruebas_ini: document.getElementById('date-pruebas_ini').value, desencube: document.getElementById('date-desencube').value, desensamble: document.getElementById('date-desensamble').value, bobinado: document.getElementById('date-bobinado').value, ensamble: document.getElementById('date-ensamble').value, horno: document.getElementById('date-horno').value, encube: document.getElementById('date-encube').value, pruebas_fin: document.getElementById('date-pruebas_fin').value, pintura: document.getElementById('date-pruebas_fin').value, listo: document.getElementById('date-listo').value, idGroup: document.getElementById('in-idgroup').value, serie: document.getElementById('in-serie').value, ods: document.getElementById('in-ods').value, desc: document.getElementById('in-desc').value, tipo: document.getElementById('in-tipo').value }; google.script.run.withSuccessHandler(() => { b.innerHTML = txtOriginal; b.disabled = false; cerrarModal(); cargarProgramacion(); showToast("Cambios guardados"); }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).guardarAvance({rowIndex: datosProg[indiceActual].rowIndex, cambios: c}); }
+function enviarFormulario(){ const b = document.getElementById('btn-crear'); const txtOriginal = b.innerHTML; b.innerHTML = 'PROCESANDO...'; b.disabled = true; const f = document.getElementById('form-entrada'); const d = new FormData(f); const dt = { empresa: d.get('empresa'), cliente: d.get('cliente'), cedula: d.get('cedula'), contacto: d.get('contacto'), telefono: d.get('telefono'), ciudad: d.get('ciudad'), descripcion: d.get('descripcion'), cantidad: d.get('cantidad'), observaciones: d.get('observaciones'), quienEntrega: d.get('quienEntrega'), quienRecibe: d.get('quienRecibe'), codigo: d.get('codigo'), firmaBase64: getFirmaBase64() }; google.script.run.withSuccessHandler(r => { if(r.exito) { cerrarModalNueva(); b.innerHTML = txtOriginal; b.disabled = false; if(document.getElementById('grid-entradas')) renderCardEntrada({ id: r.id, fecha: r.fecha, cliente: dt.cliente, descripcion: dt.descripcion, codigo: r.datosCompletos.codigo, cantidad: dt.cantidad, pdf: null, rowIndex: r.rowIndex }, document.getElementById('grid-entradas'), true); showToast("Entrada guardada. Generando PDF..."); if(!dbClientes.find(c => c.nombre === dt.cliente.toUpperCase())) { dbClientes.push({nombre: dt.cliente.toUpperCase(), nit: dt.cedula, telefono: dt.telefono, contacto: dt.contacto, ciudad: dt.ciudad}); actualizarDatalistClientes(); } const cardAct = document.getElementById(`act-${r.id}`); if(cardAct) { cardAct.innerHTML = '<div class="text-xs text-yellow-600 font-bold text-center animate-pulse">CREANDO PDF...</div>'; google.script.run.withSuccessHandler(x => { if(x.exito && cardAct) { cardAct.innerHTML = `<a href="${x.url}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>`; if(typeof lucide !== 'undefined') lucide.createIcons(); showToast("PDF Listo"); } }).generarPDFBackground(r.id, r.rowIndex, r.datosCompletos); } } else { alert("Error: " + r.error); b.innerHTML = txtOriginal; b.disabled = false; } }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).registrarEntradaRapida(dt); }
 function cargarEntradas() { const g = document.getElementById('grid-entradas'); if(!g) return; g.innerHTML='<p class="col-span-full text-center py-4">Cargando...</p>'; google.script.run.withSuccessHandler(d => { datosEntradas = d; g.innerHTML = ''; if(d.length === 0) g.innerHTML = '<p class="col-span-full text-center">Sin registros.</p>'; d.forEach(i => renderCardEntrada(i, g, false)); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerDatosEntradas(); }
 function renderCardEntrada(i, c, p){ const cid = `card-${i.id}`; const pdf = (i.pdf && i.pdf.length > 5) ? `<a href="${i.pdf}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>` : `<button id="btn-gen-${i.id}" onclick="genPDF(${i.id},${i.rowIndex})" class="w-full bg-slate-800 text-white hover:bg-slate-900 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-plus" class="w-4 h-4"></i> GENERAR</button>`; const ziur = `${i.cantidad||1} / ${i.codigo||'S/C'} / ${i.descripcion}`; const h = `<div id="${cid}" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative"><button onclick="copiarTexto('${ziur}')" class="absolute top-4 right-4 text-slate-400 hover:text-blue-600"><i data-lucide="copy" class="w-5 h-5"></i></button><div><div class="flex justify-between mb-2"><span class="font-bold text-lg">#${i.id}</span><span class="text-xs bg-slate-100 px-2 py-1 rounded">${i.fecha}</span></div><div class="bg-blue-50 text-blue-800 text-xs font-mono px-2 py-1 rounded w-fit mb-2">🏷️ ${i.codigo||'---'}</div><h4 class="font-bold text-blue-600 mb-1">${i.cliente}</h4><p class="text-sm text-slate-500 line-clamp-2">${i.descripcion}</p></div><div class="pt-3 border-t mt-4" id="act-${i.id}">${pdf}</div></div>`; if(p) c.insertAdjacentHTML('afterbegin', h); else c.insertAdjacentHTML('beforeend', h); }
 function genPDF(id, rix){ const b = document.getElementById(`btn-gen-${id}`); if(b) { const o = b.innerHTML; b.innerHTML = '...'; b.disabled = true; google.script.run.withSuccessHandler(r => { if(r.exito) { b.parentElement.innerHTML = `<a href="${r.url}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>`; if(typeof lucide !== 'undefined') lucide.createIcons(); } else { alert(r.error); b.innerHTML = o; b.disabled = false; } }).generarPDFBackground(id, rix, null); } }
@@ -359,55 +209,59 @@ function cerrarModal() { document.getElementById('modal-detalle').classList.add(
 function subLog(id) { document.querySelectorAll('.log-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.log-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-log-'+id).classList.add('active'); if(id==='term') cargarTerminados(); if(id==='alq') cargarAlquiler(); if(id==='pat') cargarPatio(); }
 function subNav(id) { document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.cp-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-cp-'+id).classList.add('active'); }
 
-// --- CORRECCIÓN LOGÍSTICA (Envoltura en Objetos para el Backend) ---
-function cargarTerminados() { 
-    google.script.run.withSuccessHandler(d => { 
-        const c = document.getElementById('lista-terminados'); 
-        if(!c) return; 
-        c.innerHTML = ''; 
-        if(d.length === 0) c.innerHTML = '<p class="text-center text-slate-400 py-4">Sin pendientes.</p>'; 
-        d.forEach(i => { 
-            const txt = `ENTRADA: ${i.id} | CLIENTE: ${i.cliente} | EQUIPO: ${i.desc} | ODS: ${i.ods}`; 
-            c.insertAdjacentHTML('beforeend', `<div class="bg-white border border-green-200 p-4 rounded-lg shadow-sm flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i data-lucide="check" class="w-6 h-6"></i></div><div><h4 class="font-bold text-slate-700">${i.cliente}</h4><p class="text-xs text-slate-500">${i.desc} (ID: ${i.id})</p></div></div><button onclick="copiarTexto('${txt}')" class="bg-slate-100 text-slate-600 p-2 rounded hover:bg-slate-200"><i data-lucide="copy" class="w-4 h-4"></i></button></div>`); 
-        }); 
-        if(typeof lucide !== 'undefined') lucide.createIcons(); 
-    }).obtenerLogistica({ tipo: 'TERMINADOS' }); 
-}
+function cargarTerminados() { google.script.run.withSuccessHandler(d => { const c = document.getElementById('lista-terminados'); if(!c) return; c.innerHTML = ''; if(d.length === 0) c.innerHTML = '<p class="text-center text-slate-400 py-4">Sin pendientes.</p>'; d.forEach(i => { const txt = `ENTRADA: ${i.id} | CLIENTE: ${i.cliente} | EQUIPO: ${i.desc} | ODS: ${i.ods}`; c.insertAdjacentHTML('beforeend', `<div class="bg-white border border-green-200 p-4 rounded-lg shadow-sm flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i data-lucide="check" class="w-6 h-6"></i></div><div><h4 class="font-bold text-slate-700">${i.cliente}</h4><p class="text-xs text-slate-500">${i.desc} (ID: ${i.id})</p></div></div><button onclick="copiarTexto('${txt}')" class="bg-slate-100 text-slate-600 p-2 rounded hover:bg-slate-200"><i data-lucide="copy" class="w-4 h-4"></i></button></div>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerLogistica({ tipo: 'TERMINADOS' }); }
+function cargarPatio() { google.script.run.withSuccessHandler(d => { const t = document.getElementById('tabla-pat'); if(!t) return; t.innerHTML = ''; d.forEach(r => { t.insertAdjacentHTML('beforeend', `<tr class="border-b"><td class="p-3 font-mono text-blue-600">${r.id}</td><td class="p-3">${r.cliente}</td><td class="p-3 text-xs text-red-500">${r.motivo}</td></tr>`); }); }).obtenerLogistica({ tipo: 'PATIO' }); }
+
+// =============================================================
+// MODULO ALQUILER (CON FILTROS Y GALERÍA)
+// =============================================================
 
 function cargarAlquiler() { 
     google.script.run.withSuccessHandler(d => { 
         datosAlq = d; 
-        const t = document.getElementById('tabla-alq'); 
-        if(!t) return; 
-        t.innerHTML = ''; 
-        d.forEach((r, i) => { 
-            const btnFoto = r.foto ? `<a href="${r.foto}" target="_blank" class="text-blue-600"><i data-lucide="image" class="w-4 h-4"></i></a>` : '-'; 
-            let badgeClass = 'bg-gray-100 text-slate-700'; 
-            
-            // Lógica de colores actualizada
-            if (r.estado.includes("DISPONIBLE")) badgeClass = 'bg-green-100 text-green-700'; 
-            else if (r.estado === "PRESTADO" || r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700'; 
-            else if (r.estado.includes("MANTENIMIENTO")) badgeClass = 'bg-orange-100 text-orange-700'; 
-            else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700'; 
-            
-            t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${i})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); 
-        }); 
-        if(typeof lucide !== 'undefined') lucide.createIcons(); 
+        filtrarAlquiler(); // Llamar al filtro para renderizar
     }).obtenerLogistica({ tipo: 'ALQUILER' }); 
 }
 
-function cargarPatio() { 
-    google.script.run.withSuccessHandler(d => { 
-        const t = document.getElementById('tabla-pat'); 
-        if(!t) return; 
-        t.innerHTML = ''; 
-        d.forEach(r => { 
-            t.insertAdjacentHTML('beforeend', `<tr class="border-b"><td class="p-3 font-mono text-blue-600">${r.id}</td><td class="p-3">${r.cliente}</td><td class="p-3 text-xs text-red-500">${r.motivo}</td></tr>`); 
-        }); 
-    }).obtenerLogistica({ tipo: 'PATIO' }); 
+function filtrarAlquiler() {
+    const kva = document.getElementById('filtro-kva').value.toLowerCase();
+    const volt = document.getElementById('filtro-voltaje').value.toLowerCase();
+    const t = document.getElementById('tabla-alq');
+    if(!t) return;
+    t.innerHTML = '';
+    
+    // Filtrar datos
+    const filtrados = datosAlq.filter(item => {
+        const matchKVA = kva === "" || item.kva.toString().toLowerCase().includes(kva);
+        const matchVolt = volt === "" || item.voltajes.toString().toLowerCase().includes(volt);
+        return matchKVA && matchVolt;
+    });
+
+    if(filtrados.length === 0) {
+        t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>';
+        return;
+    }
+
+    filtrados.forEach((r, i) => { 
+        // Si hay link de fotos, mostramos icono de carpeta o imagen
+        const btnFoto = r.foto 
+            ? `<a href="${r.foto}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="folder-open" class="w-5 h-5"></i></a>` 
+            : '<span class="text-slate-300">-</span>'; 
+        
+        let badgeClass = 'bg-gray-100 text-slate-700'; 
+        if (r.estado.includes("DISPONIBLE")) badgeClass = 'bg-green-100 text-green-700'; 
+        else if (r.estado === "PRESTADO" || r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700'; 
+        else if (r.estado.includes("MANTENIMIENTO")) badgeClass = 'bg-orange-100 text-orange-700'; 
+        else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700'; 
+        
+        // El índice 'i' aquí es del array filtrado, necesitamos el índice real para editar
+        const indexReal = datosAlq.indexOf(r);
+
+        t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); 
+    }); 
+    if(typeof lucide !== 'undefined') lucide.createIcons(); 
 }
 
-// --- EDICIÓN Y GUARDADO DE ALQUILER CORREGIDO ---
 function editarAlquiler(i) { 
     const d = datosAlq[i]; 
     abrirModalAlq(false); 
@@ -421,29 +275,22 @@ function editarAlquiler(i) {
     document.getElementById('alq-salida').value = fechaParaInput(d.salida); 
     document.getElementById('alq-regreso').value = fechaParaInput(d.regreso); 
     
-    // Mapeo inteligente del estado al Select
     const sel = document.getElementById('alq-estado-manual');
     const estadosValidos = ["DISPONIBLE", "MANTENIMIENTO", "REPARACION", "PRESTADO"];
     
-    // Intentar match exacto
     if(estadosValidos.includes(d.estado)) {
         sel.value = d.estado;
     } else {
-        // Match aproximado para datos legacy
         if(d.estado.includes("DISPONIBLE")) sel.value = "DISPONIBLE";
         else if(d.estado.includes("MANTENIMIENTO")) sel.value = "MANTENIMIENTO";
         else if(d.estado.includes("REPARACION")) sel.value = "REPARACION";
         else if(d.estado.includes("PRESTADO")) sel.value = "PRESTADO";
-        else sel.value = "DISPONIBLE"; // Default
+        else sel.value = "DISPONIBLE"; 
     }
 
-    if(d.foto) { 
-        document.getElementById('alq-preview').src = d.foto; 
-        document.getElementById('alq-preview').classList.remove('hidden'); 
-    } else { 
-        document.getElementById('alq-preview').classList.add('hidden'); 
-    } 
-    alqFotoBase64 = null; 
+    alqFotosNuevas = []; // Reiniciar fotos
+    document.getElementById('alq-preview-container').innerHTML = '';
+    document.getElementById('alq-preview-container').classList.add('hidden');
 }
 
 function abrirModalAlq(nuevo) { 
@@ -455,24 +302,40 @@ function abrirModalAlq(nuevo) {
         document.getElementById('title-modal-alq').innerText = "Registrar Nuevo"; 
         document.getElementById('form-alq').reset(); 
         document.getElementById('alq-codigo').readOnly = false; 
-        document.getElementById('alq-preview').classList.add('hidden'); 
-        alqFotoBase64 = null; 
+        alqFotosNuevas = [];
+        document.getElementById('alq-preview-container').innerHTML = '';
+        document.getElementById('alq-preview-container').classList.add('hidden');
     } 
 }
 
 function cerrarModalAlq() { document.getElementById('modal-alq').classList.add('hidden'); }
 
+function previewAlqFoto(input) {
+    if (input.files && input.files.length > 0) {
+        alqFotosNuevas = []; // Resetear array
+        const container = document.getElementById('alq-preview-container');
+        container.innerHTML = '';
+        container.classList.remove('hidden');
+
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                alqFotosNuevas.push(e.target.result); // Guardar Base64
+                // Renderizar miniatura
+                const div = document.createElement('div');
+                div.className = "aspect-square rounded border border-slate-200 overflow-hidden relative";
+                div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                container.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+}
+
 function guardarAlquiler() { 
-    // Captura explícita del estado manual
     const estadoSeleccionado = document.getElementById('alq-estado-manual').value;
     let cliente = document.getElementById('alq-cliente').value;
-    
-    // LÓGICA DE PROTECCIÓN DE DATOS: 
-    // Si el usuario dice que está en Taller (NO PRESTADO), forzamos vaciar el cliente
-    // para que el backend no sobrescriba el estado a "PRESTADO" automáticamente.
-    if(estadoSeleccionado !== "PRESTADO") {
-        cliente = ""; 
-    }
+    if(estadoSeleccionado !== "PRESTADO") { cliente = ""; }
 
     const d = { 
         codigo: document.getElementById('alq-codigo').value, 
@@ -486,18 +349,20 @@ function guardarAlquiler() {
     }; 
     
     const btn = document.getElementById('btn-alq-save'); 
-    btn.innerText = "Guardando..."; 
+    btn.innerText = "Subiendo..."; 
     btn.disabled = true; 
     
-    if(alqFotoBase64) { 
-        google.script.run.withSuccessHandler(url => { 
-            d.fotoUrl = url; 
-            enviarAlquiler(d); 
-        }).withFailureHandler(e => { 
-            btn.innerText = "Guardar"; 
-            btn.disabled = false; 
-            showToast("Error foto: " + e, 'error'); 
-        }).subirFotoAlquiler(alqFotoBase64, d.codigo); 
+    // Si hay fotos nuevas, las subimos en lote a la carpeta
+    if(alqFotosNuevas.length > 0) {
+         google.script.run.withSuccessHandler(res => {
+             if(res.exito) {
+                 d.fotoUrl = res.url; // URL de la carpeta
+                 enviarAlquiler(d);
+             } else {
+                 btn.innerText = "Guardar"; btn.disabled = false;
+                 showToast("Error fotos: " + res.error, 'error');
+             }
+         }).subirFotosAlquilerBatch(alqFotosNuevas, d.codigo);
     } else { 
         enviarAlquiler(d); 
     } 
@@ -508,7 +373,7 @@ function enviarAlquiler(d){
     google.script.run.withSuccessHandler(() => { 
         cerrarModalAlq(); 
         cargarAlquiler(); 
-        alqFotoBase64=null; 
+        alqFotosNuevas=[]; 
         showToast("Alquiler guardado"); 
         btn.innerText = "Guardar"; 
         btn.disabled = false; 
@@ -519,18 +384,7 @@ function enviarAlquiler(d){
     }).guardarAlquiler(d); 
 }
 
-function previewAlqFoto(input) { 
-    if (input.files && input.files[0]) { 
-        const reader = new FileReader(); 
-        reader.onload = function(e) { 
-            document.getElementById('alq-preview').src = e.target.result; 
-            document.getElementById('alq-preview').classList.remove('hidden'); 
-            alqFotoBase64 = e.target.result; 
-        }; 
-        reader.readAsDataURL(input.files[0]); 
-    } 
-}
-
+// RESTO DE FUNCIONES DE APOYO...
 function procesarFotosInmediato(input) { const idTrafo = document.getElementById('foto-trafo').value; if(!idTrafo) { alert("¡Escribe primero el ID del Trafo!"); input.value = ""; return; } if (input.files && input.files.length > 0) { const statusDiv = document.getElementById('status-fotos'); const listaDiv = document.getElementById('lista-fotos'); const etapa = document.getElementById('foto-etapa').value; statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Subiendo imagen...</span>'; Array.from(input.files).forEach(file => { const reader = new FileReader(); reader.onload = function(e) { const base64 = e.target.result; const divPreview = document.createElement('div'); divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50"; divPreview.innerHTML = `<span class="text-xs truncate font-bold">${file.name}</span><span class="text-xs text-blue-500">Subiendo...</span>`; listaDiv.prepend(divPreview); google.script.run.withSuccessHandler(res => { if(res.exito){ divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200"; divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`; statusDiv.innerHTML = ''; if(typeof lucide !== 'undefined') lucide.createIcons(); showToast("Foto guardada"); } else { divPreview.className = "bg-red-50 p-2 rounded border border-red-200"; divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`; } }).withFailureHandler(err => { divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`; }).subirFotoProceso(base64, idTrafo, etapa); }; reader.readAsDataURL(file); }); input.value = ""; } }
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); if(!dl) return; dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
