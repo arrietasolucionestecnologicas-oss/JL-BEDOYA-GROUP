@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V5.8 - FIX CRÍTICO VARIABLE DIV) */
+/* JLB OPERACIONES - APP.JS (V5.9 - FIX CRÍTICO VARIABLE DIV + ALQUILER COMPLETO) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -421,7 +421,7 @@ function procesarFotosInmediato(input) {
             const reader = new FileReader(); 
             reader.onload = function(e) { 
                 const base64 = e.target.result; 
-                // CORREGIDO: Se definió 'divPreview' y se usa 'divPreview'
+                // CORREGIDO: SE USA divPreview (NO div)
                 const divPreview = document.createElement('div'); 
                 divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50"; 
                 divPreview.innerHTML = `<span class="text-xs truncate font-bold">${file.name}</span><span class="text-xs text-blue-500">Subiendo...</span>`; 
