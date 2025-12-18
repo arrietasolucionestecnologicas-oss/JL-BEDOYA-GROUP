@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V5.7 - FIX PARAMETROS OBJETOS) */
+/* JLB OPERACIONES - APP.JS (V5.8 - FIX CRÍTICO VARIABLE DIV) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -381,7 +381,7 @@ function guardarAlquiler() {
     cerrarModalAlq();
     showToast("Datos guardados. Procesando fotos...");
 
-    // 2. SUBIDA FOTOS BACKGROUND (FIXED: PACKAGED ARGUMENTS)
+    // 2. SUBIDA FOTOS BACKGROUND
     if(alqFotosNuevas.length > 0) {
          showToast("Subiendo fotos en segundo plano...", "info");
          google.script.run.withSuccessHandler(res => {
@@ -393,7 +393,7 @@ function guardarAlquiler() {
              } else {
                  showToast("Error subiendo fotos: " + res.error, 'error');
              }
-         }).subirFotosAlquilerBatch({ listaBase64: alqFotosNuevas, codigo: d.codigo }); // 👈 FIX AQUI
+         }).subirFotosAlquilerBatch({ listaBase64: alqFotosNuevas, codigo: d.codigo });
     }
 }
 
@@ -406,7 +406,7 @@ function enviarAlquiler(d){
     }).guardarAlquiler(d); 
 }
 
-// RESTO DE FUNCIONES (CORREGIDAS PARA PASAR OBJETOS) ...
+// --- RESTO DE FUNCIONES (CORREGIDAS) ---
 function procesarFotosInmediato(input) { 
     const idTrafo = document.getElementById('foto-trafo').value; 
     if(!idTrafo) { alert("¡Escribe primero el ID del Trafo!"); input.value = ""; return; } 
@@ -421,12 +421,12 @@ function procesarFotosInmediato(input) {
             const reader = new FileReader(); 
             reader.onload = function(e) { 
                 const base64 = e.target.result; 
+                // CORREGIDO: Se definió 'divPreview' y se usa 'divPreview'
                 const divPreview = document.createElement('div'); 
-                div.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50"; 
+                divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50"; 
                 divPreview.innerHTML = `<span class="text-xs truncate font-bold">${file.name}</span><span class="text-xs text-blue-500">Subiendo...</span>`; 
                 listaDiv.prepend(divPreview); 
                 
-                // 👈 FIX CRÍTICO AQUÍ: Empaquetar en un objeto
                 google.script.run.withSuccessHandler(res => { 
                     if(res.exito){ 
                         divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200"; 
