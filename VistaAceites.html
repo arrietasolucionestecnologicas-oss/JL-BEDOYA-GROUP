@@ -69,9 +69,9 @@
 
     <div id="modal-ensayo" class="fixed inset-0 z-50 hidden flex items-end md:items-center justify-center p-0 md:p-4">
         <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm transition-opacity" onclick="cerrarModalAceite()"></div>
-        <div class="bg-white w-full h-[95vh] md:h-auto md:max-w-3xl md:rounded-2xl rounded-t-2xl relative z-10 flex flex-col shadow-2xl animate-up">
+        <div class="bg-white w-full h-[95vh] md:h-auto md:max-w-3xl md:rounded-2xl rounded-t-2xl relative z-10 flex flex-col shadow-2xl animate-up max-h-[90vh]">
             
-            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 md:rounded-t-2xl">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 md:rounded-t-2xl shrink-0">
                 <div>
                     <h3 class="font-black text-slate-800 text-lg flex items-center gap-2">
                         <i data-lucide="clipboard-edit" class="w-5 h-5 text-yellow-600"></i> 
@@ -171,7 +171,7 @@
 
             </form>
 
-            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 md:rounded-b-2xl">
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 md:rounded-b-2xl shrink-0">
                 <button onclick="cerrarModalAceite()" class="px-5 py-3 font-bold text-slate-500 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
                 <button onclick="document.getElementById('form-ensayo').requestSubmit()" id="btn-save-oil" class="bg-[#ca8a04] hover:bg-[#a16207] text-white px-8 py-3 rounded-lg font-bold shadow-lg transition-transform active:scale-95 flex items-center gap-2">
                     <i data-lucide="save" class="w-4 h-4"></i> GUARDAR
@@ -186,8 +186,8 @@
         .input-std:focus { border-color: #ca8a04; box-shadow: 0 0 0 2px rgba(202, 138, 4, 0.1); }
         .input-kv { text-align: center; border: 1px solid #94a3b8; border-radius: 6px; padding: 8px 2px; font-weight: bold; color: #0f172a; outline: none; }
         .input-kv:focus { background-color: #eff6ff; border-color: #3b82f6; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .animate-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-up { animation: slideUp 0.3s ease-out forwards; }
     </style>
 
     <script src="app.js"></script>
