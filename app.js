@@ -3,7 +3,7 @@
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
 // =============================================================
-const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxEJ7AKN6Qn8VhELXGdluYDsm2Of49bGJV0h28GWCSpKu9lv1YWbWIosq6gQ-jcKNYsJg/exec"; 
+const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbwjPV6C4Jglw2689PfyegxsL4c_oZMDyYPOQKVh-zA5cv-GgNYDkKEnMmRhDzNsd3Llhg/exec"; 
 
 // =============================================================
 // 2. ADAPTADOR GOOGLE -> GITHUB (CORE FIX)
