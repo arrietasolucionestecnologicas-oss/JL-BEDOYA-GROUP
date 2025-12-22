@@ -162,7 +162,16 @@
 
             <div class="p-4 md:p-6 overflow-y-auto flex-1 pb-24 md:pb-6 bg-slate-50">
                 <div id="view-seg" class="tab-content active">
-                     <div class="mb-6 bg-blue-50 border border-blue-200 p-4 rounded-lg"><label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Fecha Límite Según Oferta</label><input type="date" id="date-f-oferta" class="date-input bg-white border-blue-300 text-blue-900 font-bold"></div>
+                     <div class="mb-6 grid grid-cols-2 gap-4">
+                        <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                            <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Fecha Límite Según Oferta</label>
+                            <input type="date" id="date-f-oferta" class="date-input bg-white border-blue-300 text-blue-900 font-bold">
+                        </div>
+                        <div class="bg-green-50 border border-green-200 p-4 rounded-lg">
+                            <label class="block text-xs font-bold text-green-800 mb-1 uppercase">Fecha de Autorización Real</label>
+                            <input type="date" id="date-f-aut" class="date-input bg-white border-green-300 text-green-900 font-bold">
+                        </div>
+                     </div>
                      <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 border-b pb-1">Etapas</h4>
                      <div id="steps-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6"></div>
                      <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 border-b pb-1">Cierre</h4>
