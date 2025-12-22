@@ -11,7 +11,7 @@
 <body class="bg-slate-100 text-slate-800">
 
     <header class="bg-[#ca8a04] text-white p-4 shadow-lg sticky top-0 z-50">
-        <div class="flex justify-between items-center max-w-7xl mx-auto">
+        <div class="flex justify-between items-center max-w-[1400px] mx-auto">
             <div class="flex items-center gap-3">
                 <div class="bg-white/20 p-2 rounded-lg"><i data-lucide="flask-conical" class="w-6 h-6"></i></div>
                 <div>
@@ -23,12 +23,12 @@
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto p-4 pb-24">
+    <main class="max-w-[1400px] mx-auto p-4 pb-24">
         
         <div class="mb-4 flex flex-col md:flex-row gap-4 items-center justify-between">
             <div class="relative w-full md:w-1/2">
                 <i data-lucide="search" class="absolute left-3 top-3 text-slate-400 w-4 h-4"></i>
-                <input type="text" id="buscador-aceite" onkeyup="filtrarAceites()" placeholder="Filtrar por ID, Cliente o Estado (Ej: PCB)..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-yellow-500 text-sm shadow-sm">
+                <input type="text" id="buscador-aceite" onkeyup="filtrarAceites()" placeholder="Filtrar por ID, Cliente o Estado..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-yellow-500 text-sm shadow-sm">
             </div>
             
             <div class="flex gap-2 text-[10px] font-bold uppercase hidden md:flex">
@@ -41,19 +41,22 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200">
+                    <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200 whitespace-nowrap">
                         <tr>
-                            <th class="px-4 py-4 w-24">ID</th>
-                            <th class="px-4 py-4 w-32">F. Ingreso</th>
+                            <th class="px-4 py-4">ID</th>
+                            <th class="px-4 py-4">ODS</th>
+                            <th class="px-4 py-4">Tipo Servicio</th>
+                            <th class="px-4 py-4">F. Ingreso</th>
+                            <th class="px-4 py-4">F. Auto</th>
+                            <th class="px-4 py-4">F. Encube</th>
                             <th class="px-4 py-4">Cliente</th>
-                            <th class="px-4 py-4">Equipo / Descripción</th>
                             <th class="px-4 py-4 w-40">Estado Lab</th>
-                            <th class="px-4 py-4 w-20 text-center">Acción</th>
+                            <th class="px-4 py-4 text-center">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-aceites" class="divide-y divide-slate-100 text-sm text-slate-700">
                         <tr>
-                            <td colspan="6" class="px-4 py-12 text-center text-slate-400">
+                            <td colspan="9" class="px-4 py-12 text-center text-slate-400">
                                 <div class="flex flex-col items-center gap-2">
                                     <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>
                                     <span>Cargando datos...</span>
@@ -201,15 +204,14 @@
 
         function cargarListaAceites() {
             const container = document.getElementById('tabla-aceites');
-            // Loader tipo tabla
-            container.innerHTML = '<tr><td colspan="6" class="px-4 py-12 text-center text-slate-400"><div class="flex flex-col items-center gap-2"><i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i><span>Consultando base de datos...</span></div></td></tr>';
+            container.innerHTML = '<tr><td colspan="9" class="px-4 py-12 text-center text-slate-400"><div class="flex flex-col items-center gap-2"><i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i><span>Consultando base de datos...</span></div></td></tr>';
             if(typeof lucide !== 'undefined') lucide.createIcons();
             
             google.script.run.withSuccessHandler(data => {
                 listaAceites = data;
                 renderAceites(data);
             }).withFailureHandler(err => {
-                container.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-red-500 font-bold bg-red-50">Error de conexión: ${err}</td></tr>`;
+                container.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-red-500 font-bold bg-red-50">Error de conexión: ${err}</td></tr>`;
             }).Aceites_ObtenerPendientes();
         }
 
@@ -218,13 +220,13 @@
             container.innerHTML = '';
 
             if(data.length === 0) {
-                container.innerHTML = '<tr><td colspan="6" class="px-4 py-12 text-center text-slate-400 flex flex-col items-center"><i data-lucide="check-circle-2" class="w-10 h-10 text-green-200 mb-2"></i><span>No hay trabajos pendientes en laboratorio.</span></td></tr>';
+                container.innerHTML = '<tr><td colspan="9" class="px-4 py-12 text-center text-slate-400 flex flex-col items-center"><i data-lucide="check-circle-2" class="w-10 h-10 text-green-200 mb-2"></i><span>No hay trabajos pendientes en laboratorio.</span></td></tr>';
                 if(typeof lucide !== 'undefined') lucide.createIcons();
                 return;
             }
 
             data.forEach((item, index) => {
-                // LÓGICA DE COLORES DE LA TABLA
+                // COLORES SEGÚN ESTADO
                 let bgBadge = "bg-slate-100 text-slate-500";
                 let icon = "alert-circle";
                 let rowClass = "hover:bg-slate-50 transition-colors border-b border-slate-100";
@@ -238,6 +240,10 @@
                 } else if (item.accion === "PARCIAL") {
                     bgBadge = "bg-blue-100 text-blue-700";
                     icon = "zap";
+                } else if (item.accion === "HISTORIAL") {
+                    bgBadge = "bg-gray-100 text-gray-500";
+                    icon = "archive";
+                    rowClass += " opacity-60"; // Se ven más tenues los entregados
                 } else {
                     bgBadge = "bg-yellow-50 text-yellow-700";
                     icon = "clock";
@@ -245,17 +251,22 @@
 
                 // Si está en espera, deshabilitamos la fila visualmente
                 if(item.accion === 'ESPERA') {
-                    rowClass += " opacity-60 bg-slate-50";
+                    rowClass += " bg-slate-50";
                 }
 
-                const fechaCorta = item.fechaIngreso ? item.fechaIngreso.split(" ")[0] : "-";
+                const fIng = item.fechaIngreso ? item.fechaIngreso.split(" ")[0] : "-";
+                const fAuto = item.fechaAutorizacion ? item.fechaAutorizacion.split("T")[0] : "-";
+                const fEnc = item.fechaEncube ? item.fechaEncube.split("T")[0] : "-";
 
                 const html = `
                 <tr class="${rowClass}">
                     <td class="px-4 py-4 font-mono font-black text-slate-700">#${item.id}</td>
-                    <td class="px-4 py-4 text-xs text-slate-500 font-bold">${fechaCorta}</td>
+                    <td class="px-4 py-4 font-mono text-xs font-bold text-blue-600">${item.ods || '-'}</td>
+                    <td class="px-4 py-4 text-xs font-bold text-slate-600 uppercase">${item.tipoServicio}</td>
+                    <td class="px-4 py-4 text-xs text-slate-500">${fIng}</td>
+                    <td class="px-4 py-4 text-xs text-slate-500">${fAuto}</td>
+                    <td class="px-4 py-4 text-xs text-slate-500">${fEnc}</td>
                     <td class="px-4 py-4 font-bold text-slate-800">${item.cliente}</td>
-                    <td class="px-4 py-4 text-xs text-slate-600 max-w-[200px] truncate" title="${item.equipo}">${item.equipo}</td>
                     <td class="px-4 py-4">
                         <span class="text-[10px] font-black px-2 py-1 rounded uppercase inline-flex items-center gap-1 ${bgBadge}">
                             <i data-lucide="${icon}" class="w-3 h-3"></i> ${item.estadoLab}
@@ -279,7 +290,7 @@
             const filtrados = listaAceites.filter(i => 
                 (i.id||'').toString().toLowerCase().includes(q) || 
                 (i.cliente||'').toLowerCase().includes(q) ||
-                (i.estadoLab||'').toLowerCase().includes(q) // Busca por estado (ej: PCB)
+                (i.estadoLab||'').toLowerCase().includes(q)
             );
             renderAceites(filtrados);
         }
@@ -288,15 +299,12 @@
             const item = listaAceites[index];
             document.getElementById('modal-ensayo').classList.remove('hidden');
             
-            // Llenar datos base
             document.getElementById('in-idtrafo').value = item.id;
             document.getElementById('in-cliente').value = item.cliente;
             document.getElementById('m-subtitulo').innerText = `ID: ${item.id} | ${item.cliente}`;
             
-            // Auto-seleccionar el tipo de ensayo según la regla
-            document.getElementById('in-tipo-ensayo').value = item.accion;
+            document.getElementById('in-tipo-ensayo').value = (item.accion === 'HISTORIAL') ? 'FINAL' : item.accion;
             
-            // Resetear resto
             document.getElementById('in-fecha').valueAsDate = new Date();
             document.getElementById('in-temp').value = "";
             document.getElementById('in-humedad').value = "";
