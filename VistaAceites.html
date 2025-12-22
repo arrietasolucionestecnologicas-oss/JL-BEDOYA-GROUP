@@ -44,7 +44,7 @@
                     <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200 whitespace-nowrap">
                         <tr>
                             <th class="px-4 py-4">ID</th>
-                            <th class="px-4 py-4">F. Autorización</th>
+                            <th class="px-4 py-4 text-blue-700">F. INGRESO</th> <th class="px-4 py-4">F. Autorización</th>
                             <th class="px-4 py-4">Tipo Servicio</th>
                             <th class="px-4 py-4">ODS</th>
                             <th class="px-4 py-4">F. Encube</th>
@@ -55,7 +55,7 @@
                     </thead>
                     <tbody id="tabla-aceites" class="divide-y divide-slate-100 text-sm text-slate-700">
                         <tr>
-                            <td colspan="8" class="px-4 py-12 text-center text-slate-400">
+                            <td colspan="9" class="px-4 py-12 text-center text-slate-400">
                                 <div class="flex flex-col items-center gap-2">
                                     <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>
                                     <span>Cargando datos...</span>
@@ -207,14 +207,14 @@
 
         function cargarListaAceites() {
             const container = document.getElementById('tabla-aceites');
-            container.innerHTML = '<tr><td colspan="8" class="px-4 py-12 text-center text-slate-400"><div class="flex flex-col items-center gap-2"><i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i><span>Consultando base de datos...</span></div></td></tr>';
+            container.innerHTML = '<tr><td colspan="9" class="px-4 py-12 text-center text-slate-400"><div class="flex flex-col items-center gap-2"><i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i><span>Consultando base de datos...</span></div></td></tr>';
             if(typeof lucide !== 'undefined') lucide.createIcons();
             
             google.script.run.withSuccessHandler(data => {
                 listaAceites = data;
                 renderAceites(data);
             }).withFailureHandler(err => {
-                container.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-red-500 font-bold bg-red-50">Error de conexión: ${err}</td></tr>`;
+                container.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-red-500 font-bold bg-red-50">Error de conexión: ${err}</td></tr>`;
             }).Aceites_ObtenerPendientes();
         }
 
@@ -223,7 +223,7 @@
             container.innerHTML = '';
 
             if(data.length === 0) {
-                container.innerHTML = '<tr><td colspan="8" class="px-4 py-12 text-center text-slate-400 flex flex-col items-center"><i data-lucide="check-circle-2" class="w-10 h-10 text-green-200 mb-2"></i><span>No hay trabajos pendientes en laboratorio.</span></td></tr>';
+                container.innerHTML = '<tr><td colspan="9" class="px-4 py-12 text-center text-slate-400 flex flex-col items-center"><i data-lucide="check-circle-2" class="w-10 h-10 text-green-200 mb-2"></i><span>No hay trabajos pendientes en laboratorio.</span></td></tr>';
                 if(typeof lucide !== 'undefined') lucide.createIcons();
                 return;
             }
@@ -253,14 +253,15 @@
 
                 if(item.accion === 'ESPERA') rowClass += " bg-slate-50";
 
+                const fIng = item.fechaIngreso ? item.fechaIngreso.split(" ")[0] : "-"; // Nueva variable
                 const fAuto = item.fechaAutorizacion ? item.fechaAutorizacion.split("T")[0] : "-";
                 const fEnc = item.fechaEncube ? item.fechaEncube.split("T")[0] : "-";
 
                 const html = `
                 <tr class="${rowClass}">
                     <td class="px-4 py-4 font-mono font-black text-slate-700">#${item.id}</td>
-                    <td class="px-4 py-4 text-xs font-bold text-slate-600">${fAuto}</td>
-                    <td class="px-4 py-4 text-xs font-bold text-blue-600 uppercase">${item.tipoServicio}</td>
+                    <td class="px-4 py-4 text-xs font-bold text-blue-700 bg-blue-50">${fIng}</td> <td class="px-4 py-4 text-xs font-bold text-slate-600">${fAuto}</td>
+                    <td class="px-4 py-4 text-xs font-bold text-slate-600 uppercase">${item.tipoServicio}</td>
                     <td class="px-4 py-4 font-mono text-xs text-slate-600">${item.ods || '-'}</td>
                     <td class="px-4 py-4 text-xs text-slate-500">${fEnc}</td>
                     <td class="px-4 py-4 font-bold text-slate-800">${item.cliente}</td>
