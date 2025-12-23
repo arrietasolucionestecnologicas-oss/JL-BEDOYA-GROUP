@@ -3,310 +3,355 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab. Aceites - Gestión Simplificada</title>
+    <title>Lab. Aceites JLB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f1f5f9; }
-        .input-std { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; outline: none; }
-        .input-std:focus { border-color: #ca8a04; ring: 2px; }
-        
-        /* CLASE CLAVE PARA EL GRIS BAJITO */
-        .row-delivered { background-color: #e5e7eb !important; color: #9ca3af !important; }
-        .row-delivered td { border-bottom: 1px solid #d1d5db; }
-        /* Botones desactivados visualmente si está entregado */
-        .row-delivered button.action-btn { background-color: #9ca3af; pointer-events: auto; } 
-    </style>
+    <link href="style.css" rel="stylesheet">
 </head>
-<body class="p-4 md:p-8">
+<body class="bg-slate-100 text-slate-800">
 
-    <div class="max-w-6xl mx-auto mb-6 flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-black text-slate-800">CONTROL DE ACEITES</h1>
-            <p class="text-sm text-slate-500">Gestión de PCBs y Diagnóstico Básico</p>
-        </div>
-        <button onclick="cargarDatos()" class="bg-white p-2 rounded-full shadow hover:bg-slate-50">
-            <i data-lucide="refresh-cw" class="w-5 h-5 text-slate-600"></i>
-        </button>
-    </div>
-
-    <div class="max-w-6xl mx-auto bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-            <label class="text-[10px] font-bold text-slate-500 uppercase">Buscar</label>
-            <input type="text" id="filtro-buscar" onkeyup="aplicarFiltros()" placeholder="Cliente o ID..." class="input-std text-sm">
-        </div>
-        <div>
-            <label class="text-[10px] font-bold text-slate-500 uppercase">Tipo de Servicio (Col G)</label>
-            <select id="filtro-servicio" onchange="aplicarFiltros()" class="input-std text-sm bg-white">
-                <option value="">-- Todos --</option>
-                <option value="PROTOCOLO">Protocolo / Pruebas</option>
-                <option value="MANTENIMIENTO">Mantenimiento</option>
-                <option value="REGENERACION">Regeneración</option>
-            </select>
-        </div>
-        <div>
-            <label class="text-[10px] font-bold text-slate-500 uppercase">Estado PCB</label>
-            <select id="filtro-pcb" onchange="aplicarFiltros()" class="input-std text-sm bg-white">
-                <option value="">-- Todos --</option>
-                <option value="Pendiente">Pendiente de PCB</option>
-                <option value="Libre de PCB">Libre de PCB</option>
-                <option value="Contaminado">Contaminado</option>
-            </select>
-        </div>
-        <div>
-            <label class="text-[10px] font-bold text-slate-500 uppercase">Estado Entrega</label>
-            <select id="filtro-estado" onchange="aplicarFiltros()" class="input-std text-sm bg-white">
-                <option value="PENDIENTE">Pendientes (En Planta)</option>
-                <option value="ENTREGADO">Entregados (Histórico)</option>
-                <option value="">Mostrar Todo</option>
-            </select>
-        </div>
-    </div>
-
-    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <table class="w-full text-left border-collapse">
-            <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200">
-                <tr>
-                    <th class="p-4">ID Entrada</th>
-                    <th class="p-4">Cliente</th>
-                    <th class="p-4">Servicio</th>
-                    <th class="p-4">Estado Planta</th>
-                    <th class="p-4">Estado PCB</th>
-                    <th class="p-4 text-center">Acción</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-body" class="text-sm text-slate-700 divide-y divide-slate-100">
-                <tr><td colspan="6" class="p-8 text-center text-slate-400">Cargando datos...</td></tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div id="modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-up">
-            <div class="bg-slate-50 p-4 border-b flex justify-between items-center">
-                <h3 class="font-bold text-lg text-slate-800">Registro Laboratorio</h3>
-                <button onclick="cerrarModal()" class="text-slate-400 hover:text-red-500"><i data-lucide="x" class="w-6 h-6"></i></button>
+    <header class="bg-[#ca8a04] text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="flex justify-between items-center max-w-[1400px] mx-auto">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-2 rounded-lg"><i data-lucide="flask-conical" class="w-6 h-6"></i></div>
+                <div>
+                    <h1 class="font-black text-xl leading-none">LABORATORIO</h1>
+                    <p class="text-[10px] opacity-90 font-mono tracking-widest uppercase">Control de Calidad & PCBs</p>
+                </div>
             </div>
+            <button onclick="cargarListaAceites()" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+        </div>
+    </header>
+
+    <main class="max-w-[1400px] mx-auto p-4 pb-24">
+        
+        <div class="mb-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="relative w-full md:w-1/2">
+                <i data-lucide="search" class="absolute left-3 top-3 text-slate-400 w-4 h-4"></i>
+                <input type="text" id="buscador-aceite" onkeyup="filtrarAceites()" placeholder="Filtrar por ID, Cliente..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-yellow-500 text-sm shadow-sm">
+            </div>
+            <div class="flex gap-2 text-[10px] font-bold uppercase hidden md:flex">
+                <span class="px-2 py-1 bg-red-100 text-red-700 rounded border border-red-200">PCB Inicial</span>
+                <span class="px-2 py-1 bg-green-100 text-green-700 rounded border border-green-200">Final (Salida)</span>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200 whitespace-nowrap">
+                        <tr>
+                            <th class="px-4 py-4">ID</th>
+                            <th class="px-4 py-4 text-blue-700">F. Ingreso</th>
+                            <th class="px-4 py-4">F. Auto</th>
+                            <th class="px-4 py-4">Servicio</th>
+                            <th class="px-4 py-4">ODS</th>
+                            <th class="px-4 py-4">F. Encube</th>
+                            <th class="px-4 py-4">Cliente</th>
+                            <th class="px-4 py-4 text-center">Próximo Paso</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-aceites" class="divide-y divide-slate-100 text-sm text-slate-700">
+                        <tr>
+                            <td colspan="8" class="px-4 py-12 text-center text-slate-400">
+                                <div class="flex flex-col items-center gap-2"><i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i><span>Cargando datos...</span></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal-ensayo" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm transition-opacity" onclick="cerrarModalAceite()"></div>
+        <div class="bg-white w-full h-auto md:max-w-4xl md:rounded-2xl rounded-lg relative z-10 flex flex-col shadow-2xl animate-up max-h-[90vh] overflow-hidden">
             
-            <form id="form-lab" class="p-6 space-y-4">
-                <input type="hidden" id="in-id">
-                <input type="hidden" id="in-cliente">
+            <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <div>
+                    <h3 class="font-black text-slate-800 text-lg flex items-center gap-2">
+                        <i data-lucide="clipboard-list" class="w-5 h-5 text-yellow-600"></i> 
+                        <span id="m-titulo">REGISTRO DE LABORATORIO</span>
+                    </h3>
+                    <p class="text-xs text-slate-500 font-mono" id="m-subtitulo">ID: ---</p>
+                </div>
+                <button onclick="cerrarModalAceite()" class="text-slate-400 hover:text-slate-600 bg-white p-1 rounded-full border border-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="flex border-b border-slate-200 bg-white">
+                <button onclick="verTab('ensayo')" id="tab-ensayo" class="flex-1 py-3 text-sm font-bold text-yellow-600 border-b-2 border-yellow-500 bg-yellow-50">🧪 REGISTRO ENSAYO</button>
+                <button onclick="verTab('ficha')" id="tab-ficha" class="flex-1 py-3 text-sm font-bold text-slate-400 hover:text-slate-600">📋 FICHA TÉCNICA (Auto)</button>
+            </div>
+
+            <form id="form-ensayo" onsubmit="event.preventDefault(); guardarEnsayo();" class="flex-1 overflow-y-auto bg-white">
                 
-                <div class="bg-blue-50 p-3 rounded border border-blue-100 mb-4">
-                    <p class="text-xs font-bold text-blue-800" id="info-trafo">ID: -- | Cliente: --</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Estado de PCB</label>
-                    <select id="in-pcb" class="input-std font-bold text-slate-700 bg-yellow-50 border-yellow-300">
-                        <option value="Pendiente">⏳ Pendiente</option>
-                        <option value="Libre de PCB">✅ Libre de PCB</option>
-                        <option value="Contaminado">⛔ Contaminado</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Observaciones PCB / Certificado</label>
-                    <textarea id="in-obs-pcb" class="input-std h-20" placeholder="Ej: Certificado adjunto, Marcado como libre..."></textarea>
-                </div>
-
-                <hr class="border-slate-100 my-4">
-
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase">Temp °C</label>
-                        <input type="number" id="in-temp" class="input-std text-center">
+                <div id="view-ensayo" class="p-6 space-y-6">
+                    <input type="hidden" id="in-idtrafo">
+                    <input type="hidden" id="in-cliente">
+                    
+                    <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg flex items-center justify-between">
+                        <label class="text-xs font-bold text-blue-800 uppercase">Ensayo a Realizar:</label>
+                        <select id="in-tipo-ensayo" class="bg-white border border-blue-300 text-blue-900 text-sm font-black rounded px-3 py-1 outline-none">
+                            <option value="PCB">PCB (ENTRADA)</option>
+                            <option value="PARCIAL">PARCIAL (PROTOCOLO)</option>
+                            <option value="FINAL">FINAL (SALIDA)</option>
+                            <option value="OTRO">OTRO</option>
+                        </select>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase">Humedad %</label>
-                        <input type="number" id="in-hum" class="input-std text-center">
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="lbl-input">Fecha Muestreo</label><input type="date" id="in-fecha" class="input-std" required></div>
+                        <div><label class="lbl-input">Técnico</label><select id="in-tecnico" class="input-std"><option value="LAB. INTERNO">LAB. INTERNO</option><option value="EXTERNO">EXTERNO</option></select></div>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase">Color</label>
-                        <input type="text" id="in-color" class="input-std text-center">
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div><label class="lbl-input">Temp. Aceite (°C)</label><input type="number" id="in-temp" class="input-std text-center" placeholder="--"></div>
+                        <div><label class="lbl-input">Humedad Rel. (%)</label><input type="number" id="in-humedad" class="input-std text-center" placeholder="--"></div>
+                        <div><label class="lbl-input">Color (ASTM)</label><input type="number" step="0.5" id="in-color" class="input-std text-center" placeholder="0.5 - 8.0"></div>
+                        <div><label class="lbl-input">Aspecto</label><select id="in-aspecto" class="input-std"><option value="CLARO">CLARO</option><option value="TURBIO">TURBIO</option><option value="SEDIMENTOS">SEDIMENTOS</option></select></div>
+                    </div>
+
+                    <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                        <div class="flex justify-between items-center mb-2"><label class="font-black text-red-800 text-sm flex items-center gap-2"><i data-lucide="biohazard" class="w-4 h-4"></i> ANÁLISIS DE PCBs</label><span class="text-[10px] text-red-400 bg-white px-2 rounded border border-red-100">ppm</span></div>
+                        <input type="number" id="in-pcb" class="w-full text-2xl font-black text-center text-red-700 bg-white border border-red-200 rounded-lg p-2 outline-none" placeholder="< 50">
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <label class="font-black text-slate-700 text-sm mb-3 block flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4 text-blue-500"></i> RIGIDEZ DIELECTRICA (kV)</label>
+                        <div class="grid grid-cols-5 gap-2">
+                            <input type="number" id="in-kv1" class="input-kv" placeholder="1"><input type="number" id="in-kv2" class="input-kv" placeholder="2"><input type="number" id="in-kv3" class="input-kv" placeholder="3"><input type="number" id="in-kv4" class="input-kv" placeholder="4"><input type="number" id="in-kv5" class="input-kv" placeholder="5">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="bg-blue-50 p-3 rounded-lg border border-blue-100"><label class="text-xs font-bold text-blue-800 block mb-1">Agua (ppm)</label><input type="number" id="in-agua" class="w-full bg-white border border-blue-200 rounded p-2 text-center font-bold text-blue-900"></div>
+                        <div class="bg-orange-50 p-3 rounded-lg border border-orange-100"><label class="text-xs font-bold text-orange-800 block mb-1">Acidez</label><input type="number" step="0.001" id="in-acidez" class="w-full bg-white border border-orange-200 rounded p-2 text-center font-bold text-orange-900"></div>
+                        <div class="bg-purple-50 p-3 rounded-lg border border-purple-100"><label class="text-xs font-bold text-purple-800 block mb-1">Tens. IFT</label><input type="number" step="0.1" id="in-ift" class="w-full bg-white border border-purple-200 rounded p-2 text-center font-bold text-purple-900" placeholder="IFT"></div>
+                    </div>
+
+                    <div><label class="lbl-input">Conclusión</label><textarea id="in-conclusion" class="w-full border border-slate-300 rounded-lg p-3 text-sm h-20 resize-none"></textarea></div>
+                </div>
+
+                <div id="view-ficha" class="p-6 space-y-6 hidden">
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-200 mb-4 flex items-center gap-3">
+                        <i data-lucide="database" class="text-green-600 w-6 h-6"></i>
+                        <p class="text-xs text-green-800 font-bold">Datos sincronizados con Hoja de Vida Maestra (BD_ENTRADAS)</p>
+                    </div>
+
+                    <h4 class="font-bold text-slate-700 mb-2 uppercase text-xs border-b pb-1">Identificación</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="lbl-input">Serie</label><input id="in-f-serie" class="input-std bg-slate-100" readonly></div>
+                        <div><label class="lbl-input">KVA</label><input id="in-f-kva" class="input-std bg-slate-100 font-black text-slate-800" readonly></div>
+                    </div>
+
+                    <h4 class="font-bold text-slate-700 mb-2 uppercase text-xs border-b pb-1 mt-4">Especificaciones</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="lbl-input">Año Fabricación</label><input type="text" id="in-f-ano" class="input-std bg-slate-100" readonly></div>
+                        <div><label class="lbl-input">Peso Total (Kg)</label><input type="text" id="in-f-peso" class="input-std bg-slate-100" readonly></div>
+                        <div><label class="lbl-input">Aceite (Litros)</label><input type="text" id="in-f-litros" class="input-std bg-slate-100" readonly></div>
+                        <div><label class="lbl-input">Voltaje</label><input type="text" id="in-f-volt" class="input-std bg-slate-100" readonly></div>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Conclusiones Generales</label>
-                    <textarea id="in-concl" class="input-std h-20" placeholder="Estado general del equipo..."></textarea>
-                </div>
-
-                <div class="pt-2">
-                    <button type="button" onclick="guardar()" id="btn-guardar" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow transition-colors">
-                        GUARDAR REGISTRO
-                    </button>
-                </div>
             </form>
+
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
+                <button onclick="cerrarModalAceite()" class="px-5 py-3 font-bold text-slate-500 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
+                <button onclick="document.getElementById('form-ensayo').requestSubmit()" id="btn-save-oil" class="bg-[#ca8a04] hover:bg-[#a16207] text-white px-8 py-3 rounded-lg font-bold shadow-lg transition-transform active:scale-95 flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> GUARDAR ENSAYO
+                </button>
+            </div>
         </div>
     </div>
+
+    <style>
+        .lbl-input { display: block; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+        .input-std { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; transition: all 0.2s; }
+        .input-std:focus { border-color: #ca8a04; box-shadow: 0 0 0 2px rgba(202, 138, 4, 0.1); }
+        .input-kv { text-align: center; border: 1px solid #94a3b8; border-radius: 6px; padding: 8px 2px; font-weight: bold; color: #0f172a; outline: none; }
+        .input-kv:focus { background-color: #eff6ff; border-color: #3b82f6; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-up { animation: slideUp 0.3s ease-out forwards; }
+    </style>
 
     <script src="app.js"></script>
     <script>
-        let datosGlobales = [];
+        let listaAceites = [];
 
-        // INICIO
-        window.onload = function() {
+        document.addEventListener("DOMContentLoaded", () => {
             if(typeof lucide !== 'undefined') lucide.createIcons();
-            cargarDatos();
-        };
+            cargarListaAceites();
+        });
 
-        function cargarDatos() {
-            const tbody = document.getElementById('tabla-body');
-            tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">Consultando...</td></tr>';
+        function cargarListaAceites() {
+            const container = document.getElementById('tabla-aceites');
+            container.innerHTML = '<tr><td colspan="8" class="px-4 py-12 text-center text-slate-400"><div class="flex flex-col items-center gap-2"><i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i><span>Consultando base de datos...</span></div></td></tr>';
+            if(typeof lucide !== 'undefined') lucide.createIcons();
             
-            // Llamada al backend ESPECÍFICO de aceites
-            google.script.run
-                .withSuccessHandler(data => {
-                    datosGlobales = data;
-                    aplicarFiltros();
-                })
-                .withFailureHandler(err => {
-                    tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-red-500 text-center">Error: ${err}</td></tr>`;
-                })
-                .Aceites_ObtenerPendientes();
+            google.script.run.withSuccessHandler(data => {
+                listaAceites = data;
+                renderAceites(data);
+            }).withFailureHandler(err => {
+                container.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-red-500 font-bold bg-red-50">Error de conexión: ${err}</td></tr>`;
+            }).Aceites_ObtenerPendientes();
         }
 
-        function aplicarFiltros() {
-            const busqueda = document.getElementById('filtro-buscar').value.toLowerCase();
-            const servicio = document.getElementById('filtro-servicio').value; // Mantenimiento, Protocolo...
-            const pcb = document.getElementById('filtro-pcb').value;
-            const estadoEntrega = document.getElementById('filtro-estado').value; // Pendiente, Entregado
+        function renderAceites(data) {
+            const container = document.getElementById('tabla-aceites');
+            container.innerHTML = '';
 
-            const filtrados = datosGlobales.filter(item => {
-                // 1. Filtro Texto
-                const matchTexto = (item.id + " " + item.cliente).toLowerCase().includes(busqueda);
-                
-                // 2. Filtro Servicio (Busca coincidencia parcial, ej: "PROTOCOLO" en "REPARACION PROTOCOLO")
-                const matchServicio = servicio === "" || (item.tipoServicio && item.tipoServicio.includes(servicio));
-                
-                // 3. Filtro PCB (Coincidencia exacta)
-                const matchPcb = pcb === "" || item.pcbEstado === pcb;
-
-                // 4. Filtro Entrega (Basado en la Columna S que viene del Backend)
-                const esEntregado = item.estadoProg && item.estadoProg.includes("ENTREGADO");
-                let matchEntrega = true;
-                if (estadoEntrega === "PENDIENTE" && esEntregado) matchEntrega = false;
-                if (estadoEntrega === "ENTREGADO" && !esEntregado) matchEntrega = false;
-
-                return matchTexto && matchServicio && matchPcb && matchEntrega;
-            });
-
-            renderizarTabla(filtrados);
-        }
-
-        function renderizarTabla(lista) {
-            const tbody = document.getElementById('tabla-body');
-            tbody.innerHTML = '';
-
-            if (lista.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">No se encontraron registros.</td></tr>';
+            if(data.length === 0) {
+                container.innerHTML = '<tr><td colspan="8" class="px-4 py-12 text-center text-slate-400 flex flex-col items-center"><i data-lucide="check-circle-2" class="w-10 h-10 text-green-200 mb-2"></i><span>No hay trabajos pendientes.</span></td></tr>';
+                if(typeof lucide !== 'undefined') lucide.createIcons();
                 return;
             }
 
-            lista.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition-colors border-b border-slate-100";
-                
-                // LÓGICA VISUAL: GRIS BAJITO
-                if (item.estadoProg && item.estadoProg.includes("ENTREGADO")) {
-                    tr.classList.add('row-delivered');
+            data.forEach((item, index) => {
+                // ESTILOS SEGÚN ESTADO LÓGICO
+                let btnClass = "bg-yellow-500 hover:bg-yellow-600 text-white";
+                let btnDisable = "";
+                let rowClass = "hover:bg-slate-50 transition-colors border-b border-slate-100";
+
+                if(item.accion === "ESPERA" || item.accion === "HISTORIAL") {
+                    btnClass = "bg-slate-200 text-slate-500 hover:bg-slate-300";
+                    if(item.accion === "ESPERA") btnDisable = "disabled opacity-50 cursor-not-allowed";
+                } else if(item.accion === "PCB") {
+                    btnClass = "bg-red-500 hover:bg-red-600 text-white shadow-red-200";
+                } else if(item.accion === "FINAL") {
+                    btnClass = "bg-green-600 hover:bg-green-700 text-white shadow-green-200";
+                } else if(item.accion === "PARCIAL") {
+                    btnClass = "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200";
                 }
 
-                // BADGE PCB
-                let badgeClass = "bg-yellow-100 text-yellow-700 border-yellow-200";
-                let pcbText = item.pcbEstado || "Pendiente";
-                if (pcbText === "Libre de PCB") badgeClass = "bg-green-100 text-green-700 border-green-200";
-                if (pcbText === "Contaminado") badgeClass = "bg-red-100 text-red-700 border-red-200";
+                const fIng = item.fechaIngreso ? item.fechaIngreso.split(" ")[0] : "-";
+                const fAuto = item.fechaAutorizacion ? item.fechaAutorizacion.split("T")[0] : "-";
+                const fEnc = item.fechaEncube ? item.fechaEncube.split("T")[0] : "-";
 
-                tr.innerHTML = `
-                    <td class="p-4 font-mono font-bold text-slate-600">#${item.id}</td>
-                    <td class="p-4 font-bold text-slate-800">${item.cliente}</td>
-                    <td class="p-4 text-xs font-bold text-blue-600 bg-blue-50 rounded w-fit px-2 py-1">${item.tipoServicio || 'S/D'}</td>
-                    <td class="p-4 text-xs text-slate-500">${item.estadoProg || 'En Proceso'}</td>
-                    <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-black uppercase border ${badgeClass}">${pcbText}</span></td>
-                    <td class="p-4 text-center">
-                        <button onclick="abrirModal(${index})" class="action-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow transition-transform active:scale-95">
+                const html = `
+                <tr class="${rowClass}">
+                    <td class="px-4 py-4 font-mono font-black text-slate-700">#${item.id}</td>
+                    <td class="px-4 py-4 text-xs font-bold text-blue-700 bg-blue-50">${fIng}</td>
+                    <td class="px-4 py-4 text-xs font-bold text-slate-600">${fAuto}</td>
+                    <td class="px-4 py-4 text-xs font-bold text-slate-600 uppercase">${item.tipoServicio}</td>
+                    <td class="px-4 py-4 font-mono text-xs text-slate-600">${item.ods || '-'}</td>
+                    <td class="px-4 py-4 text-xs text-slate-500">${fEnc}</td>
+                    <td class="px-4 py-4 font-bold text-slate-800">${item.cliente}</td>
+                    <td class="px-4 py-4 text-center">
+                        <button onclick="abrirModalEnsayo(${index})" ${btnDisable} class="${btnClass} px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-sm transition-all active:scale-95 w-full">
                             ${item.textoBoton}
                         </button>
                     </td>
-                `;
-                tbody.appendChild(tr);
+                </tr>`;
+                container.insertAdjacentHTML('beforeend', html);
             });
+            if(typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        function abrirModal(index) {
-            // Buscamos el item en la lista filtrada actual (Ojo: index debe referirse a la lista renderizada, pero aquí simplificamos buscando en globales por ID para seguridad)
-            // Para simplificar en este ejemplo usaremos el objeto pasado directo si es posible, o re-buscamos.
-            // Lo mejor es guardar referencia. Por ahora usaremos datosGlobales asumiendo que el orden visual coincide o pasando ID.
-            // Corrección: Pasaremos el objeto directo en el onclick en una versión avanzada, aquí recuperamos del DOM o volvemos a filtrar.
-            // Truco rápido: Filtramos de nuevo para hallar el objeto exacto, o pasamos el ID en el botón.
-            // Voy a usar el ID del texto de la fila para buscar en datosGlobales.
+        function filtrarAceites() {
+            const q = document.getElementById('buscador-aceite').value.toLowerCase();
+            const filtrados = listaAceites.filter(i => 
+                (i.id||'').toString().toLowerCase().includes(q) || 
+                (i.cliente||'').toLowerCase().includes(q)
+            );
+            renderAceites(filtrados);
+        }
+
+        // --- LÓGICA DE PESTAÑAS ---
+        function verTab(tab) {
+            document.getElementById('view-ensayo').classList.add('hidden');
+            document.getElementById('view-ficha').classList.add('hidden');
+            document.getElementById('tab-ensayo').className = "flex-1 py-3 text-sm font-bold text-slate-400 hover:text-slate-600";
+            document.getElementById('tab-ficha').className = "flex-1 py-3 text-sm font-bold text-slate-400 hover:text-slate-600";
             
-            // MÉTODO ROBUSTO:
-            const row = document.querySelectorAll('#tabla-body tr')[index];
-            const idText = row.querySelector('td').innerText.replace('#','');
-            const item = datosGlobales.find(x => x.id == idText);
+            document.getElementById('view-'+tab).classList.remove('hidden');
+            if(tab === 'ensayo') {
+                document.getElementById('tab-ensayo').className = "flex-1 py-3 text-sm font-bold text-yellow-600 border-b-2 border-yellow-500 bg-yellow-50";
+            } else {
+                document.getElementById('tab-ficha').className = "flex-1 py-3 text-sm font-bold text-yellow-600 border-b-2 border-yellow-500 bg-yellow-50";
+            }
+        }
 
-            if(!item) return;
-
-            document.getElementById('modal').classList.remove('hidden');
-            document.getElementById('in-id').value = item.id;
+        function abrirModalEnsayo(index) {
+            const item = listaAceites[index];
+            document.getElementById('modal-ensayo').classList.remove('hidden');
+            verTab('ensayo'); // Reset a primera pestaña
+            
+            // Datos Base
+            document.getElementById('in-idtrafo').value = item.id;
             document.getElementById('in-cliente').value = item.cliente;
-            document.getElementById('info-trafo').innerText = `ID: ${item.id} | ${item.cliente}`;
-
-            // Llenar campos
-            document.getElementById('in-pcb').value = item.pcbEstado || "Pendiente";
-            document.getElementById('in-obs-pcb').value = item.obsPcb || "";
-            document.getElementById('in-concl').value = item.conclusion || "";
+            document.getElementById('m-subtitulo').innerText = `ID: ${item.id} | ${item.cliente}`;
             
-            // Campos opcionales vacíos por defecto
-            document.getElementById('in-temp').value = "";
-            document.getElementById('in-hum').value = "";
-            document.getElementById('in-color').value = "";
+            // --- CARGA DE DATOS FICHA (DESDE EXTERNO) ---
+            if(item.datosFicha) {
+                document.getElementById('in-f-serie').value = item.datosFicha.serie || "-";
+                document.getElementById('in-f-kva').value = item.datosFicha.kva || "-";
+                document.getElementById('in-f-ano').value = item.datosFicha.ano || "-";
+                document.getElementById('in-f-peso').value = item.datosFicha.peso || "-";
+                document.getElementById('in-f-litros').value = item.datosFicha.litros || "-";
+                document.getElementById('in-f-volt').value = item.datosFicha.voltaje || "-";
+            } else {
+                // Limpiar si no hay match
+                ['in-f-serie','in-f-kva','in-f-ano','in-f-peso','in-f-litros','in-f-volt'].forEach(id => document.getElementById(id).value = "NO ENCONTRADO");
+            }
+
+            // Configurar Ensayo
+            let tipo = item.accion;
+            if(tipo === 'HISTORIAL' || tipo === 'ESPERA') tipo = 'FINAL'; // Default visual
+            document.getElementById('in-tipo-ensayo').value = tipo;
+            
+            // Reset campos ensayo
+            document.getElementById('in-fecha').valueAsDate = new Date();
+            document.getElementById('in-temp').value = ""; document.getElementById('in-humedad').value = ""; document.getElementById('in-color').value = ""; document.getElementById('in-pcb').value = "";
+            document.getElementById('in-kv1').value = ""; document.getElementById('in-kv2').value = ""; document.getElementById('in-kv3').value = ""; document.getElementById('in-kv4').value = ""; document.getElementById('in-kv5').value = "";
+            document.getElementById('in-agua').value = ""; document.getElementById('in-acidez').value = ""; document.getElementById('in-ift').value = ""; document.getElementById('in-conclusion').value = "";
         }
 
-        function cerrarModal() {
-            document.getElementById('modal').classList.add('hidden');
+        function cerrarModalAceite() {
+            document.getElementById('modal-ensayo').classList.add('hidden');
         }
 
-        function guardar() {
-            const btn = document.getElementById('btn-guardar');
-            btn.innerText = "GUARDANDO...";
+        function guardarEnsayo() {
+            const btn = document.getElementById('btn-save-oil');
+            const txt = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> GUARDANDO...';
             btn.disabled = true;
 
             const datos = {
-                idTrafo: document.getElementById('in-id').value,
+                idTrafo: document.getElementById('in-idtrafo').value,
                 cliente: document.getElementById('in-cliente').value,
-                fechaMuestreo: new Date(), // Fecha actual automática
-                tecnico: "LAB WEB",
+                fechaMuestreo: document.getElementById('in-fecha').value,
+                tecnico: document.getElementById('in-tecnico').value,
+                tipoEnsayo: document.getElementById('in-tipo-ensayo').value,
                 
-                // Datos PCB
-                pcbEstado: document.getElementById('in-pcb').value,
-                obsPcb: document.getElementById('in-obs-pcb').value,
-                conclusion: document.getElementById('in-concl').value,
-                
-                // Datos Fisicos (Opcionales)
                 temp: document.getElementById('in-temp').value,
-                humedad: document.getElementById('in-hum').value,
+                humedad: document.getElementById('in-humedad').value,
                 color: document.getElementById('in-color').value,
+                aspecto: document.getElementById('in-aspecto').value,
+                pcb: document.getElementById('in-pcb').value,
                 
-                // Tipo Ensayo (Default)
-                tipoEnsayo: "REPORTE WEB"
+                kv1: document.getElementById('in-kv1').value,
+                kv2: document.getElementById('in-kv2').value,
+                kv3: document.getElementById('in-kv3').value,
+                kv4: document.getElementById('in-kv4').value,
+                kv5: document.getElementById('in-kv5').value,
+                
+                agua: document.getElementById('in-agua').value,
+                acidez: document.getElementById('in-acidez').value,
+                ift: document.getElementById('in-ift').value,
+                conclusion: document.getElementById('in-conclusion').value
             };
 
-            google.script.run
-                .withSuccessHandler(res => {
-                    btn.innerText = "GUARDAR REGISTRO";
-                    btn.disabled = false;
-                    if(res.exito) {
-                        cerrarModal();
-                        cargarDatos(); // Recargar tabla
-                    } else {
-                        alert("Error: " + res.error);
-                    }
-                })
-                .Aceites_GuardarInforme(datos);
+            google.script.run.withSuccessHandler(res => {
+                btn.innerHTML = txt;
+                btn.disabled = false;
+                if(res.exito) {
+                    cerrarModalAceite();
+                    cargarListaAceites(); 
+                    if(typeof showToast === 'function') showToast("Guardado Exitoso"); else alert("Guardado");
+                } else {
+                    alert("Error: " + res.error);
+                }
+            }).Aceites_GuardarInforme(datos);
         }
     </script>
 </body>
