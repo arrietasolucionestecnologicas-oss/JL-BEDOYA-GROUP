@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V6.0 - LOGICA INTELIGENTE DE SERVICIOS) */
+/* JLB OPERACIONES - APP.JS (V6.2 - LOGICA UI REFINADA) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -129,7 +129,7 @@ function cargarProgramacion(){
             const s = (r.estado || "").toUpperCase(); 
             if(s.includes("FINAL") || s.includes("ENTREGADO")) { c = "row-finalizado"; badgeColor = "bg-green-100 text-green-700"; }
             else if(s.includes("PROCESO")) { c = "row-proceso"; badgeColor = "bg-blue-100 text-blue-700"; }
-            else if(s.includes("PENDIENTE") || s.includes("SIN") || s.includes("DIAGNOSTICO")) { c = "row-pendiente"; badgeColor = "bg-orange-100 text-orange-700"; }
+            else if(s.includes("PENDIENTE") || s.includes("SIN") || s.includes("DIAGNOSTICO") || s.includes("AUTORIZAR") || s.includes("FALTA")) { c = "row-pendiente"; badgeColor = "bg-orange-100 text-orange-700"; }
             let b = `<span class="font-mono font-bold text-slate-700">${r.idJLB||'--'}</span>`; 
             if(r.idGroup) b += `<br><span class="bg-orange-100 text-orange-800 px-1 rounded text-[10px] font-bold">G:${r.idGroup}</span>`; 
             
@@ -161,11 +161,16 @@ function abrirModal(i){
     stepsContainer.innerHTML = ''; 
     const estado = (d.estado || "").toUpperCase().trim();
     let workflowHTML = "";
+    
+    // FLUJO DE ESTADOS INICIALES VALIDADO
     if(estado === "SIN INGRESAR A SISTEMA" || estado === "PENDIENTE" || estado === "") {
-        workflowHTML = `<div class="col-span-full mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-orange-800 font-bold text-sm uppercase">⚠️ Equipo pendiente de ingreso a ZIUR</p><button onclick="avanzarEstado('SIN REGISTRO DE INSPECCION', 'CONFIRMAR_ZIUR')" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg w-full md:w-auto">✅ CONFIRMAR INGRESO A ZIUR</button></div>`;
-    } else if (estado === "SIN REGISTRO DE INSPECCION") {
-        workflowHTML = `<div class="col-span-full mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-blue-800 font-bold text-sm uppercase">ℹ️ Pendiente de Inspección Técnica</p><div class="flex gap-3 w-full md:w-auto"><button onclick="avanzarEstado('SIN AUTORIZAR', 'CONFIRMAR_INSPECCION')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-bold shadow-lg flex-1 md:flex-none">📝 INSPECCIÓN REALIZADA</button><button onclick="avanzarEstado('SIN AUTORIZAR', 'OMITIR_INSPECCION')" class="bg-slate-300 hover:bg-slate-400 text-slate-700 px-4 py-3 rounded-lg font-bold shadow flex-1 md:flex-none">🚫 NO APLICA</button></div></div>`;
+        workflowHTML = `<div class="col-span-full mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-orange-800 font-bold text-sm uppercase">⚠️ Equipo pendiente de ingreso a ZIUR</p><button onclick="avanzarEstado('FALTA INSPECCION INICIAL', 'CONFIRMAR_ZIUR')" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg w-full md:w-auto">✅ CONFIRMAR INGRESO</button></div>`;
+    } else if (estado.includes("FALTA INSPECCION") || estado.includes("FALTA MUESTRA")) {
+        workflowHTML = `<div class="col-span-full mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-red-800 font-bold text-sm uppercase animate-pulse">✋ ALERTA: ${estado}</p><p class="text-xs text-slate-500">Debe realizarse en la App de Campo / Laboratorio</p></div>`;
+    } else if (estado.includes("DIAGNOSTICO") || estado.includes("AUTORIZAR")) {
+        workflowHTML = `<div class="col-span-full mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-blue-800 font-bold text-sm uppercase">ℹ️ Diagnóstico Listo</p><p class="text-xs text-slate-600">Por favor ingrese la Fecha de Autorización abajo para iniciar proceso.</p></div>`;
     }
+
     stepsContainer.insertAdjacentHTML('beforeend', workflowHTML);
     
     const ps = [
@@ -181,18 +186,17 @@ function abrirModal(i){
         {id:'listo',l:'10. Listo'}
     ]; 
     
-    // LOGICA INTELIGENTE DE VISIBILIDAD DE PASOS
+    // LOGICA INTELIGENTE DE VISIBILIDAD DE PASOS (Solo mostrar lo necesario)
     const tipoServ = (d.tipo || "").toUpperCase();
     const esSoloPruebas = tipoServ.includes("PRUEBA");
     const esAceite = tipoServ.includes("ACEITE") || tipoServ.includes("REGENER") || tipoServ.includes("TERMO");
     
-    // Lista negra de pasos de manufactura
+    // Pasos que se ocultan si no es reparación completa
     const pasosManufactura = ['desencube', 'desensamble', 'bobinado', 'ensamble', 'horno', 'encube', 'pintura'];
 
     ps.forEach(p => { 
         let hid = ""; 
-        
-        // Si es pruebas eléctricas o aceite, ocultamos manufactura
+        // Si es pruebas o aceite, ocultamos manufactura
         if ((esSoloPruebas || esAceite) && pasosManufactura.includes(p.id)) {
             hid = "hidden"; 
         }
@@ -207,7 +211,7 @@ function abrirModal(i){
 }
 
 function avanzarEstado(nuevoEstado, accion) {
-    if(!confirm("¿Confirmar cambio de estado?")) return;
+    if(!confirm("¿Confirmar ingreso?")) return;
     const d = datosProg[indiceActual];
     const idParaTrafo = (d.idJLB && d.idJLB.toString().length > 0) ? d.idJLB : d.idGroup;
     const btn = document.querySelector('.step-card button') || document.activeElement;
