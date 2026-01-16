@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V6.2 - LOGICA UI REFINADA) */
+/* JLB OPERACIONES - APP.JS (V6.3 - WORKFLOW Y VISIBILIDAD INTELIGENTE) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -129,7 +129,7 @@ function cargarProgramacion(){
             const s = (r.estado || "").toUpperCase(); 
             if(s.includes("FINAL") || s.includes("ENTREGADO")) { c = "row-finalizado"; badgeColor = "bg-green-100 text-green-700"; }
             else if(s.includes("PROCESO")) { c = "row-proceso"; badgeColor = "bg-blue-100 text-blue-700"; }
-            else if(s.includes("PENDIENTE") || s.includes("SIN") || s.includes("DIAGNOSTICO") || s.includes("AUTORIZAR") || s.includes("FALTA")) { c = "row-pendiente"; badgeColor = "bg-orange-100 text-orange-700"; }
+            else if(s.includes("PENDIENTE") || s.includes("SIN") || s.includes("DIAGNOSTICO") || s.includes("FALTA") || s.includes("AUTORIZAR")) { c = "row-pendiente"; badgeColor = "bg-orange-100 text-orange-700"; }
             let b = `<span class="font-mono font-bold text-slate-700">${r.idJLB||'--'}</span>`; 
             if(r.idGroup) b += `<br><span class="bg-orange-100 text-orange-800 px-1 rounded text-[10px] font-bold">G:${r.idGroup}</span>`; 
             
@@ -162,7 +162,7 @@ function abrirModal(i){
     const estado = (d.estado || "").toUpperCase().trim();
     let workflowHTML = "";
     
-    // FLUJO DE ESTADOS INICIALES VALIDADO
+    // --- ESTADOS Y BOTONES SEMÁFORO ---
     if(estado === "SIN INGRESAR A SISTEMA" || estado === "PENDIENTE" || estado === "") {
         workflowHTML = `<div class="col-span-full mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-orange-800 font-bold text-sm uppercase">⚠️ Equipo pendiente de ingreso a ZIUR</p><button onclick="avanzarEstado('FALTA INSPECCION INICIAL', 'CONFIRMAR_ZIUR')" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg w-full md:w-auto">✅ CONFIRMAR INGRESO</button></div>`;
     } else if (estado.includes("FALTA INSPECCION") || estado.includes("FALTA MUESTRA")) {
@@ -186,17 +186,15 @@ function abrirModal(i){
         {id:'listo',l:'10. Listo'}
     ]; 
     
-    // LOGICA INTELIGENTE DE VISIBILIDAD DE PASOS (Solo mostrar lo necesario)
+    // --- LÓGICA DE OCULTAR PASOS ---
     const tipoServ = (d.tipo || "").toUpperCase();
     const esSoloPruebas = tipoServ.includes("PRUEBA");
     const esAceite = tipoServ.includes("ACEITE") || tipoServ.includes("REGENER") || tipoServ.includes("TERMO");
     
-    // Pasos que se ocultan si no es reparación completa
     const pasosManufactura = ['desencube', 'desensamble', 'bobinado', 'ensamble', 'horno', 'encube', 'pintura'];
 
     ps.forEach(p => { 
         let hid = ""; 
-        // Si es pruebas o aceite, ocultamos manufactura
         if ((esSoloPruebas || esAceite) && pasosManufactura.includes(p.id)) {
             hid = "hidden"; 
         }
@@ -211,7 +209,7 @@ function abrirModal(i){
 }
 
 function avanzarEstado(nuevoEstado, accion) {
-    if(!confirm("¿Confirmar ingreso?")) return;
+    if(!confirm("¿Confirmar cambio de estado?")) return;
     const d = datosProg[indiceActual];
     const idParaTrafo = (d.idJLB && d.idJLB.toString().length > 0) ? d.idJLB : d.idGroup;
     const btn = document.querySelector('.step-card button') || document.activeElement;
