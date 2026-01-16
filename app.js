@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V5.10 - FIX FECHA AUTORIZACIÓN) */
+/* JLB OPERACIONES - APP.JS (V6.0 - LOGICA INTELIGENTE DE SERVICIOS) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -128,8 +128,8 @@ function cargarProgramacion(){
             let c = "row-default", badgeColor = "bg-slate-100 text-slate-600";
             const s = (r.estado || "").toUpperCase(); 
             if(s.includes("FINAL") || s.includes("ENTREGADO")) { c = "row-finalizado"; badgeColor = "bg-green-100 text-green-700"; }
-            else if(s.includes("PROCESO") || s.includes("AUTO")) { c = "row-proceso"; badgeColor = "bg-blue-100 text-blue-700"; }
-            else if(s.includes("PENDIENTE") || s.includes("SIN")) { c = "row-pendiente"; badgeColor = "bg-orange-100 text-orange-700"; }
+            else if(s.includes("PROCESO")) { c = "row-proceso"; badgeColor = "bg-blue-100 text-blue-700"; }
+            else if(s.includes("PENDIENTE") || s.includes("SIN") || s.includes("DIAGNOSTICO")) { c = "row-pendiente"; badgeColor = "bg-orange-100 text-orange-700"; }
             let b = `<span class="font-mono font-bold text-slate-700">${r.idJLB||'--'}</span>`; 
             if(r.idGroup) b += `<br><span class="bg-orange-100 text-orange-800 px-1 rounded text-[10px] font-bold">G:${r.idGroup}</span>`; 
             
@@ -167,10 +167,36 @@ function abrirModal(i){
         workflowHTML = `<div class="col-span-full mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-blue-800 font-bold text-sm uppercase">ℹ️ Pendiente de Inspección Técnica</p><div class="flex gap-3 w-full md:w-auto"><button onclick="avanzarEstado('SIN AUTORIZAR', 'CONFIRMAR_INSPECCION')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-bold shadow-lg flex-1 md:flex-none">📝 INSPECCIÓN REALIZADA</button><button onclick="avanzarEstado('SIN AUTORIZAR', 'OMITIR_INSPECCION')" class="bg-slate-300 hover:bg-slate-400 text-slate-700 px-4 py-3 rounded-lg font-bold shadow flex-1 md:flex-none">🚫 NO APLICA</button></div></div>`;
     }
     stepsContainer.insertAdjacentHTML('beforeend', workflowHTML);
-    const ps = [{id:'pruebas_ini',l:'1. Pruebas Iniciales'},{id:'desencube',l:'2. Desencube'},{id:'desensamble',l:'3. Desensamble'},{id:'bobinado',l:'4. Bobinado'},{id:'ensamble',l:'5. Ensamble'},{id:'horno',l:'6. Horno'},{id:'encube',l:'7. Encube'},{id:'pruebas_fin',l:'8. Pruebas Finales'},{id:'pintura',l:'9. Pintura'},{id:'listo',l:'10. Listo'}]; 
+    
+    const ps = [
+        {id:'pruebas_ini',l:'1. Pruebas Iniciales'},
+        {id:'desencube',l:'2. Desencube'},
+        {id:'desensamble',l:'3. Desensamble'},
+        {id:'bobinado',l:'4. Bobinado'},
+        {id:'ensamble',l:'5. Ensamble'},
+        {id:'horno',l:'6. Horno'},
+        {id:'encube',l:'7. Encube'},
+        {id:'pruebas_fin',l:'8. Pruebas Finales'},
+        {id:'pintura',l:'9. Pintura'},
+        {id:'listo',l:'10. Listo'}
+    ]; 
+    
+    // LOGICA INTELIGENTE DE VISIBILIDAD DE PASOS
+    const tipoServ = (d.tipo || "").toUpperCase();
+    const esSoloPruebas = tipoServ.includes("PRUEBA");
+    const esAceite = tipoServ.includes("ACEITE") || tipoServ.includes("REGENER") || tipoServ.includes("TERMO");
+    
+    // Lista negra de pasos de manufactura
+    const pasosManufactura = ['desencube', 'desensamble', 'bobinado', 'ensamble', 'horno', 'encube', 'pintura'];
+
     ps.forEach(p => { 
         let hid = ""; 
-        if(d.esAceite && p.id!=='listo' && p.id!=='pruebas_ini' && p.id!=='pruebas_fin') hid = "hidden"; 
+        
+        // Si es pruebas eléctricas o aceite, ocultamos manufactura
+        if ((esSoloPruebas || esAceite) && pasosManufactura.includes(p.id)) {
+            hid = "hidden"; 
+        }
+        
         const v = fechaParaInput(d.fases[p.id]) || (p.id==='listo'?fechaParaInput(d.f_listo):""); 
         const dn = v !== ""; 
         stepsContainer.insertAdjacentHTML('beforeend', `<div class="step-card ${dn?'done':''} ${hid}"><label class="text-[10px] font-bold uppercase mb-1 ${dn?'text-green-700':'text-slate-400'}">${p.l}</label><input type="date" id="date-${p.id}" value="${v}" class="date-input"></div>`); 
