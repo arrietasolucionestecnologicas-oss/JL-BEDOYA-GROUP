@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V6.6 - INTEGRIDAD UI) */
+/* JLB OPERACIONES - APP.JS (V10.0 - INTEGRIDAD UI) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -6,7 +6,7 @@
 const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbwjPV6C4Jglw2689PfyegxsL4c_oZMDyYPOQKVh-zA5cv-GgNYDkKEnMmRhDzNsd3Llhg/exec"; 
 
 // =============================================================
-// 2. ADAPTADOR GOOGLE -> GITHUB (CORE FIX)
+// 2. ADAPTADOR GOOGLE -> GITHUB
 // =============================================================
 
 class GasRunner {
@@ -15,19 +15,10 @@ class GasRunner {
         this._failureHandler = null;
         return new Proxy(this, {
             get: (target, prop, receiver) => {
-                if (prop in target || typeof prop === 'symbol') {
-                    return target[prop];
-                }
-                if (prop === 'withSuccessHandler') {
-                    return (cb) => { target._successHandler = cb; return receiver; };
-                }
-                if (prop === 'withFailureHandler') {
-                    return (cb) => { target._failureHandler = cb; return receiver; };
-                }
-                return (...args) => {
-                    const payload = args[0] || {}; 
-                    target._execute(prop, payload);
-                };
+                if (prop in target || typeof prop === 'symbol') { return target[prop]; }
+                if (prop === 'withSuccessHandler') { return (cb) => { target._successHandler = cb; return receiver; }; }
+                if (prop === 'withFailureHandler') { return (cb) => { target._failureHandler = cb; return receiver; }; }
+                return (...args) => { const payload = args[0] || {}; target._execute(prop, payload); };
             }
         });
     }
@@ -59,11 +50,7 @@ class GasRunner {
     }
 }
 
-const google = {
-    script: {
-        get run() { return new GasRunner(); }
-    }
-};
+const google = { script: { get run() { return new GasRunner(); } } };
 
 // =============================================================
 // 3. LÓGICA DE NEGOCIO (WORKFLOW + CORE)
@@ -148,7 +135,7 @@ function abrirModal(i){
     document.getElementById('m-cliente').innerText = d.cliente; 
     document.getElementById('m-ids-badge').innerText = `ID: ${d.idJLB} | GRUPO: ${d.idGroup||'N/A'}`; 
     document.getElementById('date-f-oferta').value = fechaParaInput(d.f_oferta); 
-    document.getElementById('date-f-aut').value = fechaParaInput(d.f_autorizacion); // NUEVO
+    document.getElementById('date-f-aut').value = fechaParaInput(d.f_autorizacion); 
     document.getElementById('input-obs-prog').value = d.observacion; 
     document.getElementById('input-remision-prog').value = d.remision; 
     document.getElementById('date-entrega').value = fechaParaInput(d.f_entrega); 
@@ -173,7 +160,14 @@ function abrirModal(i){
 
     stepsContainer.insertAdjacentHTML('beforeend', workflowHTML);
     
-    const ps = [
+    // CONFIGURACIÓN DE PASOS SEGÚN TIPO DE SERVICIO
+    // Si es ACEITE (o REGENERACIÓN) -> Ocultamos pasos de Manufactura
+    const tipoServ = (d.tipo || "").toUpperCase();
+    const desc = (d.desc || "").toUpperCase();
+    const esSoloAceite = tipoServ.includes("ACEITE") || tipoServ.includes("REGENER") || tipoServ.includes("TERMO") || desc.includes("ACEITE");
+    
+    // Lista completa de pasos
+    let ps = [
         {id:'pruebas_ini',l:'1. Pruebas Iniciales'},
         {id:'desencube',l:'2. Desencube'},
         {id:'desensamble',l:'3. Desensamble'},
@@ -185,31 +179,38 @@ function abrirModal(i){
         {id:'pintura',l:'9. Pintura'},
         {id:'listo',l:'10. Listo'}
     ]; 
-    
-    // --- LÓGICA INTELIGENTE DE VISIBILIDAD DE PASOS ---
-    const tipoServ = (d.tipo || "").toUpperCase();
-    const esSoloPruebas = tipoServ.includes("PRUEBA");
-    const esAceite = tipoServ.includes("ACEITE") || tipoServ.includes("REGENER") || tipoServ.includes("TERMO");
-    
-    const pasosManufactura = ['desencube', 'desensamble', 'bobinado', 'ensamble', 'horno', 'encube', 'pintura'];
+
+    // Filtrado de pasos para Aceite
+    if(esSoloAceite) {
+        ps = [
+            {id:'pruebas_ini',l:'1. PCB / Inicial'},
+            {id:'pruebas_fin',l:'2. Proceso Terminado'},
+            {id:'listo',l:'3. Listo para Entrega'}
+        ];
+    }
 
     ps.forEach(p => { 
-        let hid = ""; 
-        if ((esSoloPruebas || esAceite) && pasosManufactura.includes(p.id)) {
-            hid = "hidden"; 
+        // Si es aceite, usamos las fechas correspondientes o mapeadas
+        let valFecha = "";
+        if(esSoloAceite) {
+            if(p.id === 'pruebas_ini') valFecha = fechaParaInput(d.fases['pruebas_ini']);
+            if(p.id === 'pruebas_fin') valFecha = fechaParaInput(d.fases['pruebas_fin']); // O usar fecha autorización si aplica
+            if(p.id === 'listo') valFecha = fechaParaInput(d.f_listo);
+        } else {
+            valFecha = fechaParaInput(d.fases[p.id]) || (p.id==='listo'?fechaParaInput(d.f_listo):""); 
         }
         
-        const v = fechaParaInput(d.fases[p.id]) || (p.id==='listo'?fechaParaInput(d.f_listo):""); 
-        const dn = v !== ""; 
-        stepsContainer.insertAdjacentHTML('beforeend', `<div class="step-card ${dn?'done':''} ${hid}"><label class="text-[10px] font-bold uppercase mb-1 ${dn?'text-green-700':'text-slate-400'}">${p.l}</label><input type="date" id="date-${p.id}" value="${v}" class="date-input"></div>`); 
+        const dn = valFecha !== ""; 
+        stepsContainer.insertAdjacentHTML('beforeend', `<div class="step-card ${dn?'done':''}"><label class="text-[10px] font-bold uppercase mb-1 ${dn?'text-green-700':'text-slate-400'}">${p.l}</label><input type="date" id="date-${p.id}" value="${valFecha}" class="date-input"></div>`); 
     }); 
+    
     const idParaReq = d.idJLB && d.idJLB.toString().length > 1 ? d.idJLB : d.idGroup;
     cargarRequerimientosModal(idParaReq);
     switchTab('seg'); 
 }
 
 function avanzarEstado(nuevoEstado, accion) {
-    if(!confirm("¿Confirmar ingreso?")) return;
+    if(!confirm("¿Confirmar cambio de estado?")) return;
     const d = datosProg[indiceActual];
     const idParaTrafo = (d.idJLB && d.idJLB.toString().length > 0) ? d.idJLB : d.idGroup;
     const btn = document.querySelector('.step-card button') || document.activeElement;
@@ -225,7 +226,7 @@ function cargarRequerimientosModal(idTrafo) { const c = document.getElementById(
 function renderListaReqs(lista) { const c = document.getElementById('lista-reqs'); c.innerHTML = ''; if(lista.length === 0) { c.innerHTML = '<p class="text-center text-slate-400 text-xs py-4">Sin requerimientos.</p>'; return; } lista.forEach(r => { c.insertAdjacentHTML('beforeend', `<div class="bg-white p-2 rounded border border-slate-200 flex justify-between items-start mb-2"><div><p class="text-sm font-bold text-slate-700">${r.texto}</p><p class="text-[10px] text-slate-400">${r.fecha} - ${r.autor}</p></div><button onclick="borrarReq(${r.idReq})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button></div>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }
 function guardarNuevoReq() { const txt = document.getElementById('txt-nuevo-req').value; if(!txt.trim()) return; const ids = document.getElementById('m-ids-badge').innerText; let idTrafo = ids.split('|')[0].replace('ID:', '').trim(); if(idTrafo === 'undefined' || idTrafo === '') idTrafo = ids.split('|')[1].replace('GRUPO:', '').trim(); const btn = document.querySelector('#view-req button'); btn.disabled = true; google.script.run.withSuccessHandler(lista => { document.getElementById('txt-nuevo-req').value = ''; renderListaReqs(lista); btn.disabled = false; showToast("Agregado"); }).guardarRequerimiento({ idTrafo: idTrafo, texto: txt, autor: "OPERACIONES" }); }
 function borrarReq(idReq) { if(!confirm("¿Borrar?")) return; const ids = document.getElementById('m-ids-badge').innerText; let idTrafo = ids.split('|')[0].replace('ID:', '').trim(); if(idTrafo === 'undefined' || idTrafo === '') idTrafo = ids.split('|')[1].replace('GRUPO:', '').trim(); google.script.run.withSuccessHandler(lista => renderListaReqs(lista)).borrarRequerimiento(idReq, idTrafo); }
-function guardarCambios(){ const b = document.getElementById('btn-guardar-prog'); const txtOriginal = b.innerHTML; b.innerHTML = 'GUARDANDO...'; b.disabled = true; const c = { f_oferta: document.getElementById('date-f-oferta').value, f_autorizacion: document.getElementById('date-f-aut').value, observacion: document.getElementById('input-obs-prog').value, remision: document.getElementById('input-remision-prog').value, entrega: document.getElementById('date-entrega').value, pruebas_ini: document.getElementById('date-pruebas_ini').value, desencube: document.getElementById('date-desencube').value, desensamble: document.getElementById('date-desensamble').value, bobinado: document.getElementById('date-bobinado').value, ensamble: document.getElementById('date-ensamble').value, horno: document.getElementById('date-horno').value, encube: document.getElementById('date-encube').value, pruebas_fin: document.getElementById('date-pruebas_fin').value, pintura: document.getElementById('date-pruebas_fin').value, listo: document.getElementById('date-listo').value, idGroup: document.getElementById('in-idgroup').value, serie: document.getElementById('in-serie').value, ods: document.getElementById('in-ods').value, desc: document.getElementById('in-desc').value, tipo: document.getElementById('in-tipo').value }; google.script.run.withSuccessHandler(() => { b.innerHTML = txtOriginal; b.disabled = false; cerrarModal(); cargarProgramacion(); showToast("Cambios guardados"); }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).guardarAvance({rowIndex: datosProg[indiceActual].rowIndex, cambios: c}); }
+function guardarCambios(){ const b = document.getElementById('btn-guardar-prog'); const txtOriginal = b.innerHTML; b.innerHTML = 'GUARDANDO...'; b.disabled = true; const c = { f_oferta: document.getElementById('date-f-oferta').value, f_autorizacion: document.getElementById('date-f-aut').value, observacion: document.getElementById('input-obs-prog').value, remision: document.getElementById('input-remision-prog').value, entrega: document.getElementById('date-entrega').value, pruebas_ini: document.getElementById('date-pruebas_ini')?.value, desencube: document.getElementById('date-desencube')?.value, desensamble: document.getElementById('date-desensamble')?.value, bobinado: document.getElementById('date-bobinado')?.value, ensamble: document.getElementById('date-ensamble')?.value, horno: document.getElementById('date-horno')?.value, encube: document.getElementById('date-encube')?.value, pruebas_fin: document.getElementById('date-pruebas_fin')?.value, pintura: document.getElementById('date-pruebas_fin')?.value, listo: document.getElementById('date-listo')?.value, idGroup: document.getElementById('in-idgroup').value, serie: document.getElementById('in-serie').value, ods: document.getElementById('in-ods').value, desc: document.getElementById('in-desc').value, tipo: document.getElementById('in-tipo').value }; google.script.run.withSuccessHandler(() => { b.innerHTML = txtOriginal; b.disabled = false; cerrarModal(); cargarProgramacion(); showToast("Cambios guardados"); }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).guardarAvance({rowIndex: datosProg[indiceActual].rowIndex, cambios: c}); }
 function enviarFormulario(){ const b = document.getElementById('btn-crear'); const txtOriginal = b.innerHTML; b.innerHTML = 'PROCESANDO...'; b.disabled = true; const f = document.getElementById('form-entrada'); const d = new FormData(f); const dt = { empresa: d.get('empresa'), cliente: d.get('cliente'), cedula: d.get('cedula'), contacto: d.get('contacto'), telefono: d.get('telefono'), ciudad: d.get('ciudad'), descripcion: d.get('descripcion'), cantidad: d.get('cantidad'), observaciones: d.get('observaciones'), quienEntrega: d.get('quienEntrega'), quienRecibe: d.get('quienRecibe'), codigo: d.get('codigo'), firmaBase64: getFirmaBase64() }; google.script.run.withSuccessHandler(r => { if(r.exito) { cerrarModalNueva(); b.innerHTML = txtOriginal; b.disabled = false; if(document.getElementById('grid-entradas')) renderCardEntrada({ id: r.id, fecha: r.fecha, cliente: dt.cliente, descripcion: dt.descripcion, codigo: r.datosCompletos.codigo, cantidad: dt.cantidad, pdf: null, rowIndex: r.rowIndex }, document.getElementById('grid-entradas'), true); showToast("Entrada guardada. Generando PDF..."); if(!dbClientes.find(c => c.nombre === dt.cliente.toUpperCase())) { dbClientes.push({nombre: dt.cliente.toUpperCase(), nit: dt.cedula, telefono: dt.telefono, contacto: dt.contacto, ciudad: dt.ciudad}); actualizarDatalistClientes(); } const cardAct = document.getElementById(`act-${r.id}`); if(cardAct) { cardAct.innerHTML = '<div class="text-xs text-yellow-600 font-bold text-center animate-pulse">CREANDO PDF...</div>'; google.script.run.withSuccessHandler(x => { if(x.exito && cardAct) { cardAct.innerHTML = `<a href="${x.url}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>`; if(typeof lucide !== 'undefined') lucide.createIcons(); showToast("PDF Listo"); } }).generarPDFBackground({id: r.id, rowIndex: r.rowIndex, datos: r.datosCompletos}); } } else { alert("Error: " + r.error); b.innerHTML = txtOriginal; b.disabled = false; } }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).registrarEntradaRapida(dt); }
 function cargarEntradas() { const g = document.getElementById('grid-entradas'); if(!g) return; g.innerHTML='<p class="col-span-full text-center py-4">Cargando...</p>'; google.script.run.withSuccessHandler(d => { datosEntradas = d; g.innerHTML = ''; if(d.length === 0) g.innerHTML = '<p class="col-span-full text-center">Sin registros.</p>'; d.forEach(i => renderCardEntrada(i, g, false)); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerDatosEntradas(); }
 function renderCardEntrada(i, c, p){ const cid = `card-${i.id}`; const pdf = (i.pdf && i.pdf.length > 5) ? `<a href="${i.pdf}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>` : `<button id="btn-gen-${i.id}" onclick="genPDF(${i.id},${i.rowIndex})" class="w-full bg-slate-800 text-white hover:bg-slate-900 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-plus" class="w-4 h-4"></i> GENERAR</button>`; const ziur = `${i.cantidad||1} / ${i.codigo||'S/C'} / ${i.descripcion}`; const h = `<div id="${cid}" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative"><button onclick="copiarTexto('${ziur}')" class="absolute top-4 right-4 text-slate-400 hover:text-blue-600"><i data-lucide="copy" class="w-5 h-5"></i></button><div><div class="flex justify-between mb-2"><span class="font-bold text-lg">#${i.id}</span><span class="text-xs bg-slate-100 px-2 py-1 rounded">${i.fecha}</span></div><div class="bg-blue-50 text-blue-800 text-xs font-mono px-2 py-1 rounded w-fit mb-2">🏷️ ${i.codigo||'---'}</div><h4 class="font-bold text-blue-600 mb-1">${i.cliente}</h4><p class="text-sm text-slate-500 line-clamp-2">${i.descripcion}</p></div><div class="pt-3 border-t mt-4" id="act-${i.id}">${pdf}</div></div>`; if(p) c.insertAdjacentHTML('afterbegin', h); else c.insertAdjacentHTML('beforeend', h); }
