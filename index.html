@@ -41,7 +41,8 @@
                 <button onclick="nav('logistica')" id="btn-logistica" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:text-white transition-colors"><i data-lucide="truck"></i> Logística</button>
                 <button onclick="nav('control')" id="btn-control" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:text-white transition-colors"><i data-lucide="list-todo"></i> Control Procesos</button>
                 <div class="pt-4 mt-4 border-t border-slate-700">
-                    <button onclick="abrirLaboratorio()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-purple-400 hover:text-white hover:bg-slate-800 transition-colors font-bold mb-2"><i data-lucide="flask-conical"></i> IR A LABORATORIO</button>
+                    <button onclick="abrirLaboratorio()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-purple-400 hover:text-white hover:bg-slate-800 transition-colors font-bold mb-2"><i data-lucide="flask-conical"></i> LABORATORIO (G)</button>
+                    <button onclick="abrirAceites()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-yellow-400 hover:text-white hover:bg-slate-800 transition-colors font-bold mb-2"><i data-lucide="droplet"></i> LAB. ACEITES</button>
                     <button onclick="irAlDashboard()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-blue-400 hover:bg-slate-800 transition-colors font-bold"><i data-lucide="bar-chart-3"></i> IR A DASHBOARD</button>
                 </div>
             </nav>
@@ -76,11 +77,11 @@
                 </section>
 
                 <section id="logistica" class="view-section">
-                     <div class="log-nav no-scrollbar"><button class="log-btn active" onclick="subLog('term')" id="btn-log-term">Terminados</button><button class="log-btn" onclick="subLog('alq')" id="btn-log-alq">Alquiler JLB</button><button class="log-btn" onclick="subLog('pat')" id="btn-log-pat">Patio</button></div>
-                     <div id="view-term" class="log-view active"><div class="bg-white rounded-xl border border-slate-200 p-4"><div id="lista-terminados" class="space-y-3"></div></div></div>
-                     
-                     <div id="view-alq" class="log-view">
-                         <div class="flex flex-col md:flex-row justify-between items-end mb-4 gap-4">
+                      <div class="log-nav no-scrollbar"><button class="log-btn active" onclick="subLog('term')" id="btn-log-term">Terminados</button><button class="log-btn" onclick="subLog('alq')" id="btn-log-alq">Alquiler JLB</button><button class="log-btn" onclick="subLog('pat')" id="btn-log-pat">Patio</button></div>
+                      <div id="view-term" class="log-view active"><div class="bg-white rounded-xl border border-slate-200 p-4"><div id="lista-terminados" class="space-y-3"></div></div></div>
+                      
+                      <div id="view-alq" class="log-view">
+                          <div class="flex flex-col md:flex-row justify-between items-end mb-4 gap-4">
                              <div class="flex gap-2 w-full md:w-auto">
                                  <div class="w-full md:w-40">
                                     <label class="text-[10px] font-bold text-slate-500 uppercase">Filtrar KVA</label>
@@ -92,28 +93,28 @@
                                  </div>
                              </div>
                              <button onclick="abrirModalAlq(true)" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex gap-2 items-center"><i data-lucide="plus"></i> Registrar Nuevo</button>
-                         </div>
-                         <div class="bg-white rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
+                          </div>
+                          <div class="bg-white rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                              <table class="w-full text-sm text-left min-w-[600px]">
                                  <thead class="bg-slate-50 border-b"><tr><th class="p-3">Código</th><th class="p-3">Equipo</th><th class="p-3">Estado</th><th class="p-3">Cliente</th><th class="p-3">Fechas</th><th class="p-3">Carpeta Fotos</th><th class="p-3 text-center">Editar</th></tr></thead>
                                  <tbody id="tabla-alq"></tbody>
                              </table>
-                         </div>
-                     </div>
-                     
-                     <div id="view-pat" class="log-view"><div class="bg-white rounded-xl border border-slate-200 overflow-hidden"><table class="w-full text-sm text-left"><thead class="bg-slate-50 border-b"><tr><th class="p-3">ID</th><th class="p-3">Cliente</th><th class="p-3">Motivo</th></tr></thead><tbody id="tabla-pat"></tbody></table></div></div>
+                          </div>
+                      </div>
+                      
+                      <div id="view-pat" class="log-view"><div class="bg-white rounded-xl border border-slate-200 overflow-hidden"><table class="w-full text-sm text-left"><thead class="bg-slate-50 border-b"><tr><th class="p-3">ID</th><th class="p-3">Cliente</th><th class="p-3">Motivo</th></tr></thead><tbody id="tabla-pat"></tbody></table></div></div>
                 </section>
                 
                 <section id="control" class="view-section">
                     <div class="cp-nav no-scrollbar"><button class="cp-btn active" onclick="subNav('act')" id="btn-cp-act">Actividades</button><button class="cp-btn" onclick="subNav('fot')" id="btn-cp-fot">Fotos</button></div>
-                     <div id="view-act" class="cp-view active">
+                      <div id="view-act" class="cp-view active">
                         <div class="flex justify-end mb-4 gap-2">
                              <button onclick="abrirModalTarea(false)" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex gap-2"><i data-lucide="plus"></i> Nueva Tarea</button>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="bg-slate-200 p-3 rounded-lg"><h4 class="font-bold text-slate-600 mb-3 text-sm uppercase">Pendientes</h4><div id="col-pendiente" class="space-y-2 min-h-[100px]"></div></div><div class="bg-blue-100 p-3 rounded-lg"><h4 class="font-bold text-blue-800 mb-3 text-sm uppercase">En Proceso</h4><div id="col-proceso" class="space-y-2 min-h-[100px]"></div></div><div class="bg-green-100 p-3 rounded-lg"><h4 class="font-bold text-green-800 mb-3 text-sm uppercase">Terminado</h4><div id="col-terminado" class="space-y-2 min-h-[100px]"></div></div></div>
-                     </div>
-                     <div id="view-fot" class="cp-view">
-                         <div class="bg-white p-6 rounded-xl border border-slate-200 max-w-2xl mx-auto shadow-sm">
+                      </div>
+                      <div id="view-fot" class="cp-view">
+                          <div class="bg-white p-6 rounded-xl border border-slate-200 max-w-2xl mx-auto shadow-sm">
                            <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="camera" class="text-blue-600"></i> Registro Fotográfico</h3>
                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                              <input type="text" id="foto-trafo" class="border border-slate-300 rounded-lg p-3 text-lg font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="ID Trafo (Ej: 13600)">
@@ -129,8 +130,8 @@
                            <input type="file" id="input-galeria" accept="image/*" multiple class="hidden" onchange="procesarFotosInmediato(this)">
                            <div id="status-fotos" class="text-center font-bold text-sm h-6"></div>
                            <div id="lista-fotos" class="space-y-2 mt-4 max-h-60 overflow-y-auto pr-1"></div>
-                         </div>
-                     </div>
+                          </div>
+                      </div>
                 </section>
 
             </main>
@@ -162,7 +163,7 @@
 
             <div class="p-4 md:p-6 overflow-y-auto flex-1 pb-24 md:pb-6 bg-slate-50">
                 <div id="view-seg" class="tab-content active">
-                     <div class="mb-6 grid grid-cols-2 gap-4">
+                      <div class="mb-6 grid grid-cols-2 gap-4">
                         <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
                             <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Fecha Límite Según Oferta</label>
                             <input type="date" id="date-f-oferta" class="date-input bg-white border-blue-300 text-blue-900 font-bold">
@@ -171,14 +172,14 @@
                             <label class="block text-xs font-bold text-green-800 mb-1 uppercase">Fecha de Autorización Real</label>
                             <input type="date" id="date-f-aut" class="date-input bg-white border-green-300 text-green-900 font-bold">
                         </div>
-                     </div>
-                     <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 border-b pb-1">Etapas</h4>
-                     <div id="steps-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6"></div>
-                     <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 border-b pb-1">Cierre</h4>
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      </div>
+                      <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 border-b pb-1">Etapas</h4>
+                      <div id="steps-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6"></div>
+                      <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 border-b pb-1">Cierre</h4>
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div><label class="text-xs font-bold text-slate-500">Observaciones</label><textarea id="input-obs-prog" class="text-input h-20"></textarea></div>
                           <div><label class="text-xs font-bold text-slate-500">N° Remisión</label><input type="text" id="input-remision-prog" class="text-input mb-2"><label class="text-xs font-bold text-green-600 block mt-2">F. Entrega Real</label><input type="date" id="date-entrega" class="date-input border-green-300 bg-green-50"></div>
-                     </div>
+                      </div>
                 </div>
                 
                 <div id="view-req" class="tab-content">
@@ -196,10 +197,10 @@
                 </div>
 
                 <div id="view-tec" class="tab-content">
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="bg-white p-4 rounded-lg border shadow-sm space-y-4"><div><label class="text-xs font-bold text-slate-500">ID Group / Aux</label><input type="text" id="in-idgroup" class="text-input"></div><div><label class="text-xs font-bold text-slate-500">Serie</label><input type="text" id="in-serie" class="text-input"></div><div><label class="text-xs font-bold text-slate-500">ODS</label><input type="text" id="in-ods" class="text-input bg-yellow-50"></div></div>
                         <div class="bg-white p-4 rounded-lg border shadow-sm space-y-4"><div><label class="text-xs font-bold text-slate-500">Descripción</label><input type="text" id="in-desc" class="text-input"></div><div><label class="text-xs font-bold text-slate-500">Tipo de Servicio</label><input type="text" id="in-tipo" class="text-input" list="lista-servicios"><datalist id="lista-servicios"><option value="MANTENIMIENTO"><option value="REPARACION"><option value="FABRICACION"><option value="REGENERACION ACEITE"><option value="TERMOVACIO"></datalist></div></div>
-                     </div>
+                      </div>
                 </div>
             </div>
             
