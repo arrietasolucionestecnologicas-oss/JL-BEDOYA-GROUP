@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V6.3 - WORKFLOW Y VISIBILIDAD INTELIGENTE) */
+/* JLB OPERACIONES - APP.JS (V6.6 - INTEGRIDAD UI) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -105,6 +105,7 @@ function nav(id) {
 
 function irAlDashboard() { google.script.run.withSuccessHandler(url => window.open(url, '_top')).getUrlDashboard(); }
 function abrirLaboratorio() { google.script.run.withSuccessHandler(url => window.open(url, '_blank')).getUrlLaboratorio(); }
+function abrirAceites() { google.script.run.withSuccessHandler(url => window.open(url, '_blank')).getUrlAceites(); }
 function recargarActual() { const active = document.querySelector('.view-section.active'); if(active) nav(active.id); }
 
 // --- MODULO PROGRAMACION & WORKFLOW ---
@@ -162,7 +163,6 @@ function abrirModal(i){
     const estado = (d.estado || "").toUpperCase().trim();
     let workflowHTML = "";
     
-    // --- ESTADOS Y BOTONES SEMÁFORO ---
     if(estado === "SIN INGRESAR A SISTEMA" || estado === "PENDIENTE" || estado === "") {
         workflowHTML = `<div class="col-span-full mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-orange-800 font-bold text-sm uppercase">⚠️ Equipo pendiente de ingreso a ZIUR</p><button onclick="avanzarEstado('FALTA INSPECCION INICIAL', 'CONFIRMAR_ZIUR')" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg w-full md:w-auto">✅ CONFIRMAR INGRESO</button></div>`;
     } else if (estado.includes("FALTA INSPECCION") || estado.includes("FALTA MUESTRA")) {
@@ -186,7 +186,7 @@ function abrirModal(i){
         {id:'listo',l:'10. Listo'}
     ]; 
     
-    // --- LÓGICA DE OCULTAR PASOS ---
+    // --- LÓGICA INTELIGENTE DE VISIBILIDAD DE PASOS ---
     const tipoServ = (d.tipo || "").toUpperCase();
     const esSoloPruebas = tipoServ.includes("PRUEBA");
     const esAceite = tipoServ.includes("ACEITE") || tipoServ.includes("REGENER") || tipoServ.includes("TERMO");
@@ -209,7 +209,7 @@ function abrirModal(i){
 }
 
 function avanzarEstado(nuevoEstado, accion) {
-    if(!confirm("¿Confirmar cambio de estado?")) return;
+    if(!confirm("¿Confirmar ingreso?")) return;
     const d = datosProg[indiceActual];
     const idParaTrafo = (d.idJLB && d.idJLB.toString().length > 0) ? d.idJLB : d.idGroup;
     const btn = document.querySelector('.step-card button') || document.activeElement;
