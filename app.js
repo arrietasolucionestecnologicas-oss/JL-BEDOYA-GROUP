@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V13.5 - FOTOS SECUENCIALES + ESTABILIDAD) */
+/* JLB OPERACIONES - APP.JS (V14.0 - ESTRUCTURA DEFINITIVA) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -90,9 +90,9 @@ function nav(id) {
     if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-function irAlDashboard() { google.script.run.withSuccessHandler(url => window.open(url, '_top')).getUrlDashboard(); }
-function abrirLaboratorio() { google.script.run.withSuccessHandler(url => window.open(url, '_blank')).getUrlLaboratorio(); }
-function abrirAceites() { google.script.run.withSuccessHandler(url => window.open(url, '_blank')).getUrlAceites(); }
+function irAlDashboard() { window.open('dashboard.html', '_top'); }
+function abrirLaboratorio() { window.open('VistaCampoPruebas.html', '_blank'); }
+function abrirAceites() { window.open('VistaAceites.html', '_blank'); }
 function recargarActual() { const active = document.querySelector('.view-section.active'); if(active) nav(active.id); }
 
 // --- MODULO PROGRAMACION & WORKFLOW ---
@@ -151,6 +151,31 @@ function abrirModal(i){
     
     const stepsContainer = document.getElementById('steps-container'); 
     stepsContainer.innerHTML = ''; 
+
+    // --- LOGICA REPARACION EXTERNA ---
+    const esExterno = d.tipo_ejecucion === 'EXTERNA';
+    const htmlEjecucion = `
+        <div class="col-span-full bg-slate-50 p-3 rounded border mb-4 border-slate-300">
+            <h6 class="font-bold text-xs text-slate-500 mb-2 uppercase flex items-center gap-2">
+               <i data-lucide="settings-2" class="w-3 h-3"></i> Configuración de Ejecución
+            </h6>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-600 block mb-1">TIPO EJECUCIÓN</label>
+                    <select id="sel-ejecucion" class="w-full border rounded p-2 text-sm bg-white font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" onchange="toggleProveedor(this.value)">
+                        <option value="INTERNA" ${!esExterno?'selected':''}>🏠 INTERNA (Planta)</option>
+                        <option value="EXTERNA" ${esExterno?'selected':''}>🚚 EXTERNA (Proveedor)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-600 block mb-1">PROVEEDOR / TALLER</label>
+                    <input id="in-proveedor-dyn" class="w-full border rounded p-2 text-sm" value="${d.proveedor_ext||''}" ${!esExterno?'disabled':''} placeholder="Nombre del proveedor...">
+                </div>
+            </div>
+        </div>
+    `;
+    stepsContainer.insertAdjacentHTML('beforeend', htmlEjecucion);
+
     const estado = (d.estado || "").toUpperCase().trim();
     let workflowHTML = "";
     
@@ -162,7 +187,6 @@ function abrirModal(i){
         workflowHTML = `<div class="col-span-full mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-blue-800 font-bold text-sm uppercase">ℹ️ Diagnóstico Listo</p><p class="text-xs text-slate-600">Por favor ingrese la Fecha de Autorización abajo para iniciar proceso.</p></div>`;
     }
 
-    const esExterno = d.tipo_ejecucion === 'EXTERNA';
     const enProveedor = estado.includes('PROVEEDOR') || estado.includes('EXTERNO');
 
     if (esExterno && enProveedor) {
@@ -172,7 +196,6 @@ function abrirModal(i){
                     <i data-lucide="truck" class="w-6 h-6"></i>
                     <span class="text-sm uppercase">EQUIPO EN REPARACIÓN EXTERNA</span>
                 </div>
-                <p class="text-xs text-slate-500">Proveedor Asignado: <strong>${d.proveedor_ext || 'No especificado'}</strong></p>
                 <div class="w-full bg-white p-3 rounded border border-purple-100 text-center">
                     <p class="text-[10px] text-slate-400 mb-2">PROCESOS INTERNOS BLOQUEADOS (NA)</p>
                     <div class="flex justify-center gap-2 opacity-50">
@@ -185,13 +208,13 @@ function abrirModal(i){
                         class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg flex items-center justify-center gap-2 animate-bounce-slow">
                     <i data-lucide="corner-down-left"></i> ✅ REGISTRAR RETORNO DE PROVEEDOR
                 </button>
-                <p class="text-[10px] text-slate-400 text-center">Al confirmar, se activarán las alertas de Laboratorio de Aceites y Pruebas Finales automáticamente.</p>
             </div>
         `;
     }
 
     stepsContainer.insertAdjacentHTML('beforeend', workflowHTML);
     
+    // CONFIGURACIÓN DE PASOS SEGÚN TIPO DE SERVICIO
     const tipoServ = (d.tipo || "").toUpperCase();
     const desc = (d.desc || "").toUpperCase();
     const esSoloAceite = tipoServ.includes("ACEITE") || tipoServ.includes("REGENER") || tipoServ.includes("TERMO") || desc.includes("ACEITE");
@@ -230,7 +253,6 @@ function abrirModal(i){
         } else {
             valFecha = fechaParaInput(d.fases[p.id]) || (p.id==='listo'?fechaParaInput(d.f_listo):""); 
         }
-        
         const dn = valFecha !== ""; 
         stepsContainer.insertAdjacentHTML('beforeend', `<div class="step-card ${dn?'done':''}"><label class="text-[10px] font-bold uppercase mb-1 ${dn?'text-green-700':'text-slate-400'}">${p.l}</label><input type="date" id="date-${p.id}" value="${valFecha}" class="date-input"></div>`); 
     }); 
@@ -239,6 +261,17 @@ function abrirModal(i){
     cargarRequerimientosModal(idParaReq);
     switchTab('seg'); 
     if(typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function toggleProveedor(val) {
+    const inp = document.getElementById('in-proveedor-dyn');
+    if(val === 'EXTERNA') {
+        inp.disabled = false;
+        inp.focus();
+    } else {
+        inp.disabled = true;
+        inp.value = '';
+    }
 }
 
 function avanzarEstado(nuevoEstado, accion) {
@@ -274,7 +307,43 @@ function cargarRequerimientosModal(idTrafo) { const c = document.getElementById(
 function renderListaReqs(lista) { const c = document.getElementById('lista-reqs'); c.innerHTML = ''; if(lista.length === 0) { c.innerHTML = '<p class="text-center text-slate-400 text-xs py-4">Sin requerimientos.</p>'; return; } lista.forEach(r => { c.insertAdjacentHTML('beforeend', `<div class="bg-white p-2 rounded border border-slate-200 flex justify-between items-start mb-2"><div><p class="text-sm font-bold text-slate-700">${r.texto}</p><p class="text-[10px] text-slate-400">${r.fecha} - ${r.autor}</p></div><button onclick="borrarReq(${r.idReq})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button></div>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }
 function guardarNuevoReq() { const txt = document.getElementById('txt-nuevo-req').value; if(!txt.trim()) return; const ids = document.getElementById('m-ids-badge').innerText; let idTrafo = ids.split('|')[0].replace('ID:', '').trim(); if(idTrafo === 'undefined' || idTrafo === '') idTrafo = ids.split('|')[1].replace('GRUPO:', '').trim(); const btn = document.querySelector('#view-req button'); btn.disabled = true; google.script.run.withSuccessHandler(lista => { document.getElementById('txt-nuevo-req').value = ''; renderListaReqs(lista); btn.disabled = false; showToast("Agregado"); }).guardarRequerimiento({ idTrafo: idTrafo, texto: txt, autor: "OPERACIONES" }); }
 function borrarReq(idReq) { if(!confirm("¿Borrar?")) return; const ids = document.getElementById('m-ids-badge').innerText; let idTrafo = ids.split('|')[0].replace('ID:', '').trim(); if(idTrafo === 'undefined' || idTrafo === '') idTrafo = ids.split('|')[1].replace('GRUPO:', '').trim(); google.script.run.withSuccessHandler(lista => renderListaReqs(lista)).borrarRequerimiento(idReq, idTrafo); }
-function guardarCambios(){ const b = document.getElementById('btn-guardar-prog'); const txtOriginal = b.innerHTML; b.innerHTML = 'GUARDANDO...'; b.disabled = true; const c = { f_oferta: document.getElementById('date-f-oferta').value, f_autorizacion: document.getElementById('date-f-aut').value, observacion: document.getElementById('input-obs-prog').value, remision: document.getElementById('input-remision-prog').value, entrega: document.getElementById('date-entrega').value, pruebas_ini: document.getElementById('date-pruebas_ini')?.value, desencube: document.getElementById('date-desencube')?.value, desensamble: document.getElementById('date-desensamble')?.value, bobinado: document.getElementById('date-bobinado')?.value, ensamble: document.getElementById('date-ensamble')?.value, horno: document.getElementById('date-horno')?.value, encube: document.getElementById('date-encube')?.value, pruebas_fin: document.getElementById('date-pruebas_fin')?.value, pintura: document.getElementById('date-pruebas_fin')?.value, listo: document.getElementById('date-listo')?.value, idGroup: document.getElementById('in-idgroup').value, serie: document.getElementById('in-serie').value, ods: document.getElementById('in-ods').value, desc: document.getElementById('in-desc').value, tipo: document.getElementById('in-tipo').value }; google.script.run.withSuccessHandler(() => { b.innerHTML = txtOriginal; b.disabled = false; cerrarModal(); cargarProgramacion(); showToast("Cambios guardados"); }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).guardarAvance({rowIndex: datosProg[indiceActual].rowIndex, cambios: c}); }
+
+function guardarCambios(){ 
+    const b = document.getElementById('btn-guardar-prog'); 
+    const txtOriginal = b.innerHTML; b.innerHTML = 'GUARDANDO...'; b.disabled = true; 
+    
+    const c = { 
+        f_oferta: document.getElementById('date-f-oferta').value, 
+        f_autorizacion: document.getElementById('date-f-aut').value, 
+        observacion: document.getElementById('input-obs-prog').value, 
+        remision: document.getElementById('input-remision-prog').value, 
+        entrega: document.getElementById('date-entrega').value, 
+        pruebas_ini: document.getElementById('date-pruebas_ini')?.value, 
+        desencube: document.getElementById('date-desencube')?.value, 
+        desensamble: document.getElementById('date-desensamble')?.value, 
+        bobinado: document.getElementById('date-bobinado')?.value, 
+        ensamble: document.getElementById('date-ensamble')?.value, 
+        horno: document.getElementById('date-horno')?.value, 
+        encube: document.getElementById('date-encube')?.value, 
+        pruebas_fin: document.getElementById('date-pruebas_fin')?.value, 
+        pintura: document.getElementById('date-pruebas_fin')?.value, 
+        listo: document.getElementById('date-listo')?.value, 
+        idGroup: document.getElementById('in-idgroup').value, 
+        serie: document.getElementById('in-serie').value, 
+        ods: document.getElementById('in-ods').value, 
+        desc: document.getElementById('in-desc').value, 
+        tipo: document.getElementById('in-tipo').value,
+        tipo_ejecucion: document.getElementById('sel-ejecucion')?.value || 'INTERNA',
+        proveedor: document.getElementById('in-proveedor-dyn')?.value || ''
+    }; 
+    
+    google.script.run.withSuccessHandler(() => { 
+        b.innerHTML = txtOriginal; b.disabled = false; cerrarModal(); cargarProgramacion(); showToast("Cambios guardados"); 
+    }).withFailureHandler(e => { 
+        b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); 
+    }).guardarAvance({rowIndex: datosProg[indiceActual].rowIndex, cambios: c}); 
+}
+
 function enviarFormulario(){ const b = document.getElementById('btn-crear'); const txtOriginal = b.innerHTML; b.innerHTML = 'PROCESANDO...'; b.disabled = true; const f = document.getElementById('form-entrada'); const d = new FormData(f); const dt = { empresa: d.get('empresa'), cliente: d.get('cliente'), cedula: d.get('cedula'), contacto: d.get('contacto'), telefono: d.get('telefono'), ciudad: d.get('ciudad'), descripcion: d.get('descripcion'), cantidad: d.get('cantidad'), observaciones: d.get('observaciones'), quienEntrega: d.get('quienEntrega'), quienRecibe: d.get('quienRecibe'), codigo: d.get('codigo'), firmaBase64: getFirmaBase64() }; google.script.run.withSuccessHandler(r => { if(r.exito) { cerrarModalNueva(); b.innerHTML = txtOriginal; b.disabled = false; if(document.getElementById('grid-entradas')) renderCardEntrada({ id: r.id, fecha: r.fecha, cliente: dt.cliente, descripcion: dt.descripcion, codigo: r.datosCompletos.codigo, cantidad: dt.cantidad, pdf: null, rowIndex: r.rowIndex }, document.getElementById('grid-entradas'), true); showToast("Entrada guardada. Generando PDF..."); if(!dbClientes.find(c => c.nombre === dt.cliente.toUpperCase())) { dbClientes.push({nombre: dt.cliente.toUpperCase(), nit: dt.cedula, telefono: dt.telefono, contacto: dt.contacto, ciudad: dt.ciudad}); actualizarDatalistClientes(); } const cardAct = document.getElementById(`act-${r.id}`); if(cardAct) { cardAct.innerHTML = '<div class="text-xs text-yellow-600 font-bold text-center animate-pulse">CREANDO PDF...</div>'; google.script.run.withSuccessHandler(x => { if(x.exito && cardAct) { cardAct.innerHTML = `<a href="${x.url}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>`; if(typeof lucide !== 'undefined') lucide.createIcons(); showToast("PDF Listo"); } }).generarPDFBackground({id: r.id, rowIndex: r.rowIndex, datos: r.datosCompletos}); } } else { alert("Error: " + r.error); b.innerHTML = txtOriginal; b.disabled = false; } }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).registrarEntradaRapida(dt); }
 function cargarEntradas() { const g = document.getElementById('grid-entradas'); if(!g) return; g.innerHTML='<p class="col-span-full text-center py-4">Cargando...</p>'; google.script.run.withSuccessHandler(d => { datosEntradas = d; g.innerHTML = ''; if(d.length === 0) g.innerHTML = '<p class="col-span-full text-center">Sin registros.</p>'; d.forEach(i => renderCardEntrada(i, g, false)); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerDatosEntradas(); }
 function renderCardEntrada(i, c, p){ const cid = `card-${i.id}`; const pdf = (i.urlPdf && i.urlPdf.length > 5) ? `<a href="${i.urlPdf}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>` : `<button id="btn-gen-${i.id}" onclick="genPDF(${i.id},${i.rowIndex})" class="w-full bg-slate-800 text-white hover:bg-slate-900 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-plus" class="w-4 h-4"></i> GENERAR</button>`; const ziur = `${i.cantidad||1} / ${i.codigo||'S/C'} / ${i.descripcion}`; const h = `<div id="${cid}" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative"><button onclick="copiarTexto('${ziur}')" class="absolute top-4 right-4 text-slate-400 hover:text-blue-600"><i data-lucide="copy" class="w-5 h-5"></i></button><div><div class="flex justify-between mb-2"><span class="font-bold text-lg">#${i.id}</span><span class="text-xs bg-slate-100 px-2 py-1 rounded">${i.fecha}</span></div><div class="bg-blue-50 text-blue-800 text-xs font-mono px-2 py-1 rounded w-fit mb-2">🏷️ ${i.codigo||'---'}</div><h4 class="font-bold text-blue-600 mb-1">${i.cliente}</h4><p class="text-sm text-slate-500 line-clamp-2">${i.descripcion}</p></div><div class="pt-3 border-t mt-4" id="act-${i.id}">${pdf}</div></div>`; if(p) c.insertAdjacentHTML('afterbegin', h); else c.insertAdjacentHTML('beforeend', h); }
@@ -350,74 +419,42 @@ function abrirModalAlq(nuevo) {
 
 function cerrarModalAlq() { document.getElementById('modal-alq').classList.add('hidden'); }
 
-// =========================================================================
-// CORRECCIÓN CRÍTICA V13.5 - SUBIDA DE FOTOS SECUENCIAL (EVITA SATURACIÓN)
-// =========================================================================
-
+// --- FOTOS SECUENCIAL ---
 async function procesarFotosInmediato(input) { 
     const idTrafo = document.getElementById('foto-trafo').value; 
     if(!idTrafo) { alert("¡Escribe primero el ID del Trafo!"); input.value = ""; return; } 
-    
     if (input.files && input.files.length > 0) { 
         const statusDiv = document.getElementById('status-fotos'); 
         const listaDiv = document.getElementById('lista-fotos'); 
         const etapa = document.getElementById('foto-etapa').value; 
-        
         statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Iniciando carga secuencial...</span>'; 
         const archivos = Array.from(input.files);
-
-        // --- BUCLE SECUENCIAL (ESPERA A QUE UNA TERMINE PARA SEGUIR) ---
         for (const file of archivos) {
-            // 1. Crear Preview Visual
             const divPreview = document.createElement('div'); 
             divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50 mb-1"; 
             divPreview.innerHTML = `<span class="text-xs truncate font-bold w-2/3">${file.name}</span><span class="text-xs text-blue-500">Procesando...</span>`; 
             listaDiv.prepend(divPreview); 
-
             try {
-                // 2. Leer archivo (Promesa)
                 const base64 = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => resolve(e.target.result);
                     reader.onerror = (e) => reject(e);
                     reader.readAsDataURL(file);
                 });
-
-                // 3. Subir al Servidor (Promesa) y ESPERAR respuesta
                 await new Promise((resolve, reject) => {
-                    google.script.run
-                        .withSuccessHandler(res => {
-                            if(res.exito){ 
-                                divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200 mb-1"; 
-                                divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800 w-2/3">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`; 
-                                if(typeof lucide !== 'undefined') lucide.createIcons(); 
-                                resolve();
-                            } else { 
-                                divPreview.className = "bg-red-50 p-2 rounded border border-red-200 mb-1"; 
-                                divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`; 
-                                reject(res.error);
-                            } 
-                        })
-                        .withFailureHandler(err => { 
-                            divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`; 
-                            reject(err);
-                        })
-                        .subirFotoProceso({ base64: base64, idTrafo: idTrafo, etapa: etapa });
+                    google.script.run.withSuccessHandler(res => {
+                            if(res.exito){ divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200 mb-1"; divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800 w-2/3">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`; if(typeof lucide !== 'undefined') lucide.createIcons(); resolve(); } 
+                            else { divPreview.className = "bg-red-50 p-2 rounded border border-red-200 mb-1"; divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`; reject(res.error); } 
+                    }).withFailureHandler(err => { divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`; reject(err); }).subirFotoProceso({ base64: base64, idTrafo: idTrafo, etapa: etapa });
                 });
-
-            } catch (error) {
-                console.error("Error subiendo foto:", error);
-                // No detenemos el bucle, intentamos con la siguiente
-            }
+            } catch (error) { console.error("Error subiendo foto:", error); }
         }
-        
         statusDiv.innerHTML = '<span class="text-green-600 font-bold">¡Carga completa!</span>';
         setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
         input.value = ""; 
     } 
 }
 
-// --- FUNCIONES FOTOS ALQUILER (BATCH) ---
 function previewAlqFoto(input) {
     if (input.files && input.files.length > 0) {
         const container = document.getElementById('alq-preview-container');
