@@ -3,131 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laboratorio Aceites JLB</title>
+    <title>Lab JLB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-slate-100 text-slate-800">
+<body class="bg-slate-100 p-4">
+    <script>
+        const URL_API = "https://script.google.com/macros/s/AKfycbwjPV6C4Jglw2689PfyegxsL4c_oZMDyYPOQKVh-zA5cv-GgNYDkKEnMmRhDzNsd3Llhg/exec";
+    </script>
 
-    <header class="bg-[#ca8a04] text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-3">
-            <i data-lucide="flask-conical" class="w-6 h-6"></i>
-            <h1 class="font-black text-xl">LABORATORIO JLB</h1>
+    <header class="bg-[#ca8a04] text-white p-6 rounded-2xl shadow-xl flex justify-between items-center mb-6">
+        <div>
+            <h1 class="font-black text-2xl">LABORATORIO JLB</h1>
+            <p class="text-[10px] opacity-75 uppercase tracking-widest">Control de Calidad</p>
         </div>
-        <button onclick="cargar()" class="bg-white/20 p-2 rounded-full hover:bg-white/40"><i data-lucide="refresh-cw"></i></button>
+        <button onclick="cargar()" class="bg-white/20 p-3 rounded-full hover:bg-white/30 transition-all"><i data-lucide="refresh-cw"></i></button>
     </header>
 
-    <main class="p-4 max-w-6xl mx-auto">
-        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
+    <main class="max-w-7xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-slate-50 text-xs font-bold uppercase text-slate-500 border-b">
+                <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b border-slate-100">
                     <tr>
-                        <th class="px-4 py-4">ID / KVA</th>
-                        <th class="px-4 py-4">F. Ingreso</th>
-                        <th class="px-4 py-4">Servicio</th>
-                        <th class="px-4 py-4">F. Proceso / Encube</th>
-                        <th class="px-4 py-4">Detalles Técnicos</th>
-                        <th class="px-4 py-4 text-center">Acción</th>
+                        <th class="px-6 py-4">ID / KVA</th>
+                        <th class="px-6 py-4">F. Ingreso</th>
+                        <th class="px-6 py-4">Servicio</th>
+                        <th class="px-6 py-4 text-center">F. Proceso / Encube</th>
+                        <th class="px-6 py-4">Cliente</th>
+                        <th class="px-6 py-4 text-center">Acción</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-aceites" class="divide-y text-sm">
-                    <tr><td colspan="6" class="p-10 text-center text-slate-400 animate-pulse">Cargando pendientes...</td></tr>
+                <tbody id="tabla-aceites" class="divide-y divide-slate-50 text-sm">
+                    <tr><td colspan="6" class="p-20 text-center text-slate-400">Sincronizando...</td></tr>
                 </tbody>
             </table>
         </div>
     </main>
 
-    <div id="modal-ficha" class="fixed inset-0 bg-slate-900/90 hidden z-[60] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl overflow-hidden relative">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-black text-lg flex items-center gap-2"><i data-lucide="info" class="text-blue-500"></i> FICHA TÉCNICA</h3>
-                <button onclick="cerrarFicha()" class="p-1 bg-slate-100 rounded-full"><i data-lucide="x"></i></button>
+    <div id="modal-ficha" class="fixed inset-0 bg-slate-900/95 hidden z-[60] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="font-black text-2xl text-slate-800">FICHA TÉCNICA</h3>
+                <button onclick="cerrarFicha()" class="p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-all"><i data-lucide="x"></i></button>
             </div>
-            <div id="content-ficha" class="space-y-3 text-sm"></div>
-            
-            <hr class="my-6">
-            
-            <label class="block text-xs font-black text-slate-500 uppercase mb-2">Responsable Lab</label>
-            <input type="text" id="responsable" class="w-full border-2 border-slate-200 p-3 rounded-xl outline-none focus:border-yellow-500" placeholder="Nombre completo">
-            
-            <label class="block text-xs font-black text-slate-500 uppercase mt-4 mb-2">Conclusión del Análisis</label>
-            <textarea id="conclusion" class="w-full border-2 border-slate-200 p-3 rounded-xl outline-none h-24 resize-none" placeholder="Escribe el resultado general..."></textarea>
-
-            <button id="btn-save" onclick="guardar()" class="w-full bg-[#ca8a04] text-white py-4 rounded-xl font-black mt-6 shadow-lg active:scale-95 transition-all">MARCAR REALIZADO</button>
+            <div id="content-ficha" class="space-y-4 bg-blue-50/50 p-8 rounded-3xl border border-blue-100 text-sm"></div>
+            <div class="mt-8 space-y-6">
+                <input type="text" id="responsable" class="w-full border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-yellow-500 font-bold" placeholder="Responsable">
+                <textarea id="conclusion" class="w-full border-2 border-slate-100 p-4 rounded-2xl outline-none h-28 resize-none focus:border-yellow-500" placeholder="Resultado..."></textarea>
+            </div>
+            <button id="btn-save" onclick="guardar()" class="w-full bg-[#ca8a04] text-white py-5 rounded-2xl font-black mt-10 shadow-xl active:scale-95 transition-all uppercase">REGISTRAR EN BITÁCORA</button>
         </div>
     </div>
 
     <script>
         let dataGlobal = []; let selIdx = -1;
 
+        async function apiRequest(action, payload = {}) {
+            const response = await fetch(URL_API, {
+                method: 'POST',
+                body: JSON.stringify({ action: action, payload: payload })
+            });
+            return response.json();
+        }
+
         async function cargar() {
             const tbody = document.getElementById('tabla-aceites');
-            tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-slate-400">Consultando base de datos...</td></tr>';
-            
-            google.script.run.withSuccessHandler(data => {
+            tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center">Consultando...</td></tr>';
+            try {
+                const data = await apiRequest('Aceites_ObtenerPendientes');
                 dataGlobal = data;
                 tbody.innerHTML = data.map((it, i) => `
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-4 py-4 font-black">#${it.id}<br><span class="text-xs text-blue-600">${it.info.kva || 'S/D'} KVA</span></td>
-                        <td class="px-4 py-4 text-xs font-bold text-slate-500">${it.fechaIngreso}</td>
-                        <td class="px-4 py-4"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-black">${it.servicio}</span></td>
-                        <td class="px-4 py-4 text-xs text-center font-mono">${it.f_proceso}</td>
-                        <td class="px-4 py-4 text-xs text-slate-500">${it.cliente}</td>
-                        <td class="px-4 py-4 text-center">
-                            <button onclick="abrirFicha(${i})" class="bg-yellow-500 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">${it.textoBoton}</button>
+                        <td class="px-6 py-6 font-black text-slate-700">#${it.id}<br><span class="text-[9px] text-blue-600 font-black uppercase">${it.info.kva || 'S/D'} KVA</span></td>
+                        <td class="px-6 py-6 text-xs font-bold text-slate-400">${it.fechaIngreso}</td>
+                        <td class="px-6 py-6"><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[9px] font-black">${it.servicio}</span></td>
+                        <td class="px-6 py-6 text-xs text-center font-mono font-bold text-slate-500">${it.f_proceso}</td>
+                        <td class="px-6 py-6 text-xs font-bold text-slate-600">${it.cliente}</td>
+                        <td class="px-6 py-6 text-center">
+                            <button onclick="abrirFicha(${i})" class="bg-yellow-500 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-lg hover:bg-yellow-600">${it.textoBoton}</button>
                         </td>
                     </tr>
                 `).join('');
                 lucide.createIcons();
-            }).Aceites_ObtenerPendientes();
+            } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center text-red-500 font-bold">Error de conexión con el servidor.</td></tr>'; }
         }
 
         function abrirFicha(idx) {
             selIdx = idx; const it = dataGlobal[idx];
             document.getElementById('content-ficha').innerHTML = `
-                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">Marca</p><p class="font-bold">${it.info.marca || '-'}</p></div>
-                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">Serie</p><p class="font-bold">${it.info.serie || '-'}</p></div>
-                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">Voltaje Primario</p><p class="font-bold">${it.info.vp || '-'}</p></div>
-                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">Voltaje Secundario</p><p class="font-bold">${it.info.vs || '-'}</p></div>
-                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">Fases</p><p class="font-bold">${it.info.fases || '-'}</p></div>
-                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">Aceite (L)</p><p class="font-bold text-blue-600">${it.info.aceite || '-'}</p></div>
-                </div>
-                <div class="bg-yellow-50 border border-yellow-200 p-3 rounded-lg text-center">
-                    <p class="text-[10px] text-yellow-600 font-bold uppercase">Derivaciones (ADN)</p>
-                    <p class="text-xl font-black text-yellow-700">${it.info.taps || '0'}</p>
+                <div class="grid grid-cols-2 gap-6">
+                    <div><p class="text-[9px] text-slate-400 font-black uppercase mb-1">Marca / Serie</p><p class="font-black text-slate-700">${it.info.marca || '-'} / ${it.info.serie || '-'}</p></div>
+                    <div><p class="text-[9px] text-slate-400 font-black uppercase mb-1">Aceite (Litros)</p><p class="font-black text-blue-600">${it.info.litros || '-'}</p></div>
+                    <div><p class="text-[9px] text-slate-400 font-black uppercase mb-1">Voltajes (P/S)</p><p class="font-black text-slate-700 font-mono">${it.info.vp || '-'} / ${it.info.vs || '-'}</p></div>
+                    <div class="bg-yellow-100 p-3 rounded-2xl text-center border border-yellow-200">
+                        <p class="text-[9px] text-yellow-600 font-black uppercase">Taps (Nominal)</p>
+                        <p class="text-xl font-black text-yellow-700">${it.info.taps || '0'}</p>
+                    </div>
                 </div>
             `;
             document.getElementById('modal-ficha').classList.remove('hidden');
             lucide.createIcons();
         }
 
-        function guardar() {
+        async function guardar() {
             const it = dataGlobal[selIdx];
             const btn = document.getElementById('btn-save');
-            btn.innerText = "GUARDANDO..."; btn.disabled = true;
-
-            const payload = {
-                idTrafo: it.id,
-                cliente: it.cliente,
-                fecha: new Date().toISOString().split('T')[0],
-                responsable: document.getElementById('responsable').value,
-                conclusion: document.getElementById('conclusion').value,
-                tipoEnsayo: it.accion
-            };
-
-            google.script.run.withSuccessHandler(() => {
+            const resp = document.getElementById('responsable').value;
+            if(!resp) { alert("Ingresa el responsable"); return; }
+            btn.innerText = "PROCESANDO..."; btn.disabled = true;
+            try {
+                await apiRequest('Aceites_GuardarInforme', { idTrafo: it.id, cliente: it.cliente, fecha: new Date().toISOString().split('T')[0], responsable: resp, conclusion: document.getElementById('conclusion').value, tipoEnsayo: it.accion });
                 cerrarFicha(); cargar();
-                btn.innerText = "MARCAR REALIZADO"; btn.disabled = false;
-            }).Aceites_GuardarInforme(payload);
+            } finally { btn.innerText = "REGISTRAR EN BITÁCORA"; btn.disabled = false; }
         }
 
-        function cerrarFicha() { 
-            document.getElementById('modal-ficha').classList.add('hidden'); 
-            document.getElementById('responsable').value = "";
-            document.getElementById('conclusion').value = "";
-        }
-
+        function cerrarFicha() { document.getElementById('modal-ficha').classList.add('hidden'); document.getElementById('responsable').value = ""; document.getElementById('conclusion').value = ""; }
         window.onload = cargar;
     </script>
 </body>
