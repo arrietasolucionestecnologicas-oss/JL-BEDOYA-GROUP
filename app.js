@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V12.9 - MODULO EXTERNO INTEGRADO) */
+/* JLB OPERACIONES - APP.JS (V13.5 - FOTOS SECUENCIALES + ESTABILIDAD) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -162,9 +162,8 @@ function abrirModal(i){
         workflowHTML = `<div class="col-span-full mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-blue-800 font-bold text-sm uppercase">ℹ️ Diagnóstico Listo</p><p class="text-xs text-slate-600">Por favor ingrese la Fecha de Autorización abajo para iniciar proceso.</p></div>`;
     }
 
-    // --- NUEVA LÓGICA V12.9: REPARACIÓN EXTERNA ---
     const esExterno = d.tipo_ejecucion === 'EXTERNA';
-    const enProveedor = estado.includes('PROVEEDOR');
+    const enProveedor = estado.includes('PROVEEDOR') || estado.includes('EXTERNO');
 
     if (esExterno && enProveedor) {
         workflowHTML += `
@@ -190,17 +189,13 @@ function abrirModal(i){
             </div>
         `;
     }
-    // ---------------------------------------------
 
     stepsContainer.insertAdjacentHTML('beforeend', workflowHTML);
     
-    // CONFIGURACIÓN DE PASOS SEGÚN TIPO DE SERVICIO
-    // Si es ACEITE (o REGENERACIÓN) -> Ocultamos pasos de Manufactura
     const tipoServ = (d.tipo || "").toUpperCase();
     const desc = (d.desc || "").toUpperCase();
     const esSoloAceite = tipoServ.includes("ACEITE") || tipoServ.includes("REGENER") || tipoServ.includes("TERMO") || desc.includes("ACEITE");
     
-    // Lista completa de pasos
     let ps = [
         {id:'pruebas_ini',l:'1. Pruebas Iniciales'},
         {id:'desencube',l:'2. Desencube'},
@@ -214,7 +209,6 @@ function abrirModal(i){
         {id:'listo',l:'10. Listo'}
     ]; 
 
-    // Filtrado de pasos para Aceite
     if(esSoloAceite) {
         ps = [
             {id:'pruebas_ini',l:'1. PCB / Inicial'},
@@ -223,18 +217,15 @@ function abrirModal(i){
         ];
     }
 
-    // SI ES EXTERNO, OCULTAMOS LOS INPUTS DE FECHA INTERNA PARA EVITAR CONFUSIÓN
     if (esExterno && enProveedor) {
-        // Solo mostramos Pruebas Iniciales y Finales (que se hacen al llegar/salir)
         ps = ps.filter(p => p.id === 'pruebas_ini' || p.id === 'pruebas_fin' || p.id === 'pintura' || p.id === 'listo');
     }
 
     ps.forEach(p => { 
-        // Si es aceite, usamos las fechas correspondientes o mapeadas
         let valFecha = "";
         if(esSoloAceite) {
             if(p.id === 'pruebas_ini') valFecha = fechaParaInput(d.fases['pruebas_ini']);
-            if(p.id === 'pruebas_fin') valFecha = fechaParaInput(d.fases['pruebas_fin']); // O usar fecha autorización si aplica
+            if(p.id === 'pruebas_fin') valFecha = fechaParaInput(d.fases['pruebas_fin']); 
             if(p.id === 'listo') valFecha = fechaParaInput(d.f_listo);
         } else {
             valFecha = fechaParaInput(d.fases[p.id]) || (p.id==='listo'?fechaParaInput(d.f_listo):""); 
@@ -262,14 +253,11 @@ function avanzarEstado(nuevoEstado, accion) {
     }).avanzarEstadoAdmin({ rowIndex: d.rowIndex, nuevoEstado: nuevoEstado, accion: accion, idTrafo: idParaTrafo });
 }
 
-// --- FUNCIÓN NUEVA PARA RETORNO ---
 function confirmarRetorno(rowIndex) {
     if(!confirm("¿Confirmas que el equipo ha regresado físicamente a planta?\n\nEsto activará las alertas de Calidad Final.")) return;
-    
     const btn = event.target;
     const originalText = btn.innerHTML;
     btn.disabled = true; btn.innerHTML = "Procesando...";
-
     google.script.run.withSuccessHandler(res => {
         if(res.exito) {
             alert(res.mensaje);
@@ -282,7 +270,6 @@ function confirmarRetorno(rowIndex) {
     }).registrarRetornoExterno({ rowIndex: rowIndex });
 }
 
-// --- RESTO DE MÓDULOS ---
 function cargarRequerimientosModal(idTrafo) { const c = document.getElementById('lista-reqs'); c.innerHTML = '<p class="text-center text-slate-400 text-xs py-4 animate-pulse">Cargando lista...</p>'; google.script.run.withSuccessHandler(lista => renderListaReqs(lista)).obtenerRequerimientos(idTrafo); }
 function renderListaReqs(lista) { const c = document.getElementById('lista-reqs'); c.innerHTML = ''; if(lista.length === 0) { c.innerHTML = '<p class="text-center text-slate-400 text-xs py-4">Sin requerimientos.</p>'; return; } lista.forEach(r => { c.insertAdjacentHTML('beforeend', `<div class="bg-white p-2 rounded border border-slate-200 flex justify-between items-start mb-2"><div><p class="text-sm font-bold text-slate-700">${r.texto}</p><p class="text-[10px] text-slate-400">${r.fecha} - ${r.autor}</p></div><button onclick="borrarReq(${r.idReq})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button></div>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }
 function guardarNuevoReq() { const txt = document.getElementById('txt-nuevo-req').value; if(!txt.trim()) return; const ids = document.getElementById('m-ids-badge').innerText; let idTrafo = ids.split('|')[0].replace('ID:', '').trim(); if(idTrafo === 'undefined' || idTrafo === '') idTrafo = ids.split('|')[1].replace('GRUPO:', '').trim(); const btn = document.querySelector('#view-req button'); btn.disabled = true; google.script.run.withSuccessHandler(lista => { document.getElementById('txt-nuevo-req').value = ''; renderListaReqs(lista); btn.disabled = false; showToast("Agregado"); }).guardarRequerimiento({ idTrafo: idTrafo, texto: txt, autor: "OPERACIONES" }); }
@@ -303,10 +290,6 @@ function subNav(id) { document.querySelectorAll('.cp-view').forEach(e=>e.classLi
 function cargarTerminados() { google.script.run.withSuccessHandler(d => { const c = document.getElementById('lista-terminados'); if(!c) return; c.innerHTML = ''; if(d.length === 0) c.innerHTML = '<p class="text-center text-slate-400 py-4">Sin pendientes.</p>'; d.forEach(i => { const txt = `ENTRADA: ${i.id} | CLIENTE: ${i.cliente} | EQUIPO: ${i.desc} | ODS: ${i.ods}`; c.insertAdjacentHTML('beforeend', `<div class="bg-white border border-green-200 p-4 rounded-lg shadow-sm flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i data-lucide="check" class="w-6 h-6"></i></div><div><h4 class="font-bold text-slate-700">${i.cliente}</h4><p class="text-xs text-slate-500">${i.desc} (ID: ${i.id})</p></div></div><button onclick="copiarTexto('${txt}')" class="bg-slate-100 text-slate-600 p-2 rounded hover:bg-slate-200"><i data-lucide="copy" class="w-4 h-4"></i></button></div>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerLogistica({ tipo: 'TERMINADOS' }); }
 function cargarPatio() { google.script.run.withSuccessHandler(d => { const t = document.getElementById('tabla-pat'); if(!t) return; t.innerHTML = ''; d.forEach(r => { t.insertAdjacentHTML('beforeend', `<tr class="border-b"><td class="p-3 font-mono text-blue-600">${r.id}</td><td class="p-3">${r.cliente}</td><td class="p-3 text-xs text-red-500">${r.motivo}</td></tr>`); }); }).obtenerLogistica({ tipo: 'PATIO' }); }
 
-// =============================================================
-// MODULO ALQUILER (CON FILTROS Y GALERÍA BACKGROUND)
-// =============================================================
-
 function cargarAlquiler() { 
     google.script.run.withSuccessHandler(d => { 
         datosAlq = d; 
@@ -320,31 +303,20 @@ function filtrarAlquiler() {
     const t = document.getElementById('tabla-alq');
     if(!t) return;
     t.innerHTML = '';
-    
     const filtrados = datosAlq.filter(item => {
         const matchKVA = kva === "" || item.kva.toString().toLowerCase().includes(kva);
         const matchVolt = volt === "" || item.voltajes.toString().toLowerCase().includes(volt);
         return matchKVA && matchVolt;
     });
-
-    if(filtrados.length === 0) {
-        t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>';
-        return;
-    }
-
+    if(filtrados.length === 0) { t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>'; return; }
     filtrados.forEach((r, i) => { 
-        const btnFoto = r.foto 
-            ? `<a href="${r.foto}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="folder-open" class="w-5 h-5"></i></a>` 
-            : '<span class="text-slate-300">-</span>'; 
-        
+        const btnFoto = r.foto ? `<a href="${r.foto}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="folder-open" class="w-5 h-5"></i></a>` : '<span class="text-slate-300">-</span>'; 
         let badgeClass = 'bg-gray-100 text-slate-700'; 
         if (r.estado.includes("DISPONIBLE")) badgeClass = 'bg-green-100 text-green-700'; 
-        else if (r.estado === "PRESTADO" || r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700'; 
+        else if (r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700'; 
         else if (r.estado.includes("MANTENIMIENTO")) badgeClass = 'bg-orange-100 text-orange-700'; 
         else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700'; 
-        
         const indexReal = datosAlq.indexOf(r);
-
         t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); 
     }); 
     if(typeof lucide !== 'undefined') lucide.createIcons(); 
@@ -354,80 +326,117 @@ function editarAlquiler(i) {
     const d = datosAlq[i]; 
     abrirModalAlq(false); 
     document.getElementById('title-modal-alq').innerText = "Editar Alquiler"; 
-    document.getElementById('alq-codigo').value = d.codigo; 
-    document.getElementById('alq-codigo').readOnly = true; 
-    document.getElementById('alq-kva').value = d.kva; 
-    document.getElementById('alq-marca').value = d.marca; 
-    document.getElementById('alq-volt').value = d.voltajes; 
-    document.getElementById('alq-cliente').value = d.cliente; 
-    document.getElementById('alq-salida').value = fechaParaInput(d.salida); 
-    document.getElementById('alq-regreso').value = fechaParaInput(d.regreso); 
-    
+    document.getElementById('alq-codigo').value = d.codigo; document.getElementById('alq-codigo').readOnly = true; 
+    document.getElementById('alq-kva').value = d.kva; document.getElementById('alq-marca').value = d.marca; 
+    document.getElementById('alq-volt').value = d.voltajes; document.getElementById('alq-cliente').value = d.cliente; 
+    document.getElementById('alq-salida').value = fechaParaInput(d.salida); document.getElementById('alq-regreso').value = fechaParaInput(d.regreso); 
     const sel = document.getElementById('alq-estado-manual');
     const estadosValidos = ["DISPONIBLE", "MANTENIMIENTO", "REPARACION", "PRESTADO"];
-    
-    if(estadosValidos.includes(d.estado)) {
-        sel.value = d.estado;
-    } else {
-        if(d.estado.includes("DISPONIBLE")) sel.value = "DISPONIBLE";
-        else if(d.estado.includes("MANTENIMIENTO")) sel.value = "MANTENIMIENTO";
-        else if(d.estado.includes("REPARACION")) sel.value = "REPARACION";
-        else if(d.estado.includes("PRESTADO")) sel.value = "PRESTADO";
-        else sel.value = "DISPONIBLE"; 
-    }
-
-    alqFotosNuevas = []; 
-    document.getElementById('alq-preview-container').innerHTML = '';
-    document.getElementById('alq-preview-container').classList.add('hidden');
+    if(estadosValidos.includes(d.estado)) sel.value = d.estado;
+    else { if(d.estado.includes("DISPONIBLE")) sel.value = "DISPONIBLE"; else if(d.estado.includes("MANTENIMIENTO")) sel.value = "MANTENIMIENTO"; else if(d.estado.includes("REPARACION")) sel.value = "REPARACION"; else if(d.estado.includes("PRESTADO")) sel.value = "PRESTADO"; else sel.value = "DISPONIBLE"; }
+    alqFotosNuevas = []; document.getElementById('alq-preview-container').innerHTML = ''; document.getElementById('alq-preview-container').classList.add('hidden');
 }
 
 function abrirModalAlq(nuevo) { 
     document.getElementById('modal-alq').classList.remove('hidden'); 
-    const btn = document.getElementById('btn-alq-save'); 
-    btn.innerText = "Guardar"; 
-    btn.disabled = false; 
+    const btn = document.getElementById('btn-alq-save'); btn.innerText = "Guardar"; btn.disabled = false; 
     if(nuevo) { 
         document.getElementById('title-modal-alq').innerText = "Registrar Nuevo"; 
         document.getElementById('form-alq').reset(); 
         document.getElementById('alq-codigo').readOnly = false; 
-        alqFotosNuevas = [];
-        document.getElementById('alq-preview-container').innerHTML = '';
-        document.getElementById('alq-preview-container').classList.add('hidden');
+        alqFotosNuevas = []; document.getElementById('alq-preview-container').innerHTML = ''; document.getElementById('alq-preview-container').classList.add('hidden');
     } 
 }
 
 function cerrarModalAlq() { document.getElementById('modal-alq').classList.add('hidden'); }
 
-// --- FUNCIONES DE CÁMARA Y GALERÍA (ACUMULATIVAS) ---
+// =========================================================================
+// CORRECCIÓN CRÍTICA V13.5 - SUBIDA DE FOTOS SECUENCIAL (EVITA SATURACIÓN)
+// =========================================================================
+
+async function procesarFotosInmediato(input) { 
+    const idTrafo = document.getElementById('foto-trafo').value; 
+    if(!idTrafo) { alert("¡Escribe primero el ID del Trafo!"); input.value = ""; return; } 
+    
+    if (input.files && input.files.length > 0) { 
+        const statusDiv = document.getElementById('status-fotos'); 
+        const listaDiv = document.getElementById('lista-fotos'); 
+        const etapa = document.getElementById('foto-etapa').value; 
+        
+        statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Iniciando carga secuencial...</span>'; 
+        const archivos = Array.from(input.files);
+
+        // --- BUCLE SECUENCIAL (ESPERA A QUE UNA TERMINE PARA SEGUIR) ---
+        for (const file of archivos) {
+            // 1. Crear Preview Visual
+            const divPreview = document.createElement('div'); 
+            divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50 mb-1"; 
+            divPreview.innerHTML = `<span class="text-xs truncate font-bold w-2/3">${file.name}</span><span class="text-xs text-blue-500">Procesando...</span>`; 
+            listaDiv.prepend(divPreview); 
+
+            try {
+                // 2. Leer archivo (Promesa)
+                const base64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = (e) => reject(e);
+                    reader.readAsDataURL(file);
+                });
+
+                // 3. Subir al Servidor (Promesa) y ESPERAR respuesta
+                await new Promise((resolve, reject) => {
+                    google.script.run
+                        .withSuccessHandler(res => {
+                            if(res.exito){ 
+                                divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200 mb-1"; 
+                                divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800 w-2/3">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`; 
+                                if(typeof lucide !== 'undefined') lucide.createIcons(); 
+                                resolve();
+                            } else { 
+                                divPreview.className = "bg-red-50 p-2 rounded border border-red-200 mb-1"; 
+                                divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`; 
+                                reject(res.error);
+                            } 
+                        })
+                        .withFailureHandler(err => { 
+                            divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`; 
+                            reject(err);
+                        })
+                        .subirFotoProceso({ base64: base64, idTrafo: idTrafo, etapa: etapa });
+                });
+
+            } catch (error) {
+                console.error("Error subiendo foto:", error);
+                // No detenemos el bucle, intentamos con la siguiente
+            }
+        }
+        
+        statusDiv.innerHTML = '<span class="text-green-600 font-bold">¡Carga completa!</span>';
+        setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
+        input.value = ""; 
+    } 
+}
+
+// --- FUNCIONES FOTOS ALQUILER (BATCH) ---
 function previewAlqFoto(input) {
     if (input.files && input.files.length > 0) {
         const container = document.getElementById('alq-preview-container');
         container.classList.remove('hidden');
         document.getElementById('btn-limpiar-fotos').classList.remove('hidden');
-
         Array.from(input.files).forEach(file => {
             const reader = new FileReader();
             reader.onload = function(e) {
-                // Compresión antes de previsualizar
                 const img = new Image();
                 img.src = e.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 1000;
                     const scaleSize = MAX_WIDTH / img.width;
-                    if (img.width > MAX_WIDTH) {
-                        canvas.width = MAX_WIDTH;
-                        canvas.height = img.height * scaleSize;
-                    } else {
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                    }
+                    if (img.width > MAX_WIDTH) { canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize; } else { canvas.width = img.width; canvas.height = img.height; }
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
                     const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
                     alqFotosNuevas.push(compressedDataUrl); 
-                    
                     const div = document.createElement('div');
                     div.className = "aspect-square rounded border border-slate-200 overflow-hidden relative";
                     div.innerHTML = `<img src="${compressedDataUrl}" class="w-full h-full object-cover">`;
@@ -436,109 +445,31 @@ function previewAlqFoto(input) {
             };
             reader.readAsDataURL(file);
         });
-        
-        // Limpiamos el input para permitir seleccionar la misma foto si se borra y se quiere de nuevo
         input.value = "";
     }
 }
 
-function limpiarFotosAlq() {
-    alqFotosNuevas = [];
-    const container = document.getElementById('alq-preview-container');
-    container.innerHTML = '';
-    container.classList.add('hidden');
-    document.getElementById('btn-limpiar-fotos').classList.add('hidden');
-}
+function limpiarFotosAlq() { alqFotosNuevas = []; const container = document.getElementById('alq-preview-container'); container.innerHTML = ''; container.classList.add('hidden'); document.getElementById('btn-limpiar-fotos').classList.add('hidden'); }
 
 function guardarAlquiler() { 
     const estadoSeleccionado = document.getElementById('alq-estado-manual').value;
     let cliente = document.getElementById('alq-cliente').value;
     if(estadoSeleccionado !== "PRESTADO") { cliente = ""; }
-
-    const d = { 
-        codigo: document.getElementById('alq-codigo').value, 
-        kva: document.getElementById('alq-kva').value, 
-        marca: document.getElementById('alq-marca').value, 
-        voltajes: document.getElementById('alq-volt').value, 
-        cliente: cliente, 
-        salida: document.getElementById('alq-salida').value, 
-        regreso: document.getElementById('alq-regreso').value, 
-        estadoManual: estadoSeleccionado 
-    }; 
-    
-    // 1. GUARDAMOS DATOS DE TEXTO
+    const d = { codigo: document.getElementById('alq-codigo').value, kva: document.getElementById('alq-kva').value, marca: document.getElementById('alq-marca').value, voltajes: document.getElementById('alq-volt').value, cliente: cliente, salida: document.getElementById('alq-salida').value, regreso: document.getElementById('alq-regreso').value, estadoManual: estadoSeleccionado }; 
     enviarAlquiler(d);
-    
     cerrarModalAlq();
     showToast("Datos guardados. Procesando fotos...");
-
-    // 2. SUBIDA FOTOS BACKGROUND
     if(alqFotosNuevas.length > 0) {
          showToast("Subiendo fotos en segundo plano...", "info");
          google.script.run.withSuccessHandler(res => {
              if(res.exito) {
-                 google.script.run.withSuccessHandler(() => {
-                     showToast("✅ Fotos subidas y vinculadas.");
-                     cargarAlquiler(); 
-                 }).actualizarFotoAlquiler({ codigo: d.codigo, url: res.url });
-             } else {
-                 showToast("Error subiendo fotos: " + res.error, 'error');
-             }
+                 google.script.run.withSuccessHandler(() => { showToast("✅ Fotos subidas y vinculadas."); cargarAlquiler(); }).actualizarFotoAlquiler({ codigo: d.codigo, url: res.url });
+             } else { showToast("Error subiendo fotos: " + res.error, 'error'); }
          }).subirFotosAlquilerBatch({ listaBase64: alqFotosNuevas, codigo: d.codigo });
     }
 }
 
-function enviarAlquiler(d){ 
-    google.script.run.withSuccessHandler(() => { 
-        cargarAlquiler(); 
-        alqFotosNuevas=[]; 
-    }).withFailureHandler(e => { 
-        showToast("Error guardar: " + e, 'error'); 
-    }).guardarAlquiler(d); 
-}
-
-// --- RESTO DE FUNCIONES (CORREGIDAS) ---
-function procesarFotosInmediato(input) { 
-    const idTrafo = document.getElementById('foto-trafo').value; 
-    if(!idTrafo) { alert("¡Escribe primero el ID del Trafo!"); input.value = ""; return; } 
-    
-    if (input.files && input.files.length > 0) { 
-        const statusDiv = document.getElementById('status-fotos'); 
-        const listaDiv = document.getElementById('lista-fotos'); 
-        const etapa = document.getElementById('foto-etapa').value; 
-        statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Subiendo imagen...</span>'; 
-        
-        Array.from(input.files).forEach(file => { 
-            const reader = new FileReader(); 
-            reader.onload = function(e) { 
-                const base64 = e.target.result; 
-                // CORREGIDO: SE USA divPreview (NO div)
-                const divPreview = document.createElement('div'); 
-                divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50"; 
-                divPreview.innerHTML = `<span class="text-xs truncate font-bold">${file.name}</span><span class="text-xs text-blue-500">Subiendo...</span>`; 
-                listaDiv.prepend(divPreview); 
-                
-                google.script.run.withSuccessHandler(res => { 
-                    if(res.exito){ 
-                        divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200"; 
-                        divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`; 
-                        statusDiv.innerHTML = ''; 
-                        if(typeof lucide !== 'undefined') lucide.createIcons(); 
-                        showToast("Foto guardada"); 
-                    } else { 
-                        divPreview.className = "bg-red-50 p-2 rounded border border-red-200"; 
-                        divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`; 
-                    } 
-                }).withFailureHandler(err => { 
-                    divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`; 
-                }).subirFotoProceso({ base64: base64, idTrafo: idTrafo, etapa: etapa }); 
-            }; 
-            reader.readAsDataURL(file); 
-        }); 
-        input.value = ""; 
-    } 
-}
-
+function enviarAlquiler(d){ google.script.run.withSuccessHandler(() => { cargarAlquiler(); alqFotosNuevas=[]; }).withFailureHandler(e => { showToast("Error guardar: " + e, 'error'); }).guardarAlquiler(d); }
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); if(!dl) return; dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
 function abrirModalNuevaEntrada() { document.getElementById('modal-nueva-entrada').classList.remove('hidden'); setTimeout(initCanvas, 100); }
