@@ -12,12 +12,12 @@
         const URL_API = "https://script.google.com/macros/s/AKfycbwjPV6C4Jglw2689PfyegxsL4c_oZMDyYPOQKVh-zA5cv-GgNYDkKEnMmRhDzNsd3Llhg/exec";
     </script>
 
-    <header class="bg-[#ca8a04] text-white p-6 rounded-2xl shadow-xl flex justify-between items-center mb-6">
+    <header class="bg-[#ca8a04] text-white p-6 rounded-2xl shadow-xl flex justify-between items-center mb-6 sticky top-0 z-50">
         <div>
             <h1 class="font-black text-2xl">LABORATORIO JLB</h1>
             <p class="text-[10px] opacity-75 uppercase tracking-widest">Control de Calidad</p>
         </div>
-        <button onclick="cargar()" class="bg-white/20 p-3 rounded-full hover:bg-white/30 transition-all"><i data-lucide="refresh-cw"></i></button>
+        <button onclick="cargarListaAceites()" class="bg-white/20 p-3 rounded-full hover:bg-white/30 transition-all"><i data-lucide="refresh-cw"></i></button>
     </header>
 
     <main class="max-w-7xl mx-auto">
@@ -34,7 +34,7 @@
                     </tr>
                 </thead>
                 <tbody id="tabla-aceites" class="divide-y divide-slate-50 text-sm">
-                    <tr><td colspan="6" class="p-20 text-center text-slate-400">Sincronizando...</td></tr>
+                    <tr><td colspan="6" class="p-20 text-center text-slate-400">Consultando pendientes...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -49,9 +49,9 @@
             <div id="content-ficha" class="space-y-4 bg-blue-50/50 p-8 rounded-3xl border border-blue-100 text-sm"></div>
             <div class="mt-8 space-y-6">
                 <input type="text" id="responsable" class="w-full border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-yellow-500 font-bold" placeholder="Responsable">
-                <textarea id="conclusion" class="w-full border-2 border-slate-100 p-4 rounded-2xl outline-none h-28 resize-none focus:border-yellow-500" placeholder="Resultado..."></textarea>
+                <textarea id="conclusion" class="w-full border-2 border-slate-100 p-4 rounded-2xl outline-none h-28 resize-none focus:border-yellow-500" placeholder="Resultado del análisis..."></textarea>
             </div>
-            <button id="btn-save" onclick="guardar()" class="w-full bg-[#ca8a04] text-white py-5 rounded-2xl font-black mt-10 shadow-xl active:scale-95 transition-all uppercase">REGISTRAR EN BITÁCORA</button>
+            <button id="btn-save" onclick="guardarEnsayo()" class="w-full bg-[#ca8a04] text-white py-5 rounded-2xl font-black mt-10 shadow-xl active:scale-95 transition-all uppercase">MARCAR REALIZADO</button>
         </div>
     </div>
 
@@ -59,33 +59,43 @@
         let dataGlobal = []; let selIdx = -1;
 
         async function apiRequest(action, payload = {}) {
-            const response = await fetch(URL_API, {
-                method: 'POST',
-                body: JSON.stringify({ action: action, payload: payload })
-            });
+            const body = JSON.stringify({ action: action, payload: payload });
+            const response = await fetch(URL_API, { method: 'POST', body: body });
             return response.json();
         }
 
-        async function cargar() {
+        async function cargarListaAceites() {
             const tbody = document.getElementById('tabla-aceites');
-            tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center">Consultando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center"><i data-lucide="loader" class="animate-spin inline mr-2"></i> Leyendo base de datos...</td></tr>';
+            lucide.createIcons();
+            
             try {
-                const data = await apiRequest('Aceites_ObtenerPendientes');
+                // Usamos una llamada GET para mayor compatibilidad con GitHub Pages
+                const res = await fetch(`${URL_API}?action=Aceites_ObtenerPendientes`);
+                const data = await res.json();
                 dataGlobal = data;
+                
+                if(data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center text-slate-400">Sin trabajos pendientes.</td></tr>';
+                    return;
+                }
+
                 tbody.innerHTML = data.map((it, i) => `
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-6 py-6 font-black text-slate-700">#${it.id}<br><span class="text-[9px] text-blue-600 font-black uppercase">${it.info.kva || 'S/D'} KVA</span></td>
                         <td class="px-6 py-6 text-xs font-bold text-slate-400">${it.fechaIngreso}</td>
-                        <td class="px-6 py-6"><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[9px] font-black">${it.servicio}</span></td>
+                        <td class="px-6 py-6"><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[9px] font-black uppercase">${it.servicio}</span></td>
                         <td class="px-6 py-6 text-xs text-center font-mono font-bold text-slate-500">${it.f_proceso}</td>
                         <td class="px-6 py-6 text-xs font-bold text-slate-600">${it.cliente}</td>
                         <td class="px-6 py-6 text-center">
-                            <button onclick="abrirFicha(${i})" class="bg-yellow-500 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-lg hover:bg-yellow-600">${it.textoBoton}</button>
+                            <button onclick="abrirFicha(${i})" class="bg-yellow-500 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-lg hover:bg-yellow-600 transition-all">${it.textoBoton}</button>
                         </td>
                     </tr>
                 `).join('');
                 lucide.createIcons();
-            } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center text-red-500 font-bold">Error de conexión con el servidor.</td></tr>'; }
+            } catch(e) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-20 text-center text-red-500 font-bold">Error de conexión: ${e.message}</td></tr>`;
+            }
         }
 
         function abrirFicha(idx) {
@@ -105,20 +115,29 @@
             lucide.createIcons();
         }
 
-        async function guardar() {
+        async function guardarEnsayo() {
             const it = dataGlobal[selIdx];
             const btn = document.getElementById('btn-save');
             const resp = document.getElementById('responsable').value;
             if(!resp) { alert("Ingresa el responsable"); return; }
+            
             btn.innerText = "PROCESANDO..."; btn.disabled = true;
             try {
-                await apiRequest('Aceites_GuardarInforme', { idTrafo: it.id, cliente: it.cliente, fecha: new Date().toISOString().split('T')[0], responsable: resp, conclusion: document.getElementById('conclusion').value, tipoEnsayo: it.accion });
-                cerrarFicha(); cargar();
-            } finally { btn.innerText = "REGISTRAR EN BITÁCORA"; btn.disabled = false; }
+                await apiRequest('Aceites_GuardarInforme', {
+                    idTrafo: it.id, cliente: it.cliente, fecha: new Date().toISOString().split('T')[0],
+                    responsable: resp, conclusion: document.getElementById('conclusion').value, tipoEnsayo: it.accion
+                });
+                cerrarFicha(); 
+                cargarListaAceites();
+            } catch(e) {
+                alert("Error al registrar: " + e.message);
+            } finally {
+                btn.innerText = "MARCAR REALIZADO"; btn.disabled = false;
+            }
         }
 
         function cerrarFicha() { document.getElementById('modal-ficha').classList.add('hidden'); document.getElementById('responsable').value = ""; document.getElementById('conclusion').value = ""; }
-        window.onload = cargar;
+        window.onload = cargarListaAceites;
     </script>
 </body>
 </html>
