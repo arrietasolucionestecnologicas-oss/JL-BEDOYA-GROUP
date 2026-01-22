@@ -3,344 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab. Aceites JLB</title>
+    <title>Laboratorio Aceites JLB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="style.css" rel="stylesheet">
 </head>
 <body class="bg-slate-100 text-slate-800">
 
-    <header class="bg-[#ca8a04] text-white p-4 shadow-lg sticky top-0 z-50">
-        <div class="flex justify-between items-center max-w-[1400px] mx-auto">
-            <div class="flex items-center gap-3">
-                <div class="bg-white/20 p-2 rounded-lg"><i data-lucide="flask-conical" class="w-6 h-6"></i></div>
-                <div>
-                    <h1 class="font-black text-xl leading-none">LABORATORIO</h1>
-                    <p class="text-[10px] opacity-90 font-mono tracking-widest uppercase">Control de Calidad & PCBs</p>
-                </div>
-            </div>
-            <button onclick="cargarListaAceites()" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+    <header class="bg-[#ca8a04] text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <i data-lucide="flask-conical" class="w-6 h-6"></i>
+            <h1 class="font-black text-xl">LABORATORIO JLB</h1>
         </div>
+        <button onclick="cargar()" class="bg-white/20 p-2 rounded-full hover:bg-white/40"><i data-lucide="refresh-cw"></i></button>
     </header>
 
-    <main class="max-w-[1400px] mx-auto p-4 pb-24">
-        
-        <div class="mb-4 flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div class="relative w-full md:w-1/2">
-                <i data-lucide="search" class="absolute left-3 top-3 text-slate-400 w-4 h-4"></i>
-                <input type="text" id="buscador-aceite" onkeyup="filtrarAceites()" placeholder="Filtrar por ID, Cliente..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-yellow-500 text-sm shadow-sm">
-            </div>
-            <div class="flex gap-2 text-[10px] font-bold uppercase hidden md:flex">
-                <span class="px-2 py-1 bg-red-100 text-red-700 rounded border border-red-200">PCB Inicial</span>
-                <span class="px-2 py-1 bg-green-100 text-green-700 rounded border border-green-200">Final (Salida)</span>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200 whitespace-nowrap">
-                        <tr>
-                            <th class="px-4 py-4">ID / KVA</th>
-                            <th class="px-4 py-4 text-blue-700">F. Ingreso</th>
-                            <th class="px-4 py-4">Servicio</th>
-                            <th class="px-4 py-4 text-center">F. Proceso / Encube</th>
-                            <th class="px-4 py-4">Detalles Técnicos</th>
-                            <th class="px-4 py-4 text-center">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-aceites" class="divide-y divide-slate-100 text-sm text-slate-700">
-                        <tr>
-                            <td colspan="6" class="px-4 py-12 text-center text-slate-400">
-                                <div class="flex flex-col items-center gap-2"><i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i><span>Cargando datos...</span></div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+    <main class="p-4 max-w-6xl mx-auto">
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-50 text-xs font-bold uppercase text-slate-500 border-b">
+                    <tr>
+                        <th class="px-4 py-4">ID / KVA</th>
+                        <th class="px-4 py-4">F. Ingreso</th>
+                        <th class="px-4 py-4">Servicio</th>
+                        <th class="px-4 py-4">F. Proceso / Encube</th>
+                        <th class="px-4 py-4">Detalles Técnicos</th>
+                        <th class="px-4 py-4 text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-aceites" class="divide-y text-sm">
+                    <tr><td colspan="6" class="p-10 text-center text-slate-400 animate-pulse">Cargando pendientes...</td></tr>
+                </tbody>
+            </table>
         </div>
     </main>
 
-    <div id="modal-ensayo" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm transition-opacity" onclick="cerrarModalAceite()"></div>
-        <div class="bg-white w-full h-auto md:max-w-4xl md:rounded-2xl rounded-lg relative z-10 flex flex-col shadow-2xl animate-up max-h-[90vh] overflow-hidden">
+    <div id="modal-ficha" class="fixed inset-0 bg-slate-900/90 hidden z-[60] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl overflow-hidden relative">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-black text-lg flex items-center gap-2"><i data-lucide="info" class="text-blue-500"></i> FICHA TÉCNICA</h3>
+                <button onclick="cerrarFicha()" class="p-1 bg-slate-100 rounded-full"><i data-lucide="x"></i></button>
+            </div>
+            <div id="content-ficha" class="space-y-3 text-sm"></div>
             
-            <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                <div>
-                    <h3 class="font-black text-slate-800 text-lg flex items-center gap-2">
-                        <i data-lucide="clipboard-list" class="w-5 h-5 text-yellow-600"></i> 
-                        <span id="m-titulo">REGISTRO DE LABORATORIO</span>
-                    </h3>
-                    <p class="text-xs text-slate-500 font-mono" id="m-subtitulo">ID: ---</p>
-                </div>
-                <button onclick="cerrarModalAceite()" class="text-slate-400 hover:text-slate-600 bg-white p-1 rounded-full border border-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
+            <hr class="my-6">
+            
+            <label class="block text-xs font-black text-slate-500 uppercase mb-2">Responsable Lab</label>
+            <input type="text" id="responsable" class="w-full border-2 border-slate-200 p-3 rounded-xl outline-none focus:border-yellow-500" placeholder="Nombre completo">
+            
+            <label class="block text-xs font-black text-slate-500 uppercase mt-4 mb-2">Conclusión del Análisis</label>
+            <textarea id="conclusion" class="w-full border-2 border-slate-200 p-3 rounded-xl outline-none h-24 resize-none" placeholder="Escribe el resultado general..."></textarea>
 
-            <form id="form-ensayo" onsubmit="event.preventDefault(); guardarEnsayo();" class="flex-1 overflow-y-auto bg-white">
-                
-                <div id="view-ensayo" class="p-6 space-y-6">
-                    <input type="hidden" id="in-idtrafo">
-                    <input type="hidden" id="in-cliente">
-                    
-                    <div class="bg-slate-100 p-3 rounded-lg border border-slate-200 text-xs grid grid-cols-2 gap-2 mb-4">
-                        <div><span class="font-bold">KVA:</span> <span id="lbl-kva">-</span></div>
-                        <div><span class="font-bold">Marca:</span> <span id="lbl-marca">-</span></div>
-                        <div><span class="font-bold">Serie:</span> <span id="lbl-serie">-</span></div>
-                        <div><span class="font-bold text-blue-600">Aceite (L):</span> <span id="lbl-litros" class="font-black">-</span></div>
-                    </div>
-
-                    <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg flex items-center justify-between">
-                        <label class="text-xs font-bold text-blue-800 uppercase">Ensayo a Realizar:</label>
-                        <select id="in-tipo-ensayo" class="bg-white border border-blue-300 text-blue-900 text-sm font-black rounded px-3 py-1 outline-none">
-                            <option value="PCB">PCB (ENTRADA)</option>
-                            <option value="PARCIAL">PARCIAL (FQ)</option>
-                            <option value="FINAL">FINAL (SALIDA)</option>
-                        </select>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="lbl-input">Fecha Muestreo</label><input type="date" id="in-fecha" class="input-std" required></div>
-                        <div><label class="lbl-input">Técnico</label><select id="in-tecnico" class="input-std"><option value="LAB. INTERNO">LAB. INTERNO</option><option value="EXTERNO">EXTERNO</option></select></div>
-                    </div>
-
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div><label class="lbl-input">Temp. Aceite (°C)</label><input type="number" id="in-temp" class="input-std text-center" placeholder="--"></div>
-                        <div><label class="lbl-input">Humedad Rel. (%)</label><input type="number" id="in-humedad" class="input-std text-center" placeholder="--"></div>
-                        <div><label class="lbl-input">Color (ASTM)</label><input type="number" step="0.5" id="in-color" class="input-std text-center" placeholder="0.5 - 8.0"></div>
-                        <div><label class="lbl-input">Aspecto</label><select id="in-aspecto" class="input-std"><option value="CLARO">CLARO</option><option value="TURBIO">TURBIO</option><option value="SEDIMENTOS">SEDIMENTOS</option></select></div>
-                    </div>
-
-                    <div id="panel-pcb" class="bg-red-50 p-4 rounded-xl border border-red-100 hidden">
-                        <div class="flex justify-between items-center mb-2"><label class="font-black text-red-800 text-sm flex items-center gap-2"><i data-lucide="biohazard" class="w-4 h-4"></i> ANÁLISIS DE PCBs</label><span class="text-[10px] text-red-400 bg-white px-2 rounded border border-red-100">ppm</span></div>
-                        <input type="number" id="in-pcb" class="w-full text-2xl font-black text-center text-red-700 bg-white border border-red-200 rounded-lg p-2 outline-none" placeholder="< 50">
-                    </div>
-
-                    <div id="panel-fq" class="space-y-4">
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <label class="font-black text-slate-700 text-sm mb-3 block flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4 text-blue-500"></i> RIGIDEZ DIELECTRICA (kV)</label>
-                            <div class="grid grid-cols-5 gap-2">
-                                <input type="number" id="in-kv1" class="input-kv" placeholder="1"><input type="number" id="in-kv2" class="input-kv" placeholder="2"><input type="number" id="in-kv3" class="input-kv" placeholder="3"><input type="number" id="in-kv4" class="input-kv" placeholder="4"><input type="number" id="in-kv5" class="input-kv" placeholder="5">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-4">
-                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100"><label class="text-xs font-bold text-blue-800 block mb-1">Agua (ppm)</label><input type="number" id="in-agua" class="w-full bg-white border border-blue-200 rounded p-2 text-center font-bold text-blue-900"></div>
-                            <div class="bg-orange-50 p-3 rounded-lg border border-orange-100"><label class="text-xs font-bold text-orange-800 block mb-1">Acidez</label><input type="number" step="0.001" id="in-acidez" class="w-full bg-white border border-orange-200 rounded p-2 text-center font-bold text-orange-900"></div>
-                            <div class="bg-purple-50 p-3 rounded-lg border border-purple-100"><label class="text-xs font-bold text-purple-800 block mb-1">Tens. IFT</label><input type="number" step="0.1" id="in-ift" class="w-full bg-white border border-purple-200 rounded p-2 text-center font-bold text-purple-900" placeholder="IFT"></div>
-                        </div>
-                    </div>
-
-                    <div><label class="lbl-input">Conclusión</label><textarea id="in-conclusion" class="w-full border border-slate-300 rounded-lg p-3 text-sm h-20 resize-none"></textarea></div>
-                </div>
-
-            </form>
-
-            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
-                <button onclick="cerrarModalAceite()" class="px-5 py-3 font-bold text-slate-500 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
-                <button onclick="document.getElementById('form-ensayo').requestSubmit()" id="btn-save-oil" class="bg-[#ca8a04] hover:bg-[#a16207] text-white px-8 py-3 rounded-lg font-bold shadow-lg transition-transform active:scale-95 flex items-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i> GUARDAR ENSAYO
-                </button>
-            </div>
+            <button id="btn-save" onclick="guardar()" class="w-full bg-[#ca8a04] text-white py-4 rounded-xl font-black mt-6 shadow-lg active:scale-95 transition-all">MARCAR REALIZADO</button>
         </div>
     </div>
 
-    <style>
-        .lbl-input { display: block; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
-        .input-std { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; transition: all 0.2s; }
-        .input-std:focus { border-color: #ca8a04; box-shadow: 0 0 0 2px rgba(202, 138, 4, 0.1); }
-        .input-kv { text-align: center; border: 1px solid #94a3b8; border-radius: 6px; padding: 8px 2px; font-weight: bold; color: #0f172a; outline: none; }
-        .input-kv:focus { background-color: #eff6ff; border-color: #3b82f6; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .animate-up { animation: slideUp 0.3s ease-out forwards; }
-    </style>
-
-    <script src="app.js"></script>
     <script>
-        let listaAceites = [];
+        let dataGlobal = []; let selIdx = -1;
 
-        document.addEventListener("DOMContentLoaded", () => {
-            if(typeof lucide !== 'undefined') lucide.createIcons();
-            cargarListaAceites();
-        });
-
-        function cargarListaAceites() {
-            const container = document.getElementById('tabla-aceites');
-            container.innerHTML = '<tr><td colspan="6" class="px-4 py-12 text-center text-slate-400"><div class="flex flex-col items-center gap-2"><i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i><span>Consultando base de datos...</span></div></td></tr>';
+        async function cargar() {
+            const tbody = document.getElementById('tabla-aceites');
+            tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-slate-400">Consultando base de datos...</td></tr>';
             
             google.script.run.withSuccessHandler(data => {
-                listaAceites = data;
-                renderAceites(data);
-            }).withFailureHandler(err => {
-                container.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-red-500 font-bold bg-red-50">Error de conexión: ${err}</td></tr>`;
+                dataGlobal = data;
+                tbody.innerHTML = data.map((it, i) => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-4 font-black">#${it.id}<br><span class="text-xs text-blue-600">${it.info.kva || 'S/D'} KVA</span></td>
+                        <td class="px-4 py-4 text-xs font-bold text-slate-500">${it.fechaIngreso}</td>
+                        <td class="px-4 py-4"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-black">${it.servicio}</span></td>
+                        <td class="px-4 py-4 text-xs text-center font-mono">${it.f_proceso}</td>
+                        <td class="px-4 py-4 text-xs text-slate-500">${it.cliente}</td>
+                        <td class="px-4 py-4 text-center">
+                            <button onclick="abrirFicha(${i})" class="bg-yellow-500 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">${it.textoBoton}</button>
+                        </td>
+                    </tr>
+                `).join('');
+                lucide.createIcons();
             }).Aceites_ObtenerPendientes();
         }
 
-        function renderAceites(data) {
-            const container = document.getElementById('tabla-aceites');
-            container.innerHTML = '';
-
-            if(data.length === 0) {
-                container.innerHTML = '<tr><td colspan="6" class="px-4 py-12 text-center text-slate-400 flex flex-col items-center"><i data-lucide="check-circle-2" class="w-10 h-10 text-green-200 mb-2"></i><span>No hay trabajos pendientes.</span></td></tr>';
-                if(typeof lucide !== 'undefined') lucide.createIcons();
-                return;
-            }
-
-            data.forEach((item, index) => {
-                // ESTILOS SEGÚN ESTADO LÓGICO
-                let btnClass = "bg-yellow-500 hover:bg-yellow-600 text-white";
-                if(item.accion === "PCB") btnClass = "bg-red-500 hover:bg-red-600 text-white shadow-red-200";
-                if(item.accion === "FINAL") btnClass = "bg-green-600 hover:bg-green-700 text-white shadow-green-200";
-                if(item.accion === "PARCIAL") btnClass = "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200";
-
-                const info = item.info || {};
-                const kva = info.kva ? `${info.kva} KVA` : "KVA S/D";
-                const litros = info.litros ? `${info.litros} L` : "-";
-
-                const html = `
-                <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100">
-                    <td class="px-4 py-4">
-                        <div class="font-mono font-black text-slate-700">#${item.id}</div>
-                        <div class="text-xs text-slate-500 font-bold">${kva}</div>
-                    </td>
-                    <td class="px-4 py-4 text-xs font-bold text-blue-700">${item.fechaIngreso}</td>
-                    <td class="px-4 py-4">
-                        <div class="text-xs font-black text-slate-700 uppercase">${item.tipoServicio}</div>
-                        <div class="text-[10px] text-slate-400 truncate w-32" title="${item.ods}">${item.ods}</div>
-                    </td>
-                    <td class="px-4 py-4 text-center">
-                        <div class="text-xs font-bold text-slate-600">${item.f_proceso || item.f_encube || '-'}</div>
-                    </td>
-                    <td class="px-4 py-4 text-xs text-slate-500">
-                        <div><span class="font-bold">Cliente:</span> ${item.cliente}</div>
-                        <div><span class="font-bold text-blue-600">Aceite:</span> ${litros}</div>
-                        <div><span class="font-bold">Marca:</span> ${info.marca || '-'}</div>
-                    </td>
-                    <td class="px-4 py-4 text-center">
-                        <button onclick="abrirModalEnsayo(${index})" class="${btnClass} px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-sm transition-all active:scale-95 w-full">
-                            ${item.textoBoton}
-                        </button>
-                    </td>
-                </tr>`;
-                container.insertAdjacentHTML('beforeend', html);
-            });
-            if(typeof lucide !== 'undefined') lucide.createIcons();
+        function abrirFicha(idx) {
+            selIdx = idx; const it = dataGlobal[idx];
+            document.getElementById('content-ficha').innerHTML = `
+                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">Marca</p><p class="font-bold">${it.info.marca || '-'}</p></div>
+                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">Serie</p><p class="font-bold">${it.info.serie || '-'}</p></div>
+                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">Voltaje Primario</p><p class="font-bold">${it.info.vp || '-'}</p></div>
+                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">Voltaje Secundario</p><p class="font-bold">${it.info.vs || '-'}</p></div>
+                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">Fases</p><p class="font-bold">${it.info.fases || '-'}</p></div>
+                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">Aceite (L)</p><p class="font-bold text-blue-600">${it.info.aceite || '-'}</p></div>
+                </div>
+                <div class="bg-yellow-50 border border-yellow-200 p-3 rounded-lg text-center">
+                    <p class="text-[10px] text-yellow-600 font-bold uppercase">Derivaciones (ADN)</p>
+                    <p class="text-xl font-black text-yellow-700">${it.info.taps || '0'}</p>
+                </div>
+            `;
+            document.getElementById('modal-ficha').classList.remove('hidden');
+            lucide.createIcons();
         }
 
-        function filtrarAceites() {
-            const q = document.getElementById('buscador-aceite').value.toLowerCase();
-            const filtrados = listaAceites.filter(i => 
-                (i.id||'').toString().toLowerCase().includes(q) || 
-                (i.cliente||'').toLowerCase().includes(q)
-            );
-            renderAceites(filtrados);
-        }
+        function guardar() {
+            const it = dataGlobal[selIdx];
+            const btn = document.getElementById('btn-save');
+            btn.innerText = "GUARDANDO..."; btn.disabled = true;
 
-        // --- LÓGICA DE PESTAÑAS Y MODAL ---
-        function verTab(tab) {
-            document.getElementById('view-ensayo').classList.add('hidden');
-            document.getElementById('view-ficha').classList.add('hidden');
-            document.getElementById('tab-ensayo').className = "flex-1 py-3 text-sm font-bold text-slate-400 hover:text-slate-600";
-            document.getElementById('tab-ficha').className = "flex-1 py-3 text-sm font-bold text-slate-400 hover:text-slate-600";
-            
-            document.getElementById('view-'+tab).classList.remove('hidden');
-            if(tab === 'ensayo') {
-                document.getElementById('tab-ensayo').className = "flex-1 py-3 text-sm font-bold text-yellow-600 border-b-2 border-yellow-500 bg-yellow-50";
-            } else {
-                document.getElementById('tab-ficha').className = "flex-1 py-3 text-sm font-bold text-yellow-600 border-b-2 border-yellow-500 bg-yellow-50";
-            }
-        }
-
-        function abrirModalEnsayo(index) {
-            const item = listaAceites[index];
-            const info = item.info || {};
-            
-            document.getElementById('modal-ensayo').classList.remove('hidden');
-            verTab('ensayo'); 
-            
-            // Datos Base
-            document.getElementById('in-idtrafo').value = item.id;
-            document.getElementById('in-cliente').value = item.cliente;
-            document.getElementById('m-subtitulo').innerText = `ID: ${item.id} | ${item.cliente}`;
-            
-            // Cargar Datos Técnicos en la Ficha Visual
-            document.getElementById('lbl-kva').innerText = info.kva || "-";
-            document.getElementById('lbl-marca').innerText = info.marca || "-";
-            document.getElementById('lbl-serie').innerText = info.serie || "-";
-            document.getElementById('lbl-litros').innerText = info.litros || "-";
-
-            // Cargar Datos Técnicos en la Pestaña Ficha
-            document.getElementById('in-f-serie').value = info.serie || "-";
-            document.getElementById('in-f-kva').value = info.kva || "-";
-            document.getElementById('in-f-litros').value = info.litros || "-";
-            document.getElementById('in-f-volt').value = (info.vp && info.vs) ? `${info.vp} / ${info.vs}` : "-";
-
-            // Configurar Ensayo
-            const tipo = item.accion;
-            document.getElementById('in-tipo-ensayo').value = tipo;
-            
-            // Mostrar/Ocultar Paneles según tipo
-            if(tipo === 'PCB') {
-                document.getElementById('panel-pcb').classList.remove('hidden');
-                document.getElementById('panel-fq').classList.add('hidden');
-            } else {
-                document.getElementById('panel-pcb').classList.add('hidden');
-                document.getElementById('panel-fq').classList.remove('hidden');
-            }
-            
-            // Reset campos ensayo
-            document.getElementById('in-fecha').valueAsDate = new Date();
-            document.getElementById('in-temp').value = ""; document.getElementById('in-humedad').value = ""; document.getElementById('in-color').value = ""; document.getElementById('in-pcb').value = "";
-            document.getElementById('in-kv1').value = ""; document.getElementById('in-kv2').value = ""; document.getElementById('in-kv3').value = ""; document.getElementById('in-kv4').value = ""; document.getElementById('in-kv5').value = "";
-            document.getElementById('in-agua').value = ""; document.getElementById('in-acidez').value = ""; document.getElementById('in-ift').value = ""; document.getElementById('in-conclusion').value = "";
-        }
-
-        function cerrarModalAceite() {
-            document.getElementById('modal-ensayo').classList.add('hidden');
-        }
-
-        function guardarEnsayo() {
-            const btn = document.getElementById('btn-save-oil');
-            const txt = btn.innerHTML;
-            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> GUARDANDO...';
-            btn.disabled = true;
-
-            const datos = {
-                idTrafo: document.getElementById('in-idtrafo').value,
-                cliente: document.getElementById('in-cliente').value,
-                fechaMuestreo: document.getElementById('in-fecha').value,
-                tecnico: document.getElementById('in-tecnico').value,
-                tipoEnsayo: document.getElementById('in-tipo-ensayo').value,
-                
-                temp: document.getElementById('in-temp').value,
-                humedad: document.getElementById('in-humedad').value,
-                color: document.getElementById('in-color').value,
-                aspecto: document.getElementById('in-aspecto').value,
-                pcb: document.getElementById('in-pcb').value,
-                
-                kv1: document.getElementById('in-kv1').value,
-                kv2: document.getElementById('in-kv2').value,
-                kv3: document.getElementById('in-kv3').value,
-                kv4: document.getElementById('in-kv4').value,
-                kv5: document.getElementById('in-kv5').value,
-                
-                agua: document.getElementById('in-agua').value,
-                acidez: document.getElementById('in-acidez').value,
-                ift: document.getElementById('in-ift').value,
-                conclusion: document.getElementById('in-conclusion').value
+            const payload = {
+                idTrafo: it.id,
+                cliente: it.cliente,
+                fecha: new Date().toISOString().split('T')[0],
+                responsable: document.getElementById('responsable').value,
+                conclusion: document.getElementById('conclusion').value,
+                tipoEnsayo: it.accion
             };
 
-            google.script.run.withSuccessHandler(res => {
-                btn.innerHTML = txt;
-                btn.disabled = false;
-                if(res.exito) {
-                    cerrarModalAceite();
-                    cargarListaAceites(); 
-                    if(typeof showToast === 'function') showToast("Guardado Exitoso"); else alert("Guardado");
-                } else {
-                    alert("Error: " + res.error);
-                }
-            }).Aceites_GuardarInforme(datos);
+            google.script.run.withSuccessHandler(() => {
+                cerrarFicha(); cargar();
+                btn.innerText = "MARCAR REALIZADO"; btn.disabled = false;
+            }).Aceites_GuardarInforme(payload);
         }
+
+        function cerrarFicha() { 
+            document.getElementById('modal-ficha').classList.add('hidden'); 
+            document.getElementById('responsable').value = "";
+            document.getElementById('conclusion').value = "";
+        }
+
+        window.onload = cargar;
     </script>
 </body>
 </html>
