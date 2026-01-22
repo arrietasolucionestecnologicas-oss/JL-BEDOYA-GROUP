@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V14.0 - ESTRUCTURA DEFINITIVA) */
+/* JLB OPERACIONES - APP.JS (V13.7 - REPARACIÓN EXTERNA + CAMPO LOCAL) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -90,9 +90,17 @@ function nav(id) {
     if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-function irAlDashboard() { window.open('dashboard.html', '_top'); }
-function abrirLaboratorio() { window.open('VistaCampoPruebas.html', '_blank'); }
-function abrirAceites() { window.open('VistaAceites.html', '_blank'); }
+function irAlDashboard() { google.script.run.withSuccessHandler(url => window.open(url, '_top')).getUrlDashboard(); }
+
+// --- CAMBIO CLAVE: ABRIR ARCHIVO LOCAL/GITHUB ---
+function abrirLaboratorio() { 
+    window.open('VistaCampoPruebas.html', '_blank'); 
+}
+
+function abrirAceites() { 
+    window.open('VistaAceites.html', '_blank');
+}
+
 function recargarActual() { const active = document.querySelector('.view-section.active'); if(active) nav(active.id); }
 
 // --- MODULO PROGRAMACION & WORKFLOW ---
@@ -152,7 +160,7 @@ function abrirModal(i){
     const stepsContainer = document.getElementById('steps-container'); 
     stepsContainer.innerHTML = ''; 
 
-    // --- LOGICA REPARACION EXTERNA ---
+    // --- 1. INYECTAR SELECTOR DE REPARACIÓN EXTERNA ---
     const esExterno = d.tipo_ejecucion === 'EXTERNA';
     const htmlEjecucion = `
         <div class="col-span-full bg-slate-50 p-3 rounded border mb-4 border-slate-300">
@@ -175,6 +183,7 @@ function abrirModal(i){
         </div>
     `;
     stepsContainer.insertAdjacentHTML('beforeend', htmlEjecucion);
+    // ----------------------------------------------------
 
     const estado = (d.estado || "").toUpperCase().trim();
     let workflowHTML = "";
@@ -208,6 +217,7 @@ function abrirModal(i){
                         class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg flex items-center justify-center gap-2 animate-bounce-slow">
                     <i data-lucide="corner-down-left"></i> ✅ REGISTRAR RETORNO DE PROVEEDOR
                 </button>
+                <p class="text-[10px] text-slate-400 text-center">Al confirmar, se activarán las alertas de Laboratorio de Aceites y Pruebas Finales automáticamente.</p>
             </div>
         `;
     }
@@ -240,6 +250,7 @@ function abrirModal(i){
         ];
     }
 
+    // SI ES EXTERNO, FILTRAMOS PASOS VISUALMENTE
     if (esExterno && enProveedor) {
         ps = ps.filter(p => p.id === 'pruebas_ini' || p.id === 'pruebas_fin' || p.id === 'pintura' || p.id === 'listo');
     }
@@ -253,6 +264,7 @@ function abrirModal(i){
         } else {
             valFecha = fechaParaInput(d.fases[p.id]) || (p.id==='listo'?fechaParaInput(d.f_listo):""); 
         }
+        
         const dn = valFecha !== ""; 
         stepsContainer.insertAdjacentHTML('beforeend', `<div class="step-card ${dn?'done':''}"><label class="text-[10px] font-bold uppercase mb-1 ${dn?'text-green-700':'text-slate-400'}">${p.l}</label><input type="date" id="date-${p.id}" value="${valFecha}" class="date-input"></div>`); 
     }); 
@@ -312,12 +324,14 @@ function guardarCambios(){
     const b = document.getElementById('btn-guardar-prog'); 
     const txtOriginal = b.innerHTML; b.innerHTML = 'GUARDANDO...'; b.disabled = true; 
     
+    // RECOLECCIÓN DE DATOS INCLUYENDO EL NUEVO SELECTOR EXTERNO
     const c = { 
         f_oferta: document.getElementById('date-f-oferta').value, 
         f_autorizacion: document.getElementById('date-f-aut').value, 
         observacion: document.getElementById('input-obs-prog').value, 
         remision: document.getElementById('input-remision-prog').value, 
         entrega: document.getElementById('date-entrega').value, 
+        
         pruebas_ini: document.getElementById('date-pruebas_ini')?.value, 
         desencube: document.getElementById('date-desencube')?.value, 
         desensamble: document.getElementById('date-desensamble')?.value, 
@@ -328,11 +342,14 @@ function guardarCambios(){
         pruebas_fin: document.getElementById('date-pruebas_fin')?.value, 
         pintura: document.getElementById('date-pruebas_fin')?.value, 
         listo: document.getElementById('date-listo')?.value, 
+        
         idGroup: document.getElementById('in-idgroup').value, 
         serie: document.getElementById('in-serie').value, 
         ods: document.getElementById('in-ods').value, 
         desc: document.getElementById('in-desc').value, 
         tipo: document.getElementById('in-tipo').value,
+        
+        // --- NUEVOS CAMPOS EXTERNOS ---
         tipo_ejecucion: document.getElementById('sel-ejecucion')?.value || 'INTERNA',
         proveedor: document.getElementById('in-proveedor-dyn')?.value || ''
     }; 
@@ -372,20 +389,31 @@ function filtrarAlquiler() {
     const t = document.getElementById('tabla-alq');
     if(!t) return;
     t.innerHTML = '';
+    
     const filtrados = datosAlq.filter(item => {
         const matchKVA = kva === "" || item.kva.toString().toLowerCase().includes(kva);
         const matchVolt = volt === "" || item.voltajes.toString().toLowerCase().includes(volt);
         return matchKVA && matchVolt;
     });
-    if(filtrados.length === 0) { t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>'; return; }
+
+    if(filtrados.length === 0) {
+        t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>';
+        return;
+    }
+
     filtrados.forEach((r, i) => { 
-        const btnFoto = r.foto ? `<a href="${r.foto}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="folder-open" class="w-5 h-5"></i></a>` : '<span class="text-slate-300">-</span>'; 
+        const btnFoto = r.foto 
+            ? `<a href="${r.foto}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="folder-open" class="w-5 h-5"></i></a>` 
+            : '<span class="text-slate-300">-</span>'; 
+        
         let badgeClass = 'bg-gray-100 text-slate-700'; 
         if (r.estado.includes("DISPONIBLE")) badgeClass = 'bg-green-100 text-green-700'; 
-        else if (r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700'; 
+        else if (r.estado === "PRESTADO" || r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700'; 
         else if (r.estado.includes("MANTENIMIENTO")) badgeClass = 'bg-orange-100 text-orange-700'; 
         else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700'; 
+        
         const indexReal = datosAlq.indexOf(r);
+
         t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); 
     }); 
     if(typeof lucide !== 'undefined') lucide.createIcons(); 
@@ -395,45 +423,70 @@ function editarAlquiler(i) {
     const d = datosAlq[i]; 
     abrirModalAlq(false); 
     document.getElementById('title-modal-alq').innerText = "Editar Alquiler"; 
-    document.getElementById('alq-codigo').value = d.codigo; document.getElementById('alq-codigo').readOnly = true; 
-    document.getElementById('alq-kva').value = d.kva; document.getElementById('alq-marca').value = d.marca; 
-    document.getElementById('alq-volt').value = d.voltajes; document.getElementById('alq-cliente').value = d.cliente; 
-    document.getElementById('alq-salida').value = fechaParaInput(d.salida); document.getElementById('alq-regreso').value = fechaParaInput(d.regreso); 
+    document.getElementById('alq-codigo').value = d.codigo; 
+    document.getElementById('alq-codigo').readOnly = true; 
+    document.getElementById('alq-kva').value = d.kva; 
+    document.getElementById('alq-marca').value = d.marca; 
+    document.getElementById('alq-volt').value = d.voltajes; 
+    document.getElementById('alq-cliente').value = d.cliente; 
+    document.getElementById('alq-salida').value = fechaParaInput(d.salida); 
+    document.getElementById('alq-regreso').value = fechaParaInput(d.regreso); 
+    
     const sel = document.getElementById('alq-estado-manual');
     const estadosValidos = ["DISPONIBLE", "MANTENIMIENTO", "REPARACION", "PRESTADO"];
-    if(estadosValidos.includes(d.estado)) sel.value = d.estado;
-    else { if(d.estado.includes("DISPONIBLE")) sel.value = "DISPONIBLE"; else if(d.estado.includes("MANTENIMIENTO")) sel.value = "MANTENIMIENTO"; else if(d.estado.includes("REPARACION")) sel.value = "REPARACION"; else if(d.estado.includes("PRESTADO")) sel.value = "PRESTADO"; else sel.value = "DISPONIBLE"; }
-    alqFotosNuevas = []; document.getElementById('alq-preview-container').innerHTML = ''; document.getElementById('alq-preview-container').classList.add('hidden');
+    
+    if(estadosValidos.includes(d.estado)) {
+        sel.value = d.estado;
+    } else {
+        if(d.estado.includes("DISPONIBLE")) sel.value = "DISPONIBLE";
+        else if(d.estado.includes("MANTENIMIENTO")) sel.value = "MANTENIMIENTO";
+        else if(d.estado.includes("REPARACION")) sel.value = "REPARACION";
+        else if(d.estado.includes("PRESTADO")) sel.value = "PRESTADO";
+        else sel.value = "DISPONIBLE"; 
+    }
+
+    alqFotosNuevas = []; 
+    document.getElementById('alq-preview-container').innerHTML = '';
+    document.getElementById('alq-preview-container').classList.add('hidden');
 }
 
 function abrirModalAlq(nuevo) { 
     document.getElementById('modal-alq').classList.remove('hidden'); 
-    const btn = document.getElementById('btn-alq-save'); btn.innerText = "Guardar"; btn.disabled = false; 
+    const btn = document.getElementById('btn-alq-save'); 
+    btn.innerText = "Guardar"; 
+    btn.disabled = false; 
     if(nuevo) { 
         document.getElementById('title-modal-alq').innerText = "Registrar Nuevo"; 
         document.getElementById('form-alq').reset(); 
         document.getElementById('alq-codigo').readOnly = false; 
-        alqFotosNuevas = []; document.getElementById('alq-preview-container').innerHTML = ''; document.getElementById('alq-preview-container').classList.add('hidden');
+        alqFotosNuevas = [];
+        document.getElementById('alq-preview-container').innerHTML = '';
+        document.getElementById('alq-preview-container').classList.add('hidden');
     } 
 }
 
 function cerrarModalAlq() { document.getElementById('modal-alq').classList.add('hidden'); }
 
-// --- FOTOS SECUENCIAL ---
+// --- FUNCIONES DE CÁMARA Y GALERÍA (SECUENCIAL) ---
 async function procesarFotosInmediato(input) { 
     const idTrafo = document.getElementById('foto-trafo').value; 
     if(!idTrafo) { alert("¡Escribe primero el ID del Trafo!"); input.value = ""; return; } 
+    
     if (input.files && input.files.length > 0) { 
         const statusDiv = document.getElementById('status-fotos'); 
         const listaDiv = document.getElementById('lista-fotos'); 
         const etapa = document.getElementById('foto-etapa').value; 
+        
         statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Iniciando carga secuencial...</span>'; 
         const archivos = Array.from(input.files);
+
+        // BUCLE SECUENCIAL (NO PARALELO)
         for (const file of archivos) {
             const divPreview = document.createElement('div'); 
             divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50 mb-1"; 
             divPreview.innerHTML = `<span class="text-xs truncate font-bold w-2/3">${file.name}</span><span class="text-xs text-blue-500">Procesando...</span>`; 
             listaDiv.prepend(divPreview); 
+
             try {
                 const base64 = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -441,13 +494,31 @@ async function procesarFotosInmediato(input) {
                     reader.onerror = (e) => reject(e);
                     reader.readAsDataURL(file);
                 });
+
                 await new Promise((resolve, reject) => {
-                    google.script.run.withSuccessHandler(res => {
-                            if(res.exito){ divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200 mb-1"; divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800 w-2/3">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`; if(typeof lucide !== 'undefined') lucide.createIcons(); resolve(); } 
-                            else { divPreview.className = "bg-red-50 p-2 rounded border border-red-200 mb-1"; divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`; reject(res.error); } 
-                    }).withFailureHandler(err => { divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`; reject(err); }).subirFotoProceso({ base64: base64, idTrafo: idTrafo, etapa: etapa });
+                    google.script.run
+                        .withSuccessHandler(res => {
+                            if(res.exito){ 
+                                divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200 mb-1"; 
+                                divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800 w-2/3">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`; 
+                                if(typeof lucide !== 'undefined') lucide.createIcons(); 
+                                resolve();
+                            } else { 
+                                divPreview.className = "bg-red-50 p-2 rounded border border-red-200 mb-1"; 
+                                divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`; 
+                                reject(res.error);
+                            } 
+                        })
+                        .withFailureHandler(err => { 
+                            divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`; 
+                            reject(err);
+                        })
+                        .subirFotoProceso({ base64: base64, idTrafo: idTrafo, etapa: etapa });
                 });
-            } catch (error) { console.error("Error subiendo foto:", error); }
+
+            } catch (error) {
+                console.error("Error subiendo foto:", error);
+            }
         }
         statusDiv.innerHTML = '<span class="text-green-600 font-bold">¡Carga completa!</span>';
         setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
@@ -460,6 +531,7 @@ function previewAlqFoto(input) {
         const container = document.getElementById('alq-preview-container');
         container.classList.remove('hidden');
         document.getElementById('btn-limpiar-fotos').classList.remove('hidden');
+
         Array.from(input.files).forEach(file => {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -469,11 +541,19 @@ function previewAlqFoto(input) {
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 1000;
                     const scaleSize = MAX_WIDTH / img.width;
-                    if (img.width > MAX_WIDTH) { canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize; } else { canvas.width = img.width; canvas.height = img.height; }
+                    if (img.width > MAX_WIDTH) {
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                    } else {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                    }
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
                     const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
                     alqFotosNuevas.push(compressedDataUrl); 
+                    
                     const div = document.createElement('div');
                     div.className = "aspect-square rounded border border-slate-200 overflow-hidden relative";
                     div.innerHTML = `<img src="${compressedDataUrl}" class="w-full h-full object-cover">`;
@@ -482,31 +562,65 @@ function previewAlqFoto(input) {
             };
             reader.readAsDataURL(file);
         });
+        
         input.value = "";
     }
 }
 
-function limpiarFotosAlq() { alqFotosNuevas = []; const container = document.getElementById('alq-preview-container'); container.innerHTML = ''; container.classList.add('hidden'); document.getElementById('btn-limpiar-fotos').classList.add('hidden'); }
+function limpiarFotosAlq() {
+    alqFotosNuevas = [];
+    const container = document.getElementById('alq-preview-container');
+    container.innerHTML = '';
+    container.classList.add('hidden');
+    document.getElementById('btn-limpiar-fotos').classList.add('hidden');
+}
 
 function guardarAlquiler() { 
     const estadoSeleccionado = document.getElementById('alq-estado-manual').value;
     let cliente = document.getElementById('alq-cliente').value;
     if(estadoSeleccionado !== "PRESTADO") { cliente = ""; }
-    const d = { codigo: document.getElementById('alq-codigo').value, kva: document.getElementById('alq-kva').value, marca: document.getElementById('alq-marca').value, voltajes: document.getElementById('alq-volt').value, cliente: cliente, salida: document.getElementById('alq-salida').value, regreso: document.getElementById('alq-regreso').value, estadoManual: estadoSeleccionado }; 
+
+    const d = { 
+        codigo: document.getElementById('alq-codigo').value, 
+        kva: document.getElementById('alq-kva').value, 
+        marca: document.getElementById('alq-marca').value, 
+        voltajes: document.getElementById('alq-volt').value, 
+        cliente: cliente, 
+        salida: document.getElementById('alq-salida').value, 
+        regreso: document.getElementById('alq-regreso').value, 
+        estadoManual: estadoSeleccionado 
+    }; 
+    
     enviarAlquiler(d);
+    
     cerrarModalAlq();
     showToast("Datos guardados. Procesando fotos...");
+
     if(alqFotosNuevas.length > 0) {
          showToast("Subiendo fotos en segundo plano...", "info");
          google.script.run.withSuccessHandler(res => {
              if(res.exito) {
-                 google.script.run.withSuccessHandler(() => { showToast("✅ Fotos subidas y vinculadas."); cargarAlquiler(); }).actualizarFotoAlquiler({ codigo: d.codigo, url: res.url });
-             } else { showToast("Error subiendo fotos: " + res.error, 'error'); }
+                 google.script.run.withSuccessHandler(() => {
+                     showToast("✅ Fotos subidas y vinculadas.");
+                     cargarAlquiler(); 
+                 }).actualizarFotoAlquiler({ codigo: d.codigo, url: res.url });
+             } else {
+                 showToast("Error subiendo fotos: " + res.error, 'error');
+             }
          }).subirFotosAlquilerBatch({ listaBase64: alqFotosNuevas, codigo: d.codigo });
     }
 }
 
-function enviarAlquiler(d){ google.script.run.withSuccessHandler(() => { cargarAlquiler(); alqFotosNuevas=[]; }).withFailureHandler(e => { showToast("Error guardar: " + e, 'error'); }).guardarAlquiler(d); }
+function enviarAlquiler(d){ 
+    google.script.run.withSuccessHandler(() => { 
+        cargarAlquiler(); 
+        alqFotosNuevas=[]; 
+    }).withFailureHandler(e => { 
+        showToast("Error guardar: " + e, 'error'); 
+    }).guardarAlquiler(d); 
+}
+
+// --- RESTO DE FUNCIONES (CORREGIDAS) ---
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); if(!dl) return; dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
 function abrirModalNuevaEntrada() { document.getElementById('modal-nueva-entrada').classList.remove('hidden'); setTimeout(initCanvas, 100); }
