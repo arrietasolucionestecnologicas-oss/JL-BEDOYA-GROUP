@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V13.7 - REPARACIÓN EXTERNA + CAMPO LOCAL) */
+/* JLB OPERACIONES - APP.JS (V14.0 - INTEGRIDAD FINAL) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -92,7 +92,7 @@ function nav(id) {
 
 function irAlDashboard() { google.script.run.withSuccessHandler(url => window.open(url, '_top')).getUrlDashboard(); }
 
-// --- CAMBIO CLAVE: ABRIR ARCHIVO LOCAL/GITHUB ---
+// --- ENLACES EXTERNOS ---
 function abrirLaboratorio() { 
     window.open('VistaCampoPruebas.html', '_blank'); 
 }
