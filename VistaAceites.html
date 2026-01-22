@@ -12,13 +12,12 @@
         .card-oil { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; transition: transform 0.2s; cursor: pointer; }
         .card-oil:hover { transform: translateY(-4px); border-color: #ca8a04; }
         .badge-step { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .tech-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px dashed #cbd5e1; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
     <script>
-        // URL ACTUALIZADA A LA NUEVA IMPLEMENTACIÓN (V12.9 FIX)
+        // URL NUEVA V13
         const URL_API = "https://script.google.com/macros/s/AKfycbzVU2GRgkaYB6BBUyh5QWCmiCSjnbwS_tGwEGbd6o8u7hz6JwC98cTVhhOb4AmIQJXREQ/exec";
     </script>
 
@@ -33,32 +32,16 @@
     </header>
 
     <main class="max-w-5xl mx-auto">
-        
-        <div class="grid grid-cols-3 gap-4 mb-8">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
-                <span class="text-3xl font-black text-slate-700" id="stat-total">0</span>
-                <span class="text-[10px] uppercase font-bold text-slate-400 mt-1">Pendientes</span>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
-                <span class="text-3xl font-black text-red-500" id="stat-pcb">0</span>
-                <span class="text-[10px] uppercase font-bold text-slate-400 mt-1">PCB Inicial</span>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
-                <span class="text-3xl font-black text-green-600" id="stat-final">0</span>
-                <span class="text-[10px] uppercase font-bold text-slate-400 mt-1">Calidad Final</span>
-            </div>
-        </div>
-
         <div id="grid-pendientes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="col-span-full py-20 text-center text-slate-400">
                 <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-3"></i>
-                <p class="text-sm font-bold">Sincronizando con Producción...</p>
+                <p class="text-sm font-bold">Cargando...</p>
             </div>
         </div>
     </main>
 
-    <div id="modal-ficha" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden transform transition-all scale-100">
+    <div id="modal-ficha" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden transform transition-all scale-100 my-8">
             
             <div class="bg-slate-50 border-b border-slate-100 p-6 flex justify-between items-start">
                 <div>
@@ -72,12 +55,11 @@
 
             <div class="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                 
-                <div class="mb-6" id="m-alerta-accion">
-                    </div>
+                <div class="mb-6" id="m-alerta-accion"></div>
 
                 <div class="mb-6">
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Ficha Técnica (Campo)</h4>
-                    <div class="grid grid-cols-2 gap-3" id="m-datos-tecnicos">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 border-b pb-2">Hoja de Vida del Equipo</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="m-datos-tecnicos">
                         </div>
                 </div>
 
@@ -85,15 +67,14 @@
                     <h4 class="text-sm font-bold text-yellow-800 uppercase mb-4 flex items-center gap-2">
                         <i data-lucide="flask-conical" class="w-4 h-4"></i> Registro de Laboratorio
                     </h4>
-                    
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1">Responsable</label>
-                            <input type="text" id="responsable" class="w-full border-slate-300 rounded-lg text-sm font-bold p-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none" placeholder="Nombre del Analista">
+                            <input type="text" id="responsable" class="w-full border-slate-300 rounded-lg text-sm font-bold p-2.5 focus:ring-2 focus:ring-yellow-500 outline-none" placeholder="Nombre del Analista">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1">Conclusión General</label>
-                            <select id="conclusion" class="w-full border-slate-300 rounded-lg text-sm p-2.5 font-bold focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none bg-white">
+                            <select id="conclusion" class="w-full border-slate-300 rounded-lg text-sm p-2.5 font-bold focus:ring-2 focus:ring-yellow-500 outline-none bg-white">
                                 <option value="">Seleccione...</option>
                                 <option value="APROBADO">✅ APROBADO (CUMPLE NORMA)</option>
                                 <option value="RECHAZADO">❌ RECHAZADO (NO CUMPLE)</option>
@@ -119,19 +100,12 @@
         async function apiRequest(action, payload = {}) {
             const body = JSON.stringify({ action, payload });
             const res = await fetch(URL_API, { method: 'POST', body });
-            const data = await res.json();
-            return data;
+            return await res.json();
         }
 
         async function cargarListaAceites() {
             const grid = document.getElementById('grid-pendientes');
-            // Loader visual
-            grid.innerHTML = `
-                <div class="col-span-full flex flex-col items-center justify-center py-20 opacity-50">
-                    <i data-lucide="loader" class="w-12 h-12 animate-spin text-yellow-600 mb-4"></i>
-                    <p class="font-bold text-slate-600">Conectando con Producción...</p>
-                </div>
-            `;
+            grid.innerHTML = '<div class="col-span-full py-20 text-center text-slate-400"><i data-lucide="loader" class="w-10 h-10 animate-spin mx-auto mb-3"></i><p>Cargando...</p></div>';
             lucide.createIcons();
 
             try {
@@ -139,7 +113,7 @@
                 dataGlobal = res;
                 renderGrid(res);
             } catch (e) {
-                grid.innerHTML = `<div class="col-span-full p-6 bg-red-50 text-red-600 rounded-xl border border-red-200 text-center font-bold">Error de Conexión: ${e.message}</div>`;
+                grid.innerHTML = `<div class="col-span-full p-6 bg-red-50 text-red-600 rounded-xl text-center font-bold">Error: ${e.message}</div>`;
             }
         }
 
@@ -147,116 +121,76 @@
             const grid = document.getElementById('grid-pendientes');
             grid.innerHTML = '';
 
-            // Contadores
-            let cPcb = 0, cFin = 0;
-
             if (lista.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
-                        <i data-lucide="check-circle-2" class="w-16 h-16 text-green-500 mb-4 opacity-50"></i>
-                        <h3 class="text-xl font-bold text-slate-600">¡Todo al día!</h3>
-                        <p>No hay ensayos pendientes por realizar.</p>
-                    </div>
-                `;
-                actualizarStats(0,0,0);
+                grid.innerHTML = '<div class="col-span-full py-20 text-center text-slate-400"><i data-lucide="check-circle-2" class="w-16 h-16 text-green-500 mb-4 mx-auto opacity-50"></i><h3>Todo al día</h3></div>';
                 lucide.createIcons();
                 return;
             }
 
             lista.forEach((item, i) => {
-                // Colores dinámicos
                 let color = "bg-blue-50 text-blue-700 border-blue-200";
                 let icon = "test-tube-2";
-                
-                if(item.accion === 'PCB') { color = "bg-red-50 text-red-700 border-red-200"; icon = "alert-triangle"; cPcb++; }
-                else if(item.accion === 'FINAL') { color = "bg-green-50 text-green-700 border-green-200"; icon = "check-circle"; cFin++; }
+                if(item.accion === 'PCB') { color = "bg-red-50 text-red-700 border-red-200"; icon = "alert-triangle"; }
+                else if(item.accion === 'FINAL') { color = "bg-green-50 text-green-700 border-green-200"; icon = "check-circle"; }
 
-                // Info Técnica breve
                 const kva = item.info.kva || '---';
                 const serie = item.info.serie || 'S/N';
 
                 const card = `
                     <div class="card-oil p-5 relative overflow-hidden group" onclick="abrirFicha(${i})">
-                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <i data-lucide="${icon}" class="w-24 h-24"></i>
-                        </div>
-                        
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="${icon}" class="w-24 h-24"></i></div>
                         <div class="flex justify-between items-start mb-3 relative z-10">
                             <span class="badge-step ${color} border">${item.textoBoton}</span>
                             <span class="text-xs font-mono text-slate-400">${item.fechaIngreso}</span>
                         </div>
-
                         <h3 class="font-black text-slate-800 text-lg mb-1 relative z-10">#${item.id}</h3>
                         <p class="text-sm text-slate-600 font-medium mb-4 line-clamp-1 relative z-10">${item.cliente}</p>
-
                         <div class="flex items-center gap-3 text-xs text-slate-500 bg-slate-50 p-2 rounded-lg relative z-10">
-                            <div class="flex items-center gap-1">
-                                <i data-lucide="zap" class="w-3 h-3"></i> <strong>${kva} KVA</strong>
-                            </div>
-                            <div class="w-px h-3 bg-slate-300"></div>
-                            <div class="flex items-center gap-1">
-                                <i data-lucide="hash" class="w-3 h-3"></i> <span>${serie}</span>
-                            </div>
+                            <span><i data-lucide="zap" class="w-3 h-3 inline"></i> <strong>${kva} KVA</strong></span>
+                            <span class="w-px h-3 bg-slate-300"></span>
+                            <span><i data-lucide="hash" class="w-3 h-3 inline"></i> ${serie}</span>
                         </div>
                     </div>
                 `;
                 grid.insertAdjacentHTML('beforeend', card);
             });
-
-            actualizarStats(lista.length, cPcb, cFin);
             lucide.createIcons();
-        }
-
-        function actualizarStats(t, p, f) {
-            document.getElementById('stat-total').innerText = t;
-            document.getElementById('stat-pcb').innerText = p;
-            document.getElementById('stat-final').innerText = f;
         }
 
         function abrirFicha(idx) {
             selIdx = idx;
             const it = dataGlobal[idx];
-            const info = it.info;
+            const info = it.info || {};
 
             document.getElementById('m-id').innerText = "#" + it.id;
             document.getElementById('m-cliente').innerText = it.cliente;
 
-            // Renderizar Alerta
             const divAlerta = document.getElementById('m-alerta-accion');
-            let alertaHtml = '';
-            if(it.accion === 'PCB') {
-                alertaHtml = `<div class="bg-red-100 text-red-800 p-3 rounded-lg text-sm font-bold flex items-center gap-2 border border-red-200"><i data-lucide="alert-octagon" class="w-5 h-5"></i> REQUIERE PRUEBA DE PCB (INGRESO)</div>`;
-            } else if (it.accion === 'FINAL') {
-                alertaHtml = `<div class="bg-green-100 text-green-800 p-3 rounded-lg text-sm font-bold flex items-center gap-2 border border-green-200"><i data-lucide="check-circle-2" class="w-5 h-5"></i> REQUIERE CALIDAD FINAL (SALIDA)</div>`;
-            } else {
-                alertaHtml = `<div class="bg-blue-100 text-blue-800 p-3 rounded-lg text-sm font-bold flex items-center gap-2 border border-blue-200"><i data-lucide="test-tube" class="w-5 h-5"></i> REQUIERE ANÁLISIS PARCIAL</div>`;
-            }
-            divAlerta.innerHTML = alertaHtml;
+            divAlerta.innerHTML = `<div class="bg-slate-100 text-slate-700 p-3 rounded-lg text-sm font-bold border border-slate-200 text-center uppercase">${it.textoBoton}</div>`;
 
-            // Renderizar Datos Técnicos (Heredados de Campo)
+            // RENDERIZADO COMPLETO DE CAMPOS
+            const fields = [
+                { l: "Potencia", v: info.kva, u: "KVA" },
+                { l: "Marca", v: info.marca },
+                { l: "Serie", v: info.serie },
+                { l: "Tensión P.", v: info.vp, u: "V" },
+                { l: "Tensión S.", v: info.vs, u: "V" },
+                { l: "Aceite", v: info.litros, u: "Lts", hl: true },
+                { l: "Peso Total", v: info.peso, u: "Kg" },
+                { l: "Año Fab.", v: info.anio },
+                { l: "Grupo Conex.", v: info.grupo },
+                { l: "Tipo", v: info.tipo },
+                { l: "Fases", v: info.fases },
+                { l: "Taps", v: info.taps }
+            ];
+
             const divTec = document.getElementById('m-datos-tecnicos');
-            divTec.innerHTML = `
-                <div class="bg-white p-2 rounded border border-slate-200">
-                    <p class="text-[10px] text-slate-400 uppercase font-bold">Potencia</p>
-                    <p class="text-sm font-black text-slate-700">${info.kva || '-'} KVA</p>
+            divTec.innerHTML = fields.map(f => `
+                <div class="bg-white p-2 rounded border ${f.hl ? 'border-blue-300 bg-blue-50' : 'border-slate-200'}">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">${f.l}</p>
+                    <p class="text-sm font-black ${f.hl ? 'text-blue-700' : 'text-slate-700'}">${f.v || '-'} ${f.u || ''}</p>
                 </div>
-                <div class="bg-white p-2 rounded border border-slate-200">
-                    <p class="text-[10px] text-slate-400 uppercase font-bold">Marca</p>
-                    <p class="text-sm font-black text-slate-700">${info.marca || '-'}</p>
-                </div>
-                <div class="bg-white p-2 rounded border border-slate-200">
-                    <p class="text-[10px] text-slate-400 uppercase font-bold">Voltajes</p>
-                    <p class="text-xs font-bold text-slate-600">${info.vp || '?'} / ${info.vs || '?'}</p>
-                </div>
-                <div class="bg-white p-2 rounded border border-slate-200">
-                    <p class="text-[10px] text-slate-400 uppercase font-bold">Aceite (L)</p>
-                    <p class="text-sm font-black text-blue-600">${info.litros || '0'} Lts</p>
-                </div>
-                <div class="col-span-2 bg-slate-100 p-2 rounded border border-slate-200 flex justify-between items-center">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase">Derivaciones (Taps)</span>
-                    <span class="text-sm font-black text-slate-800">${info.taps || 'N/A'}</span>
-                </div>
-            `;
+            `).join('');
 
             document.getElementById('modal-ficha').classList.remove('hidden');
             lucide.createIcons();
@@ -274,16 +208,11 @@
             
             try {
                 await apiRequest('Aceites_GuardarInforme', {
-                    idTrafo: it.id, 
-                    cliente: it.cliente, 
-                    fecha: new Date().toISOString().split('T')[0],
-                    responsable: resp, 
-                    conclusion: concl, 
-                    tipoEnsayo: it.accion
+                    idTrafo: it.id, cliente: it.cliente, fecha: new Date().toISOString().split('T')[0],
+                    responsable: resp, conclusion: concl, tipoEnsayo: it.accion
                 });
-                
                 cerrarFicha(); 
-                cargarListaAceites(); // Recargar para quitar de la lista
+                cargarListaAceites();
             } catch(e) {
                 alert("Error: " + e.message);
                 btn.innerText = "CONFIRMAR REALIZADO"; btn.disabled = false;
@@ -298,7 +227,6 @@
             document.getElementById('btn-save').disabled = false;
         }
 
-        // Auto-carga al iniciar
         window.onload = cargarListaAceites;
     </script>
 </body>
