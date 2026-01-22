@@ -29,280 +29,430 @@
     <div id="toast-container"></div>
 
     <div id="wrapper-operaciones" class="flex h-full w-full flex-col md:flex-row">
-        
-        <aside class="w-64 bg-[#0F172A] text-slate-400 hidden md:flex flex-col shadow-2xl z-30">
-            <div class="h-20 flex items-center px-6 border-b border-slate-800/50 gap-2">
-                <span class="text-[#84cc16] font-black text-3xl">JLB</span>
-                <div class="leading-tight"><span class="text-white block font-bold">Group</span><span class="text-[10px] uppercase tracking-wider">Operaciones</span></div>
+        <aside class="hidden md:flex w-64 flex-col bg-slate-900 text-white shadow-xl z-20">
+            <div class="p-6 border-b border-slate-800">
+                <h1 class="text-xl font-black tracking-tight text-white flex items-center gap-2">
+                    <i data-lucide="zap" class="text-green-500"></i> JLB GROUP
+                </h1>
+                <p class="text-[10px] text-slate-400 mt-1 tracking-widest uppercase">Sistema Integrado V13</p>
             </div>
-            <nav class="flex-1 p-4 space-y-2">
-                <button onclick="nav('programacion')" id="btn-programacion" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:text-white transition-colors"><i data-lucide="kanban-square"></i> Programación</button>
-                <button onclick="nav('entradas')" id="btn-entradas" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:text-white transition-colors"><i data-lucide="package-plus"></i> Entradas</button>
-                <button onclick="nav('logistica')" id="btn-logistica" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:text-white transition-colors"><i data-lucide="truck"></i> Logística</button>
-                <button onclick="nav('control')" id="btn-control" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:text-white transition-colors"><i data-lucide="list-todo"></i> Control Procesos</button>
-                <div class="pt-4 mt-4 border-t border-slate-700">
-                    <button onclick="abrirLaboratorio()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-purple-400 hover:text-white hover:bg-slate-800 transition-colors font-bold mb-2"><i data-lucide="flask-conical"></i> LABORATORIO (G)</button>
-                    <button onclick="abrirAceites()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-yellow-400 hover:text-white hover:bg-slate-800 transition-colors font-bold mb-2"><i data-lucide="droplet"></i> LAB. ACEITES</button>
-                    <button onclick="irAlDashboard()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-blue-400 hover:bg-slate-800 transition-colors font-bold"><i data-lucide="bar-chart-3"></i> IR A DASHBOARD</button>
-                </div>
+            
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                <button onclick="nav('programacion')" id="btn-programacion" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i data-lucide="calendar-days" class="w-5 h-5"></i> <span class="font-bold text-sm">Programación</span>
+                </button>
+                <button onclick="nav('entradas')" id="btn-entradas" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i data-lucide="package-plus" class="w-5 h-5"></i> <span class="font-bold text-sm">Entradas</span>
+                </button>
+                <button onclick="nav('logistica')" id="btn-logistica" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i data-lucide="truck" class="w-5 h-5"></i> <span class="font-bold text-sm">Logística</span>
+                </button>
+                <button onclick="nav('control')" id="btn-control" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                    <i data-lucide="clipboard-check" class="w-5 h-5"></i> <span class="font-bold text-sm">Control</span>
+                </button>
             </nav>
+
+            <div class="p-4 border-t border-slate-800 space-y-2">
+                <button onclick="irAlDashboard()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded text-xs font-bold flex items-center justify-center gap-2 border border-slate-700">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> DASHBOARD
+                </button>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="abrirLaboratorio()" class="bg-blue-900 hover:bg-blue-800 text-white py-2 rounded text-xs font-bold flex items-center justify-center gap-1 border border-blue-800">
+                        <i data-lucide="flask-conical" class="w-3 h-3"></i> CAMPO
+                    </button>
+                    <button onclick="abrirAceites()" class="bg-yellow-700 hover:bg-yellow-600 text-white py-2 rounded text-xs font-bold flex items-center justify-center gap-1 border border-yellow-800">
+                        <i data-lucide="droplet" class="w-3 h-3"></i> ACEITES
+                    </button>
+                </div>
+            </div>
         </aside>
 
-        <div class="flex-1 flex flex-col h-full relative">
-            <header class="h-14 md:h-16 glass-header flex items-center justify-between px-4 md:px-6 z-20 sticky top-0">
-                <div class="flex items-center gap-3">
-                    <div class="md:hidden flex items-center gap-1">
-                        <span class="text-[#84cc16] font-black text-xl">JLB</span><span class="text-slate-800 font-bold text-sm">Group</span>
-                    </div>
-                    <h2 id="header-title" class="hidden md:block text-lg font-bold text-slate-800 uppercase">PROGRAMACIÓN</h2>
+        <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-100">
+            
+            <header class="glass-header md:hidden p-4 flex justify-between items-center z-30 sticky top-0">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="zap" class="w-6 h-6 text-green-600 fill-current"></i>
+                    <span class="font-black text-lg text-slate-800 tracking-tight">JLB GROUP</span>
                 </div>
-                <button onclick="recargarActual()" class="bg-white border border-slate-300 text-slate-600 px-3 py-2 rounded-lg flex gap-2 hover:bg-slate-50 text-sm font-bold shadow-sm active:scale-95 transition-transform"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+                <button onclick="irAlDashboard()" class="bg-slate-800 text-white p-2 rounded-full shadow-lg">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                </button>
             </header>
 
-            <main class="flex-1 overflow-y-auto p-3 md:p-6 bg-slate-100 pb-24 md:pb-6">
-                <section id="programacion" class="view-section active">
-                    <div class="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-3">
-                          <div class="flex-1 w-full"><input type="text" id="searchProg" onkeyup="filtrarProg()" placeholder="Buscar cliente, ID o estado..." class="w-full px-4 py-3 border border-slate-300 rounded-xl shadow-sm outline-none focus:ring-2 ring-blue-500 text-base"></div>
-                          <button onclick="abrirModalHistorico()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow active:scale-95 transition-transform"><i data-lucide="archive"></i> Cargar Histórico</button>
-                    </div>
-                    <div class="hidden md:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200"><tr><th class="px-6 py-4">ID / Grupo</th><th class="px-6 py-4">F. Ingreso</th><th class="px-6 py-4">Cliente</th><th class="px-6 py-4">Estado</th><th class="px-6 py-4 text-center">Ver</th></tr></thead><tbody id="tabla-prog-desktop" class="divide-y divide-slate-100 text-sm"></tbody></table></div>
-                    </div>
-                    <div id="lista-prog-mobile" class="md:hidden space-y-3"></div>
-                </section>
-
-                <section id="entradas" class="view-section">
-                    <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-700 text-lg">Bitácora</h3><button onclick="abrirModalNuevaEntrada()" class="bg-[#0284c7] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-500/30 hover:bg-sky-700 flex items-center gap-2 transition-transform active:scale-95"><i data-lucide="pen-tool"></i> Registrar</button></div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="grid-entradas"></div>
-                </section>
-
-                <section id="logistica" class="view-section">
-                      <div class="log-nav no-scrollbar"><button class="log-btn active" onclick="subLog('term')" id="btn-log-term">Terminados</button><button class="log-btn" onclick="subLog('alq')" id="btn-log-alq">Alquiler JLB</button><button class="log-btn" onclick="subLog('pat')" id="btn-log-pat">Patio</button></div>
-                      <div id="view-term" class="log-view active"><div class="bg-white rounded-xl border border-slate-200 p-4"><div id="lista-terminados" class="space-y-3"></div></div></div>
-                      
-                      <div id="view-alq" class="log-view">
-                          <div class="flex flex-col md:flex-row justify-between items-end mb-4 gap-4">
-                             <div class="flex gap-2 w-full md:w-auto">
-                                 <div class="w-full md:w-40">
-                                    <label class="text-[10px] font-bold text-slate-500 uppercase">Filtrar KVA</label>
-                                    <input id="filtro-kva" onkeyup="filtrarAlquiler()" class="w-full border rounded p-2 text-sm" placeholder="Ej: 75">
-                                 </div>
-                                 <div class="w-full md:w-40">
-                                    <label class="text-[10px] font-bold text-slate-500 uppercase">Filtrar Tensión</label>
-                                    <input id="filtro-voltaje" onkeyup="filtrarAlquiler()" class="w-full border rounded p-2 text-sm" placeholder="Ej: 13200">
-                                 </div>
-                             </div>
-                             <button onclick="abrirModalAlq(true)" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex gap-2 items-center"><i data-lucide="plus"></i> Registrar Nuevo</button>
-                          </div>
-                          <div class="bg-white rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
-                             <table class="w-full text-sm text-left min-w-[600px]">
-                                 <thead class="bg-slate-50 border-b"><tr><th class="p-3">Código</th><th class="p-3">Equipo</th><th class="p-3">Estado</th><th class="p-3">Cliente</th><th class="p-3">Fechas</th><th class="p-3">Carpeta Fotos</th><th class="p-3 text-center">Editar</th></tr></thead>
-                                 <tbody id="tabla-alq"></tbody>
-                             </table>
-                          </div>
-                      </div>
-                      
-                      <div id="view-pat" class="log-view"><div class="bg-white rounded-xl border border-slate-200 overflow-hidden"><table class="w-full text-sm text-left"><thead class="bg-slate-50 border-b"><tr><th class="p-3">ID</th><th class="p-3">Cliente</th><th class="p-3">Motivo</th></tr></thead><tbody id="tabla-pat"></tbody></table></div></div>
-                </section>
+            <div id="main-scroll" class="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar pb-24 md:pb-8">
                 
-                <section id="control" class="view-section">
-                    <div class="cp-nav no-scrollbar"><button class="cp-btn active" onclick="subNav('act')" id="btn-cp-act">Actividades</button><button class="cp-btn" onclick="subNav('fot')" id="btn-cp-fot">Fotos</button></div>
-                      <div id="view-act" class="cp-view active">
-                        <div class="flex justify-end mb-4 gap-2">
-                             <button onclick="abrirModalTarea(false)" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex gap-2"><i data-lucide="plus"></i> Nueva Tarea</button>
+                <section id="programacion" class="view-section active space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-800">Programación</h2>
+                            <p class="text-sm text-slate-500 font-medium">Gestión de flujo de trabajo</p>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="bg-slate-200 p-3 rounded-lg"><h4 class="font-bold text-slate-600 mb-3 text-sm uppercase">Pendientes</h4><div id="col-pendiente" class="space-y-2 min-h-[100px]"></div></div><div class="bg-blue-100 p-3 rounded-lg"><h4 class="font-bold text-blue-800 mb-3 text-sm uppercase">En Proceso</h4><div id="col-proceso" class="space-y-2 min-h-[100px]"></div></div><div class="bg-green-100 p-3 rounded-lg"><h4 class="font-bold text-green-800 mb-3 text-sm uppercase">Terminado</h4><div id="col-terminado" class="space-y-2 min-h-[100px]"></div></div></div>
-                      </div>
-                      <div id="view-fot" class="cp-view">
-                          <div class="bg-white p-6 rounded-xl border border-slate-200 max-w-2xl mx-auto shadow-sm">
-                           <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="camera" class="text-blue-600"></i> Registro Fotográfico</h3>
-                           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                             <input type="text" id="foto-trafo" class="border border-slate-300 rounded-lg p-3 text-lg font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="ID Trafo (Ej: 13600)">
-                             <select id="foto-etapa" class="border border-slate-300 rounded-lg p-3 bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                               <option value="ENTRADA">ENTRADA</option><option value="DESARME">DESARME</option><option value="BOBINADO">BOBINADO</option><option value="ENSAMBLE">ENSAMBLE</option><option value="PRUEBAS">PRUEBAS</option><option value="LAB_INICIAL">LAB. INICIAL</option><option value="LAB_FINAL">LAB. FINAL</option><option value="INSPECCION">INSPECCION</option><option value="SALIDA">SALIDA</option><option value="OTROS">OTROS</option>
-                             </select>
-                           </div>
-                           <div class="grid grid-cols-2 gap-4 mb-4">
-                               <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer active:bg-blue-50 transition-colors hover:border-blue-400" onclick="document.getElementById('input-camara').click()"><i data-lucide="camera" class="w-8 h-8 mx-auto mb-2 text-blue-600"></i><p class="font-bold text-sm text-slate-600">FOTO CÁMARA</p></div>
-                               <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer active:bg-blue-50 transition-colors hover:border-green-400" onclick="document.getElementById('input-galeria').click()"><i data-lucide="image" class="w-8 h-8 mx-auto mb-2 text-green-600"></i><p class="font-bold text-sm text-slate-600">GALERÍA</p></div>
-                           </div>
-                           <input type="file" id="input-camara" accept="image/*" capture="environment" class="hidden" onchange="procesarFotosInmediato(this)">
-                           <input type="file" id="input-galeria" accept="image/*" multiple class="hidden" onchange="procesarFotosInmediato(this)">
-                           <div id="status-fotos" class="text-center font-bold text-sm h-6"></div>
-                           <div id="lista-fotos" class="space-y-2 mt-4 max-h-60 overflow-y-auto pr-1"></div>
-                          </div>
-                      </div>
-                </section>
-
-            </main>
-            
-            <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 flex justify-around items-center pb-safe pt-2 h-[70px] z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                <button onclick="nav('programacion')" id="mob-programacion" class="nav-btn-mob flex flex-col items-center gap-1 p-2 w-full text-slate-400 transition-colors"><i data-lucide="kanban-square" class="w-6 h-6"></i><span class="text-[10px] font-bold">Procesos</span></button>
-                <button onclick="nav('entradas')" id="mob-entradas" class="nav-btn-mob flex flex-col items-center gap-1 p-2 w-full text-slate-400 transition-colors"><i data-lucide="package-plus" class="w-6 h-6"></i><span class="text-[10px] font-bold">Entradas</span></button>
-                <button onclick="nav('logistica')" id="mob-logistica" class="nav-btn-mob flex flex-col items-center gap-1 p-2 w-full text-slate-400 transition-colors"><i data-lucide="truck" class="w-6 h-6"></i><span class="text-[10px] font-bold">Logística</span></button>
-                <button onclick="nav('control')" id="mob-control" class="nav-btn-mob flex flex-col items-center gap-1 p-2 w-full text-slate-400 transition-colors"><i data-lucide="list-todo" class="w-6 h-6"></i><span class="text-[10px] font-bold">Control</span></button>
-            </nav>
-        </div>
-    </div>
-
-    <div id="modal-detalle" class="fixed inset-0 z-50 hidden flex items-center justify-center md:p-4">
-        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="cerrarModal()"></div>
-        <div class="modal-container overflow-hidden fade-in relative bg-white w-full h-full md:h-auto md:max-w-4xl md:rounded-xl flex flex-col">
-            <div class="bg-[#0F172A] p-4 md:p-5 flex justify-between items-center text-white shrink-0 safe-top">
-                <div class="flex items-center gap-3">
-                    <button onclick="cerrarModal()" class="md:hidden p-1 mr-2"><i data-lucide="arrow-left"></i></button>
-                    <div><h3 class="text-lg md:text-xl font-bold" id="m-cliente">Cliente</h3><div id="m-ids-badge" class="flex gap-2 mt-1 font-mono text-xs opacity-80"></div></div>
-                </div>
-                <button onclick="cerrarModal()" class="hidden md:block hover:bg-slate-700 p-2 rounded-full"><i data-lucide="x"></i></button>
-            </div>
-            
-            <div class="flex border-b bg-slate-50 shrink-0 overflow-x-auto">
-                <button class="tab-btn active" onclick="switchTab('seg')" id="tab-btn-seg">SEGUIMIENTO</button>
-                <button class="tab-btn" onclick="switchTab('req')" id="tab-btn-req">REQUERIMIENTOS</button> <button class="tab-btn" onclick="switchTab('tec')" id="tab-btn-tec">FICHA TÉCNICA</button>
-            </div>
-
-            <div class="p-4 md:p-6 overflow-y-auto flex-1 pb-24 md:pb-6 bg-slate-50">
-                <div id="view-seg" class="tab-content active">
-                      <div class="mb-6 grid grid-cols-2 gap-4">
-                        <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                            <label class="block text-xs font-bold text-blue-800 mb-1 uppercase">Fecha Límite Según Oferta</label>
-                            <input type="date" id="date-f-oferta" class="date-input bg-white border-blue-300 text-blue-900 font-bold">
-                        </div>
-                        <div class="bg-green-50 border border-green-200 p-4 rounded-lg">
-                            <label class="block text-xs font-bold text-green-800 mb-1 uppercase">Fecha de Autorización Real</label>
-                            <input type="date" id="date-f-aut" class="date-input bg-white border-green-300 text-green-900 font-bold">
-                        </div>
-                      </div>
-                      <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 border-b pb-1">Etapas</h4>
-                      <div id="steps-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6"></div>
-                      <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 border-b pb-1">Cierre</h4>
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div><label class="text-xs font-bold text-slate-500">Observaciones</label><textarea id="input-obs-prog" class="text-input h-20"></textarea></div>
-                          <div><label class="text-xs font-bold text-slate-500">N° Remisión</label><input type="text" id="input-remision-prog" class="text-input mb-2"><label class="text-xs font-bold text-green-600 block mt-2">F. Entrega Real</label><input type="date" id="date-entrega" class="date-input border-green-300 bg-green-50"></div>
-                      </div>
-                </div>
-                
-                <div id="view-req" class="tab-content">
-                    <div class="bg-white p-4 rounded-lg border shadow-sm h-full flex flex-col">
-                        <div class="flex justify-between items-center mb-4"><h4 class="text-xs font-bold text-slate-500 uppercase">Lista de Materiales / Accesorios</h4><span class="text-[10px] bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-bold">FASE DIAGNÓSTICO</span></div>
-                        <div id="lista-reqs" class="flex-1 overflow-y-auto space-y-2 mb-4 min-h-[200px] bg-slate-50 p-2 rounded border border-slate-100"></div>
-                        <div class="mt-auto pt-4 border-t">
-                            <label class="text-xs font-bold text-slate-700">Agregar Nuevo Requerimiento:</label>
-                            <div class="flex gap-2 mt-1">
-                                <textarea id="txt-nuevo-req" class="text-input h-14 resize-none py-2 text-sm" placeholder="Ej: 5 Galones de Aceite, Empaques, Bornes..."></textarea>
-                                <button onclick="guardarNuevoReq()" class="bg-slate-800 hover:bg-slate-700 text-white px-6 rounded-lg font-bold"><i data-lucide="send"></i></button>
+                        <div class="flex w-full md:w-auto gap-2">
+                            <div class="relative flex-1 md:w-64">
+                                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                                <input type="text" id="searchProg" onkeyup="filtrarProg()" placeholder="Buscar cliente, ID..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm font-medium">
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="view-tec" class="tab-content">
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white p-4 rounded-lg border shadow-sm space-y-4"><div><label class="text-xs font-bold text-slate-500">ID Group / Aux</label><input type="text" id="in-idgroup" class="text-input"></div><div><label class="text-xs font-bold text-slate-500">Serie</label><input type="text" id="in-serie" class="text-input"></div><div><label class="text-xs font-bold text-slate-500">ODS</label><input type="text" id="in-ods" class="text-input bg-yellow-50"></div></div>
-                        <div class="bg-white p-4 rounded-lg border shadow-sm space-y-4"><div><label class="text-xs font-bold text-slate-500">Descripción</label><input type="text" id="in-desc" class="text-input"></div><div><label class="text-xs font-bold text-slate-500">Tipo de Servicio</label><input type="text" id="in-tipo" class="text-input" list="lista-servicios"><datalist id="lista-servicios"><option value="MANTENIMIENTO"><option value="REPARACION"><option value="FABRICACION"><option value="REGENERACION ACEITE"><option value="TERMOVACIO"></datalist></div></div>
-                      </div>
-                </div>
+                    <div class="hidden md:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-extrabold tracking-wider border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4">ID / Group</th>
+                                    <th class="px-6 py-4">Ingreso</th>
+                                    <th class="px-6 py-4">Cliente</th>
+                                    <th class="px-6 py-4">Estado</th>
+                                    <th class="px-6 py-4 text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-prog-desktop" class="text-sm font-medium text-slate-700 divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+
+                    <div id="lista-prog-mobile" class="md:hidden space-y-3"></div>
+                </section>
+
+                <section id="entradas" class="view-section space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-800">Entradas</h2>
+                            <p class="text-sm text-slate-500 font-medium">Recepción de equipos</p>
+                        </div>
+                        <button onclick="abrirModalNuevaEntrada()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-green-500/20 flex items-center gap-2 transition-all active:scale-95">
+                            <i data-lucide="plus-circle" class="w-5 h-5"></i> <span class="hidden md:inline">NUEVA ENTRADA</span>
+                        </button>
+                    </div>
+                    <div id="grid-entradas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </section>
+
+                <section id="logistica" class="view-section space-y-6">
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-800">Logística</h2>
+                            <p class="text-sm text-slate-500 font-medium">Control de inventario y despachos</p>
+                        </div>
+                        <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                            <button onclick="subLog('term')" id="btn-log-term" class="log-btn active">TERMINADOS</button>
+                            <button onclick="subLog('alq')" id="btn-log-alq" class="log-btn">ALQUILER</button>
+                            <button onclick="subLog('pat')" id="btn-log-pat" class="log-btn">PATIO</button>
+                        </div>
+                    </div>
+
+                    <div id="view-term" class="log-view active">
+                         <div id="lista-terminados" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                    </div>
+
+                    <div id="view-alq" class="log-view">
+                         <div class="bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-4 flex flex-wrap gap-2">
+                             <input id="filtro-kva" onkeyup="filtrarAlquiler()" placeholder="Filtrar KVA" class="bg-slate-50 border rounded px-3 py-2 text-sm w-32 font-bold">
+                             <input id="filtro-voltaje" onkeyup="filtrarAlquiler()" placeholder="Voltaje" class="bg-slate-50 border rounded px-3 py-2 text-sm w-32 font-bold">
+                             <button onclick="abrirModalAlq(true)" class="ml-auto bg-blue-600 text-white px-3 py-2 rounded text-xs font-bold shadow hover:bg-blue-700">NUEVO</button>
+                         </div>
+                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 text-slate-500 uppercase font-bold text-xs border-b">
+                                    <tr><th class="p-3">COD</th><th class="p-3">EQUIPO</th><th class="p-3">ESTADO</th><th class="p-3">CLIENTE</th><th class="p-3">FECHAS</th><th class="p-3 text-center">IMG</th><th class="p-3 text-center">EDT</th></tr>
+                                </thead>
+                                <tbody id="tabla-alq" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                         </div>
+                    </div>
+
+                    <div id="view-pat" class="log-view">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 text-slate-500 uppercase font-bold text-xs border-b"><tr><th class="p-3">ID</th><th class="p-3">CLIENTE</th><th class="p-3">MOTIVO</th></tr></thead>
+                                <tbody id="tabla-pat" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="control" class="view-section space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-black text-slate-800">Control</h2>
+                        <button onclick="abrirModalTarea(false)" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2"><i data-lucide="plus"></i> TAREA</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+                        <div class="bg-slate-200/50 p-3 rounded-xl border border-slate-300/50 flex flex-col h-[600px]">
+                            <div class="flex items-center gap-2 mb-3 px-1"><div class="w-2 h-2 rounded-full bg-slate-400"></div><span class="text-xs font-black text-slate-500 uppercase">PENDIENTE</span></div>
+                            <div id="col-pendiente" class="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar"></div>
+                        </div>
+                        <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-200/50 flex flex-col h-[600px]">
+                            <div class="flex items-center gap-2 mb-3 px-1"><div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div><span class="text-xs font-black text-blue-600 uppercase">EN PROCESO</span></div>
+                            <div id="col-proceso" class="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar"></div>
+                        </div>
+                        <div class="bg-green-50/50 p-3 rounded-xl border border-green-200/50 flex flex-col h-[600px]">
+                            <div class="flex items-center gap-2 mb-3 px-1"><div class="w-2 h-2 rounded-full bg-green-500"></div><span class="text-xs font-black text-green-600 uppercase">TERMINADO</span></div>
+                            <div id="col-terminado" class="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar"></div>
+                        </div>
+                    </div>
+                </section>
             </div>
             
-            <div class="p-4 bg-white border-t flex justify-end shadow-[0_-4px_15px_rgba(0,0,0,0.1)] z-20 shrink-0 safe-bottom">
-                <button onclick="guardarCambios()" id="btn-guardar-prog" class="w-full md:w-auto bg-[#84cc16] hover:bg-[#65a30d] text-[#0f172a] px-8 py-3.5 rounded-xl font-bold shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2"><i data-lucide="save"></i> GUARDAR CAMBIOS</button>
-            </div>
-        </div>
+            <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 flex justify-around py-2 z-40 safe-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <button id="mob-programacion" onclick="nav('programacion')" class="nav-btn-mob flex flex-col items-center gap-1 p-2 text-slate-400">
+                    <i data-lucide="calendar-days" class="w-6 h-6"></i><span class="text-[10px] font-bold">Prog</span>
+                </button>
+                <button id="mob-entradas" onclick="nav('entradas')" class="nav-btn-mob flex flex-col items-center gap-1 p-2 text-slate-400">
+                    <i data-lucide="package-plus" class="w-6 h-6"></i><span class="text-[10px] font-bold">Entradas</span>
+                </button>
+                <button id="mob-logistica" onclick="nav('logistica')" class="nav-btn-mob flex flex-col items-center gap-1 p-2 text-slate-400">
+                    <i data-lucide="truck" class="w-6 h-6"></i><span class="text-[10px] font-bold">Logística</span>
+                </button>
+                <button id="mob-control" onclick="nav('control')" class="nav-btn-mob flex flex-col items-center gap-1 p-2 text-slate-400">
+                    <i data-lucide="clipboard-check" class="w-6 h-6"></i><span class="text-[10px] font-bold">Control</span>
+                </button>
+            </nav>
+        </main>
     </div>
-    
-    <div id="modal-nueva-entrada" class="fixed inset-0 z-50 hidden flex items-center justify-center md:p-4">
-        <div class="absolute inset-0 bg-slate-900/85 transition-opacity" onclick="cerrarModalNueva()"></div>
-        <div class="modal-container overflow-hidden transform transition-all bg-white w-full h-full md:h-auto md:max-w-2xl md:rounded-2xl flex flex-col">
-            <div class="bg-[#0284c7] p-4 md:p-5 text-white flex justify-between items-center shrink-0 safe-top">
-                <div class="flex items-center gap-3"><button onclick="cerrarModalNueva()" class="md:hidden p-1 mr-1"><i data-lucide="arrow-left"></i></button><h3 class="font-bold text-lg">Nueva Entrada</h3></div>
-                <button onclick="cerrarModalNueva()" class="hidden md:block hover:bg-white/20 p-1 rounded-full"><i data-lucide="x"></i></button>
+
+    <div id="modal-detalle" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex justify-center items-end md:items-center">
+        <div class="bg-white w-full md:w-[800px] md:rounded-xl rounded-t-2xl shadow-2xl h-[90vh] md:h-auto md:max-h-[90vh] flex flex-col overflow-hidden animate-in-up">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-start bg-slate-50 sticky top-0 z-10">
+                <div>
+                    <span id="m-ids-badge" class="bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block">ID: --</span>
+                    <h3 id="m-cliente" class="text-lg font-black text-slate-800 leading-tight">Cliente</h3>
+                </div>
+                <button onclick="cerrarModal()" class="bg-slate-200 hover:bg-slate-300 p-2 rounded-full text-slate-600 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <form id="form-entrada" onsubmit="event.preventDefault(); enviarFormulario();" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 pb-24 md:pb-6">
-                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 flex justify-around mb-2">
-                    <label class="flex items-center gap-2 font-bold cursor-pointer text-slate-700"><input type="radio" name="empresa" value="JLB" checked class="w-5 h-5 text-blue-600 focus:ring-blue-500"> JLB (Antiguo)</label>
-                    <label class="flex items-center gap-2 font-bold cursor-pointer text-slate-700"><input type="radio" name="empresa" value="GROUP" class="w-5 h-5 text-blue-600 focus:ring-blue-500"> GROUP (Nuevo)</label>
+            
+            <div class="flex border-b border-slate-200 bg-white sticky top-[80px] z-10">
+                <button onclick="switchTab('seg')" id="tab-btn-seg" class="tab-btn flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent active">SEGUIMIENTO</button>
+                <button onclick="switchTab('dat')" id="tab-btn-dat" class="tab-btn flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent">DATOS</button>
+                <button onclick="switchTab('req')" id="tab-btn-req" class="tab-btn flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent">REQ</button>
+                <button onclick="switchTab('fot')" id="tab-btn-fot" class="tab-btn flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent">FOTOS</button>
+            </div>
+
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-1 bg-white">
+                
+                <div id="view-seg" class="tab-content active">
+                    <div id="steps-container" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                        </div>
                 </div>
-                <datalist id="lista-clientes"></datalist>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input name="cliente" id="in-cliente-ent" class="text-input" placeholder="Cliente (Escribe para buscar) *" list="lista-clientes" oninput="autocompletarCliente(this)" required>
-                    <input name="cedula" id="in-cedula-ent" class="text-input" placeholder="NIT / CC" inputmode="numeric">
+
+                <div id="view-dat" class="tab-content hidden space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-[10px] font-bold text-slate-400">F. OFERTA</label><input type="date" id="date-f-oferta" class="w-full border rounded p-2 text-sm font-bold"></div>
+                        <div><label class="text-[10px] font-bold text-slate-400 text-blue-600">F. AUTORIZACIÓN</label><input type="date" id="date-f-aut" class="w-full border rounded p-2 text-sm font-bold border-blue-200 bg-blue-50"></div>
+                        <div class="col-span-2"><label class="text-[10px] font-bold text-slate-400">OBSERVACIÓN PROG.</label><textarea id="input-obs-prog" class="w-full border rounded p-2 text-sm h-20"></textarea></div>
+                        <div><label class="text-[10px] font-bold text-slate-400">REMISIÓN</label><input type="text" id="input-remision-prog" class="w-full border rounded p-2 text-sm"></div>
+                        <div><label class="text-[10px] font-bold text-slate-400">F. ENTREGA</label><input type="date" id="date-entrega" class="w-full border rounded p-2 text-sm"></div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200 mt-4">
+                        <h6 class="font-bold text-xs text-slate-500 mb-2">EDICIÓN CRÍTICA DE DATOS</h6>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input id="in-idgroup" placeholder="ID Group" class="border p-1 text-xs rounded">
+                            <input id="in-serie" placeholder="Serie" class="border p-1 text-xs rounded">
+                            <input id="in-ods" placeholder="ODS" class="border p-1 text-xs rounded">
+                            <input id="in-tipo" placeholder="Tipo" class="border p-1 text-xs rounded">
+                            <input id="in-desc" placeholder="Descripción" class="col-span-2 border p-1 text-xs rounded">
+                        </div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input name="contacto" id="in-contacto-ent" class="text-input" placeholder="Contacto">
-                    <input name="telefono" id="in-telefono-ent" class="text-input" placeholder="Teléfono" inputmode="tel">
-                    <input name="ciudad" id="in-ciudad-ent" class="text-input" placeholder="Ciudad">
+
+                <div id="view-req" class="tab-content hidden">
+                    <div class="flex gap-2 mb-4">
+                        <input id="txt-nuevo-req" type="text" placeholder="Nuevo requerimiento..." class="flex-1 border rounded px-3 py-2 text-sm">
+                        <button onclick="guardarNuevoReq()" class="bg-slate-800 text-white px-4 rounded text-xs font-bold">AGREGAR</button>
+                    </div>
+                    <div id="lista-reqs" class="space-y-2"></div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input name="codigo" class="col-span-1 border border-yellow-300 rounded-lg p-3 bg-yellow-50 text-slate-800 font-bold" placeholder="N° Placa (Solo si es Trafo)">
-                    <input name="descripcion" class="col-span-2 text-input" placeholder="Descripción (Si es Aceite pon 'Aceite') *" required>
+
+                <div id="view-fot" class="tab-content hidden">
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4">
+                        <div class="mb-3">
+                            <label class="text-[10px] font-bold text-blue-700 block mb-1">ID TRANSFORMADOR (Obligatorio)</label>
+                            <input type="text" id="foto-trafo" class="w-full border border-blue-200 rounded p-2 text-sm font-bold" placeholder="Ej: 13620">
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-[10px] font-bold text-blue-700 block mb-1">ETAPA</label>
+                            <select id="foto-etapa" class="w-full border border-blue-200 rounded p-2 text-sm bg-white">
+                                <option>INSPECCION</option>
+                                <option>DESENCUBE</option>
+                                <option>BOBINADO</option>
+                                <option>ENSAMBLE</option>
+                                <option>ENCUBE</option>
+                                <option>PRUEBAS</option>
+                                <option>SALIDA</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all active:scale-95">
+                                <i data-lucide="camera" class="w-4 h-4"></i> TOMAR / SUBIR
+                                <input type="file" accept="image/*" capture="environment" multiple class="hidden" onchange="procesarFotosInmediato(this)">
+                            </label>
+                        </div>
+                        <div id="status-fotos" class="mt-2 text-center text-xs font-bold h-4"></div>
+                    </div>
+                    <div id="lista-fotos" class="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar"></div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <input name="cantidad" type="number" value="1" inputmode="numeric" class="col-span-1 text-input" placeholder="Cant">
-                    <textarea name="observaciones" class="col-span-3 text-input h-16 resize-none" placeholder="Observaciones Generales"></textarea>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input name="quienEntrega" class="text-input" placeholder="Nombre Quien Entrega (Cliente)">
-                    <input name="quienRecibe" class="text-input font-bold" value="Gerson Arrieta" readonly>
-                </div>
-                <div class="border-2 dashed border-slate-300 p-4 rounded-lg bg-slate-50 text-center">
-                    <p class="text-xs text-slate-500 mb-2 font-bold uppercase">Firma de quien entrega</p>
-                    <canvas id="signature-pad" width="600" height="150" class="bg-white w-full mx-auto border shadow-sm cursor-crosshair touch-none rounded"></canvas>
-                    <button type="button" onclick="limpiarFirma()" class="text-red-500 text-xs font-bold mt-2 hover:underline">Borrar Firma</button>
-                </div>
-            </form>
-            <div class="p-4 border-t bg-slate-50 md:rounded-b-2xl flex justify-end gap-3 shrink-0 shadow-[0_-4px_15px_rgba(0,0,0,0.1)] z-20 safe-bottom">
-                <button onclick="cerrarModalNueva()" class="hidden md:block px-5 py-3 font-bold text-slate-500 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
-                <button onclick="document.getElementById('form-entrada').requestSubmit()" id="btn-crear" class="w-full md:w-auto bg-[#84cc16] hover:bg-[#65a30d] text-[#0f172a] px-6 py-3 rounded-xl font-bold shadow-lg hover:scale-105 transition-transform flex items-center justify-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> GUARDAR ENTRADA</button>
+            </div>
+
+            <div class="p-4 border-t border-slate-100 bg-white sticky bottom-0 z-10">
+                <button id="btn-guardar-prog" onclick="guardarCambios()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-lg text-sm font-bold shadow-lg flex justify-center items-center gap-2 transition-all active:scale-95">
+                    <i data-lucide="save" class="w-4 h-4"></i> GUARDAR CAMBIOS
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="modal-historico" class="fixed inset-0 z-50 hidden flex items-center justify-center md:p-4"><div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="document.getElementById('modal-historico').classList.add('hidden')"></div><div class="bg-white w-full h-full md:h-auto md:max-w-lg md:rounded-xl z-50 p-6 shadow-xl fade-in flex flex-col justify-center"><h3 class="text-lg font-bold mb-4 text-slate-700 text-center md:text-left">Cargar Equipo Histórico</h3><div class="space-y-4"><div class="grid grid-cols-2 gap-2"><input id="hist-idjlb" placeholder="ID JLB" class="text-input"><input id="hist-idgroup" placeholder="ID GROUP" class="text-input"></div><input id="hist-fecha" type="date" class="text-input"><input id="hist-cliente" placeholder="Cliente" class="text-input"><input id="hist-desc" placeholder="Descripción" class="text-input"><input id="hist-serie" placeholder="Serie (Placa)" class="text-input"><select id="hist-estado" class="text-input"><option value="PENDIENTE">PENDIENTE</option><option value="EN PROCESO">EN PROCESO</option><option value="SIN AUTORIZAR">SIN AUTORIZAR</option></select><button onclick="guardarHistorico()" id="btn-hist" class="w-full bg-slate-800 text-white py-3.5 rounded-lg font-bold mt-2 shadow-lg">CARGAR</button><button onclick="document.getElementById('modal-historico').classList.add('hidden')" class="w-full text-slate-500 py-2 font-bold md:hidden">Cancelar</button></div></div></div>
-    
-    <div id="modal-alq" class="fixed inset-0 z-50 hidden flex items-center justify-center md:p-4">
-        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="cerrarModalAlq()"></div>
-        <div class="modal-container fade-in bg-white w-full h-full md:h-auto md:max-w-2xl md:rounded-xl flex flex-col relative z-10">
-            <div class="bg-slate-800 p-4 md:p-5 text-white flex justify-between items-center safe-top"><h3 class="text-lg font-bold" id="title-modal-alq">Registrar Alquiler</h3><button onclick="cerrarModalAlq()"><i data-lucide="x"></i></button></div>
-            <form id="form-alq" class="p-6 space-y-4 flex-1 overflow-y-auto">
-                <div class="grid grid-cols-2 gap-4"><div><label class="text-xs font-bold text-slate-500">Código</label><input type="text" id="alq-codigo" class="w-full border rounded p-3"></div><div><label class="text-xs font-bold text-slate-500">KVA</label><input type="text" id="alq-kva" class="w-full border rounded p-3" inputmode="numeric"></div></div>
-                <div class="grid grid-cols-2 gap-4"><div><label class="text-xs font-bold text-slate-500">Marca</label><input type="text" id="alq-marca" class="w-full border rounded p-3"></div><div><label class="text-xs font-bold text-slate-500">Voltajes</label><input type="text" id="alq-volt" class="w-full border rounded p-3" placeholder="Ej: 13200/220"></div></div>
+    <div id="modal-nueva-entrada" class="fixed inset-0 bg-slate-900/90 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl h-full md:h-auto md:max-h-[90vh] flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center bg-slate-50 rounded-t-xl">
+                <h3 class="font-black text-slate-800">Nueva Entrada</h3>
+                <button onclick="cerrarModalNueva()" class="p-2 hover:bg-slate-200 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-entrada" class="p-6 overflow-y-auto flex-1 space-y-4 custom-scrollbar">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="label-form">Empresa</label>
+                        <select name="empresa" class="input-form font-bold">
+                            <option value="JLB">JLB</option>
+                            <option value="GROUP">GROUP</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label-form">Fecha</label>
+                        <input type="text" class="input-form bg-slate-50" value="Automático" disabled>
+                    </div>
+                </div>
                 
-                <div class="bg-slate-100 p-3 rounded border border-slate-300">
-                    <label class="text-xs font-bold text-slate-700 block mb-1">Estado del Equipo</label>
-                    <select id="alq-estado-manual" class="w-full border rounded p-3 bg-white font-bold text-slate-700">
-                        <option value="DISPONIBLE">✅ DISPONIBLE (Taller)</option>
-                        <option value="MANTENIMIENTO">🟠 MANTENIMIENTO (Taller)</option>
-                        <option value="REPARACION">🔴 REPARACIÓN (Taller)</option>
-                        <option value="PRESTADO">🔵 PRESTADO (Cliente)</option>
-                    </select>
+                <div class="relative">
+                    <label class="label-form">Cliente</label>
+                    <input list="lista-clientes" name="cliente" class="input-form uppercase font-bold" placeholder="Buscar cliente..." onchange="autocompletarCliente(this)" required>
+                    <datalist id="lista-clientes"></datalist>
                 </div>
 
-                <div class="bg-blue-50 p-4 rounded-lg space-y-3"><div><label class="text-xs font-bold text-slate-500">Cliente (Solo si es PRESTADO)</label><input type="text" id="alq-cliente" class="w-full border rounded p-3" placeholder="Nombre cliente"></div><div class="grid grid-cols-2 gap-4"><div><label class="text-xs font-bold text-slate-500">F. Salida</label><input type="date" id="alq-salida" class="w-full border rounded p-3"></div><div><label class="text-xs font-bold text-slate-500">F. Regreso</label><input type="date" id="alq-regreso" class="w-full border rounded p-3"></div></div></div>
-                
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div class="border-2 border-dashed border-blue-300 bg-blue-50 rounded-xl p-4 text-center cursor-pointer hover:bg-blue-100 active:bg-blue-200 transition-colors" onclick="document.getElementById('alq-camara').click()">
-                        <i data-lucide="camera" class="w-8 h-8 mx-auto mb-2 text-blue-600"></i>
-                        <p class="font-bold text-xs text-blue-700">📸 USAR CÁMARA</p>
-                    </div>
-                    <div class="border-2 border-dashed border-green-300 bg-green-50 rounded-xl p-4 text-center cursor-pointer hover:bg-green-100 active:bg-green-200 transition-colors" onclick="document.getElementById('alq-galeria').click()">
-                        <i data-lucide="image" class="w-8 h-8 mx-auto mb-2 text-green-600"></i>
-                        <p class="font-bold text-xs text-green-700">🖼️ SUBIR GALERÍA</p>
-                    </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="label-form">NIT/CC</label><input name="cedula" id="in-cedula-ent" class="input-form"></div>
+                    <div><label class="label-form">Teléfono</label><input name="telefono" id="in-telefono-ent" class="input-form"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="label-form">Contacto</label><input name="contacto" id="in-contacto-ent" class="input-form"></div>
+                    <div><label class="label-form">Ciudad</label><input name="ciudad" id="in-ciudad-ent" class="input-form"></div>
+                </div>
+
+                <div>
+                    <label class="label-form">Descripción Equipo</label>
+                    <input name="descripcion" class="input-form font-bold" placeholder="Ej: 75KVA 13200/220..." required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="label-form">Cantidad</label><input type="number" name="cantidad" value="1" class="input-form font-bold"></div>
+                    <div><label class="label-form">Placa / Serie (Opcional)</label><input name="codigo" class="input-form font-bold" placeholder="N° Serie"></div>
                 </div>
                 
-                <input type="file" id="alq-camara" accept="image/*" capture="environment" class="hidden" onchange="previewAlqFoto(this)">
-                <input type="file" id="alq-galeria" accept="image/*" multiple class="hidden" onchange="previewAlqFoto(this)">
-                
-                <div id="alq-preview-container" class="grid grid-cols-4 gap-2 hidden mt-2"></div>
-                <button type="button" onclick="limpiarFotosAlq()" id="btn-limpiar-fotos" class="hidden text-xs text-red-500 font-bold mt-2 w-full text-center hover:underline">🗑️ Limpiar fotos seleccionadas</button>
-                
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="label-form">Recibe (JLB)</label><input name="quienRecibe" value="Gerson Arrieta" class="input-form"></div>
+                    <div><label class="label-form">Entrega (Cliente)</label><input name="quienEntrega" class="input-form"></div>
+                </div>
+
+                <div><label class="label-form">Observaciones</label><textarea name="observaciones" class="input-form h-20"></textarea></div>
+
+                <div class="border rounded-lg p-2 bg-slate-50">
+                    <label class="label-form mb-2 block">Firma Quien Entrega</label>
+                    <canvas id="signature-pad" class="w-full h-32 bg-white border border-slate-300 rounded shadow-sm touch-none"></canvas>
+                    <button type="button" onclick="limpiarFirma()" class="text-xs text-red-500 font-bold mt-1 underline">Borrar Firma</button>
+                </div>
             </form>
-            <div class="p-4 bg-slate-50 flex justify-end gap-3 shrink-0"><button onclick="cerrarModalAlq()" class="px-4 py-2 hidden md:block">Cancelar</button><button onclick="guardarAlquiler()" id="btn-alq-save" class="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg">Guardar</button></div>
+            <div class="p-4 border-t bg-slate-50 rounded-b-xl">
+                <button id="btn-crear" onclick="enviarFormulario()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-lg flex justify-center gap-2 transition-all active:scale-95">
+                    <i data-lucide="save" class="w-5 h-5"></i> GUARDAR ENTRADA
+                </button>
+            </div>
         </div>
     </div>
-    
-    <div id="modal-tarea" class="fixed inset-0 z-50 hidden flex items-center justify-center md:p-4"><div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="cerrarModalTarea()"></div><div class="bg-white w-full h-full md:h-auto md:max-w-lg md:rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col fade-in"><div class="bg-slate-800 p-5 text-white flex justify-between items-center safe-top"><h3 class="text-lg font-bold" id="title-modal-tarea">Nueva Actividad</h3><button onclick="cerrarModalTarea()"><i data-lucide="x"></i></button></div><form id="form-tarea" class="p-6 space-y-4"><input type="hidden" id="task-rowIndex" value=""><div><label class="text-xs font-bold text-slate-500">Descripción</label><textarea id="task-desc" class="w-full border rounded p-3 h-20"></textarea></div><div class="grid grid-cols-2 gap-4"><div><label class="text-xs font-bold text-slate-500">Responsable</label><select id="task-resp" onchange="verificarNuevoResponsable(this)" class="w-full border rounded p-3 bg-white"><option>Cargando...</option></select></div><div><label class="text-xs font-bold text-slate-500">Trafo ID</label><input type="text" id="task-trafo" class="w-full border rounded p-3"></div></div><div><label class="text-xs font-bold text-slate-500">Prioridad</label><select id="task-prio" class="w-full border rounded p-3"><option value="Alta">Alta 🔴</option><option value="Media" selected>Media 🟡</option><option value="Baja">Baja 🟢</option></select></div></form><div class="p-4 bg-slate-50 flex justify-end gap-3"><button onclick="cerrarModalTarea()" class="px-4 py-2 hidden md:block">Cancelar</button><button onclick="guardarTarea()" class="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg">Guardar Tarea</button></div></div></div>
+
+    <div id="modal-alq" class="fixed inset-0 bg-slate-900/90 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b bg-slate-50 rounded-t-xl flex justify-between items-center">
+                <h3 id="title-modal-alq" class="font-black text-slate-800">Alquiler</h3>
+                <button onclick="cerrarModalAlq()"><i data-lucide="x" class="text-slate-400"></i></button>
+            </div>
+            <form id="form-alq" class="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="label-form">Código</label><input id="alq-codigo" class="input-form font-bold"></div>
+                    <div><label class="label-form">KVA</label><input id="alq-kva" type="number" class="input-form"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="label-form">Marca</label><input id="alq-marca" class="input-form"></div>
+                    <div><label class="label-form">Voltajes</label><input id="alq-volt" class="input-form"></div>
+                </div>
+                <div><label class="label-form">Estado</label><select id="alq-estado-manual" class="input-form"><option value="DISPONIBLE">DISPONIBLE</option><option value="PRESTADO">PRESTADO</option><option value="MANTENIMIENTO">MANTENIMIENTO</option><option value="REPARACION">REPARACION</option></select></div>
+                <div><label class="label-form">Cliente Actual</label><input id="alq-cliente" class="input-form uppercase"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="label-form">F. Salida</label><input type="date" id="alq-salida" class="input-form"></div>
+                    <div><label class="label-form">F. Regreso</label><input type="date" id="alq-regreso" class="input-form"></div>
+                </div>
+                <div class="bg-slate-50 p-3 rounded border">
+                    <label class="flex items-center justify-center gap-2 bg-white border border-slate-300 py-2 rounded cursor-pointer hover:bg-slate-100">
+                        <i data-lucide="camera" class="w-4 h-4 text-slate-500"></i> <span class="text-xs font-bold">AGREGAR FOTOS</span>
+                        <input type="file" multiple accept="image/*" class="hidden" onchange="previewAlqFoto(this)">
+                    </label>
+                    <div id="alq-preview-container" class="grid grid-cols-3 gap-2 mt-2 hidden"></div>
+                    <button type="button" id="btn-limpiar-fotos" onclick="limpiarFotosAlq()" class="text-xs text-red-500 underline mt-2 hidden w-full text-center">Limpiar fotos</button>
+                </div>
+            </form>
+            <div class="p-4 border-t">
+                <button id="btn-alq-save" onclick="guardarAlquiler()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700">GUARDAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-tarea" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
+             <div class="bg-slate-800 p-5 text-white flex justify-between items-center safe-top">
+                 <h3 class="text-lg font-bold" id="title-modal-tarea">Nueva Actividad</h3>
+                 <button onclick="cerrarModalTarea()"><i data-lucide="x"></i></button>
+             </div>
+             <form id="form-tarea" class="p-6 space-y-4">
+                 <input type="hidden" id="task-rowIndex" value="">
+                 <div><label class="text-xs font-bold text-slate-500">Descripción</label><textarea id="task-desc" class="w-full border rounded p-3 h-20 text-sm font-medium focus:outline-none focus:border-slate-500"></textarea></div>
+                 <div class="grid grid-cols-2 gap-4">
+                     <div><label class="text-xs font-bold text-slate-500">Responsable</label><select id="task-resp" onchange="verificarNuevoResponsable(this)" class="w-full border rounded p-3 bg-white text-sm"><option>Cargando...</option></select></div>
+                     <div><label class="text-xs font-bold text-slate-500">Trafo ID</label><input type="text" id="task-trafo" class="w-full border rounded p-3 text-sm"></div>
+                 </div>
+                 <div><label class="text-xs font-bold text-slate-500">Prioridad</label><select id="task-prio" class="w-full border rounded p-3 text-sm"><option value="Alta">Alta 🔴</option><option value="Media" selected>Media 🟡</option><option value="Baja">Baja 🟢</option></select></div>
+             </form>
+             <div class="p-4 bg-slate-50 flex justify-end">
+                 <button onclick="guardarTarea()" class="bg-slate-900 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-slate-800">GUARDAR</button>
+             </div>
+        </div>
+    </div>
+
+    <div id="modal-historico" class="fixed inset-0 bg-slate-900/90 z-[70] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl p-6 space-y-4">
+             <h3 class="font-black text-xl">Cargar Histórico Manual</h3>
+             <div class="grid grid-cols-2 gap-3">
+                 <input id="hist-idjlb" placeholder="ID JLB" class="border p-2 rounded">
+                 <input id="hist-idgroup" placeholder="ID Group" class="border p-2 rounded">
+                 <input id="hist-fecha" type="date" class="border p-2 rounded">
+                 <input id="hist-cliente" placeholder="Cliente" class="border p-2 rounded">
+             </div>
+             <input id="hist-desc" placeholder="Descripción" class="w-full border p-2 rounded">
+             <div class="grid grid-cols-2 gap-3">
+                 <input id="hist-serie" placeholder="Serie" class="border p-2 rounded">
+                 <input id="hist-estado" placeholder="Estado (ej: ENTREGADO)" class="border p-2 rounded">
+             </div>
+             <button onclick="guardarHistorico()" class="w-full bg-orange-600 text-white font-bold py-3 rounded hover:bg-orange-700">CARGAR AL SISTEMA</button>
+             <button onclick="document.getElementById('modal-historico').classList.add('hidden')" class="w-full text-slate-400 text-xs font-bold mt-2">CANCELAR</button>
+        </div>
+    </div>
 
     <script src="app.js"></script>
+
+    <style>
+        /* ESTILOS EXTRA FORMULARIOS */
+        .label-form { display: block; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+        .input-form { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .input-form:focus { border-color: #22c55e; ring: 2px solid #bbf7d0; }
+        
+        /* ANIMACIONES */
+        .animate-in-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
 </body>
 </html>
