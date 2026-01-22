@@ -35,7 +35,7 @@
                 <h1 class="text-xl font-black tracking-tight text-white flex items-center gap-2">
                     <i data-lucide="zap" class="text-green-500"></i> JLB GROUP
                 </h1>
-                <p class="text-[10px] text-slate-400 mt-1 tracking-widest uppercase">Sistema Integrado V13.8</p>
+                <p class="text-[10px] text-slate-400 mt-1 tracking-widest uppercase">Sistema Integrado V13</p>
             </div>
             
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
@@ -59,7 +59,7 @@
                 </button>
                 <div class="grid grid-cols-2 gap-2">
                     <button onclick="abrirLaboratorio()" class="bg-blue-900 hover:bg-blue-800 text-white py-2 rounded text-xs font-bold flex items-center justify-center gap-1 border border-blue-800 text-[10px]">
-                        <i data-lucide="flask-conical" class="w-3 h-3"></i> PRUEBAS ELÉC.
+                        <i data-lucide="flask-conical" class="w-3 h-3"></i> PRUEBAS
                     </button>
                     <button onclick="abrirAceites()" class="bg-yellow-700 hover:bg-yellow-600 text-white py-2 rounded text-xs font-bold flex items-center justify-center gap-1 border border-yellow-800 text-[10px]">
                         <i data-lucide="droplet" class="w-3 h-3"></i> ACEITES
@@ -93,9 +93,7 @@
                                 <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
                                 <input type="text" id="searchProg" onkeyup="filtrarProg()" placeholder="Buscar cliente, ID..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm font-medium">
                             </div>
-                            <button onclick="abrirModalHistorico()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow flex items-center gap-2">
-                                <i data-lucide="archive" class="w-4 h-4"></i> <span class="hidden md:inline">HISTÓRICO</span>
-                            </button>
+                             <button onclick="abrirModalHistorico()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 shadow active:scale-95 transition-transform"><i data-lucide="archive" class="w-4 h-4"></i> Histórico</button>
                         </div>
                     </div>
 
@@ -174,17 +172,17 @@
                 </section>
 
                 <section id="control" class="view-section space-y-6">
-                    
-                    <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-slate-200">
+                    <div class="flex gap-2 mb-4 overflow-x-auto pb-1">
                         <button onclick="subNav('act')" id="btn-cp-act" class="cp-btn active whitespace-nowrap">ACTIVIDADES</button>
-                        <button onclick="subNav('fot')" id="btn-cp-fot" class="cp-btn whitespace-nowrap">FOTOS</button>
+                        <button onclick="subNav('fot')" id="btn-cp-fot" class="cp-btn whitespace-nowrap">REGISTRO FOTOS</button>
                     </div>
 
-                    <div id="view-act" class="cp-view active h-full flex flex-col">
-                        <div class="flex justify-end mb-4">
+                    <div id="view-act" class="cp-view active h-full">
+                         <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-slate-700">Tablero</h2>
                             <button onclick="abrirModalTarea(false)" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2"><i data-lucide="plus"></i> TAREA</button>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+                         </div>
+                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
                             <div class="bg-slate-200/50 p-3 rounded-xl border border-slate-300/50 flex flex-col h-[500px]">
                                 <div class="flex items-center gap-2 mb-3 px-1"><div class="w-2 h-2 rounded-full bg-slate-400"></div><span class="text-xs font-black text-slate-500 uppercase">PENDIENTE</span></div>
                                 <div id="col-pendiente" class="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar"></div>
@@ -200,35 +198,23 @@
                         </div>
                     </div>
 
-                    <div id="view-fot" class="cp-view hidden">
-                        <div class="max-w-md mx-auto bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div id="view-fot" class="cp-view h-full">
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 max-w-2xl mx-auto shadow-sm">
                             <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="camera" class="text-blue-600"></i> Registro Fotográfico</h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="text-[10px] font-bold text-slate-500 block mb-1">ID Transformador</label>
-                                    <input type="text" id="foto-trafo" class="w-full border border-slate-300 rounded-lg p-3 text-lg font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: 13620">
-                                </div>
-                                <div>
-                                    <label class="text-[10px] font-bold text-slate-500 block mb-1">Etapa del Proceso</label>
-                                    <select id="foto-etapa" class="w-full border border-slate-300 rounded-lg p-3 bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option>INSPECCION</option><option>DESENCUBE</option><option>BOBINADO</option><option>ENSAMBLE</option><option>ENCUBE</option><option>PRUEBAS</option><option>SALIDA</option><option>OTROS</option>
-                                    </select>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3 pt-2">
-                                    <label class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center cursor-pointer hover:bg-blue-100 transition-colors">
-                                        <i data-lucide="camera" class="w-6 h-6 mx-auto mb-2 text-blue-600"></i>
-                                        <span class="text-xs font-bold text-blue-800 block">FOTO CÁMARA</span>
-                                        <input type="file" accept="image/*" capture="environment" class="hidden" onchange="procesarFotosInmediato(this)">
-                                    </label>
-                                    <label class="bg-green-50 border border-green-200 rounded-xl p-4 text-center cursor-pointer hover:bg-green-100 transition-colors">
-                                        <i data-lucide="image" class="w-6 h-6 mx-auto mb-2 text-green-600"></i>
-                                        <span class="text-xs font-bold text-green-800 block">GALERÍA</span>
-                                        <input type="file" accept="image/*" multiple class="hidden" onchange="procesarFotosInmediato(this)">
-                                    </label>
-                                </div>
-                                <div id="status-fotos" class="text-center font-bold text-xs h-6 pt-2"></div>
-                                <div id="lista-fotos" class="space-y-2 mt-2 max-h-48 overflow-y-auto custom-scrollbar"></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <input type="text" id="foto-trafo" class="border border-slate-300 rounded-lg p-3 text-lg font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="ID Trafo (Ej: 13600)">
+                              <select id="foto-etapa" class="border border-slate-300 rounded-lg p-3 bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="ENTRADA">ENTRADA</option><option value="DESARME">DESARME</option><option value="BOBINADO">BOBINADO</option><option value="ENSAMBLE">ENSAMBLE</option><option value="PRUEBAS">PRUEBAS</option><option value="LAB_INICIAL">LAB. INICIAL</option><option value="LAB_FINAL">LAB. FINAL</option><option value="INSPECCION">INSPECCION</option><option value="SALIDA">SALIDA</option><option value="OTROS">OTROS</option>
+                              </select>
                             </div>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer active:bg-blue-50 transition-colors hover:border-blue-400" onclick="document.getElementById('input-camara').click()"><i data-lucide="camera" class="w-8 h-8 mx-auto mb-2 text-blue-600"></i><p class="font-bold text-sm text-slate-600">FOTO CÁMARA</p></div>
+                                <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer active:bg-blue-50 transition-colors hover:border-green-400" onclick="document.getElementById('input-galeria').click()"><i data-lucide="image" class="w-8 h-8 mx-auto mb-2 text-green-600"></i><p class="font-bold text-sm text-slate-600">GALERÍA</p></div>
+                            </div>
+                            <input type="file" id="input-camara" accept="image/*" capture="environment" class="hidden" onchange="procesarFotosInmediato(this)">
+                            <input type="file" id="input-galeria" accept="image/*" multiple class="hidden" onchange="procesarFotosInmediato(this)">
+                            <div id="status-fotos" class="text-center font-bold text-sm h-6"></div>
+                            <div id="lista-fotos" class="space-y-2 mt-4 max-h-60 overflow-y-auto pr-1"></div>
                         </div>
                     </div>
                 </section>
@@ -458,9 +444,12 @@
     <script src="app.js"></script>
 
     <style>
+        /* ESTILOS EXTRA FORMULARIOS */
         .label-form { display: block; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
         .input-form { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; transition: border-color 0.2s; }
         .input-form:focus { border-color: #22c55e; ring: 2px solid #bbf7d0; }
+        
+        /* ANIMACIONES */
         .animate-in-up { animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
