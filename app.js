@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V14.0 - INTEGRIDAD FINAL) */
+/* JLB OPERACIONES - APP.JS (V14.2 - FIX DATE & ENTRADAS) */
 
 // =============================================================
 // 1. CONFIGURACIÓN DE CONEXIÓN
@@ -84,22 +84,43 @@ function nav(id) {
     const mobBtn = document.getElementById('mob-'+id); if(mobBtn) mobBtn.classList.add('mobile-nav-active');
 
     if(id==='programacion') cargarProgramacion(); 
-    if(id==='entradas') cargarEntradas(); 
+    if(id==='entradas') cargarEntradas(); // CRITICO: Llamar a la función
     if(id==='logistica') subLog('term'); 
     if(id==='control') { cargarActividades(); subNav('act'); } 
     if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
+// --- FIX FECHAS (PAD ZEROS) ---
+function fechaParaInput(f){
+    if(!f) return "";
+    // Caso ISO (2026-1-20) -> (2026-01-20)
+    if(f.includes("-")) {
+        const p = f.split("-");
+        if(p.length === 3) {
+            const y = p[0];
+            const m = p[1].length === 1 ? "0"+p[1] : p[1];
+            const d = p[2].split(" ")[0].length === 1 ? "0"+p[2].split(" ")[0] : p[2].split(" ")[0];
+            return `${y}-${m}-${d}`;
+        }
+    }
+    // Caso LATINO (20/1/2026) -> (2026-01-20)
+    if(f.includes("/")){
+        const p = f.split("/");
+        if(p.length === 3) {
+             const d = p[0].length === 1 ? "0"+p[0] : p[0];
+             const m = p[1].length === 1 ? "0"+p[1] : p[1];
+             const y = p[2].split(" ")[0];
+             return `${y}-${m}-${d}`;
+        }
+    }
+    return "";
+}
+
 function irAlDashboard() { google.script.run.withSuccessHandler(url => window.open(url, '_top')).getUrlDashboard(); }
 
 // --- ENLACES EXTERNOS ---
-function abrirLaboratorio() { 
-    window.open('VistaCampoPruebas.html', '_blank'); 
-}
-
-function abrirAceites() { 
-    window.open('VistaAceites.html', '_blank');
-}
+function abrirLaboratorio() { window.open('VistaCampoPruebas.html', '_blank'); }
+function abrirAceites() { window.open('VistaAceites.html', '_blank'); }
 
 function recargarActual() { const active = document.querySelector('.view-section.active'); if(active) nav(active.id); }
 
