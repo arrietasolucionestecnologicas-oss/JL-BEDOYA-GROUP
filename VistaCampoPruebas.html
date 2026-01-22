@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
+    /* ... TUS ESTILOS ORIGINALES INTACTOS ... */
     :root { --primary: #0d6efd; --sidebar-w: 260px; }
     body { background-color: #f4f6f8; font-family: 'Segoe UI', Roboto, sans-serif; padding-bottom: 80px; font-size: 0.9rem; }
     .sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; top: 0; left: 0; background: #fff; border-right: 1px solid #dee2e6; z-index: 1000; transition: 0.3s; }
@@ -46,48 +47,58 @@
 <body>
 
   <script>
-    // URL DE LA WEB APP DE CAMPO DE PRUEBAS (TERMINADA EN /exec)
-    const URL_API_CAMPO = "https://script.google.com/macros/s/AKfycbwd4ckii8-VM9sCzrOHhijQ1-BImInqTZ5YfhVpS2wyQE6BE2PDRmPb-yHJgY0910csBQ/exec";
+    // URL DE TU SCRIPT DE CAMPO DE PRUEBAS (DEBE TERMINAR EN /exec)
+    // ⚠️ REEMPLAZA ESTO CON TU URL SI CAMBIÓ ⚠️
+    const URL_API_CAMPO = "https://script.google.com/macros/s/AKfycbzVU2GRgkaYB6BBUyh5QWCmiCSjnbwS_tGwEGbd6o8u7hz6JwC98cTVhhOb4AmIQJXREQ/exec";
 
-    // SIMULADOR GOOGLE.SCRIPT.RUN (BRIDGE PATTERN)
+    // OBJETO MÁGICO: Simula que estamos dentro de Google
     const google = {
-        script: {
-            run: {
-                withSuccessHandler: function(onSuccess) {
-                    return {
-                        withFailureHandler: function(onFailure) {
-                            return new Proxy({}, {
-                                get: function(target, prop) {
-                                    return function(payload) {
-                                        fetch(URL_API_CAMPO, {
-                                            method: 'POST',
-                                            body: JSON.stringify({ action: prop, payload: payload })
-                                        })
-                                        .then(r => r.json())
-                                        .then(data => {
-                                            if(data.error && onFailure) onFailure(data.error);
-                                            else if(onSuccess) onSuccess(data);
-                                        })
-                                        .catch(err => { if(onFailure) onFailure(err); });
-                                    }
-                                }
-                            });
-                        },
-                        // Si no hay failure handler encadenado
-                        buscarInfoEntrada: (p) => this.withFailureHandler(null).buscarInfoEntrada(p),
-                        obtenerListasAutocompletado: () => this.withFailureHandler(null).obtenerListasAutocompletado(),
-                        importarAgendaProduccion: () => this.withFailureHandler(null).importarAgendaProduccion(),
-                        registrarNuevaEntrada: (p) => this.withFailureHandler(null).registrarNuevaEntrada(p),
-                        actualizarHojaVida: (p) => this.withFailureHandler(null).actualizarHojaVida(p),
-                        procesarInspeccion: (p) => this.withFailureHandler(null).procesarInspeccion(p),
-                        guardarSoloBD_Inspeccion: (p) => this.withFailureHandler(null).guardarSoloBD_Inspeccion(p),
-                        guardarPruebasIniciales: (p,s) => this.withFailureHandler(null).guardarPruebasIniciales({form:p, soloGuardar:s}),
-                        guardarPruebasFinales: (p,s) => this.withFailureHandler(null).guardarPruebasFinales({form:p, soloGuardar:s}),
-                        generarProtocoloClienteDoc: (p) => this.withFailureHandler(null).generarProtocoloClienteDoc(p)
+      script: {
+        run: {
+          withSuccessHandler: function(successCallback) {
+            return {
+              withFailureHandler: function(failureCallback) {
+                return new Proxy({}, {
+                  get: function(target, prop) {
+                    return function(payload) {
+                      // Si la función espera 2 argumentos (ej: guardarPruebas), los empaquetamos
+                      let finalPayload = payload;
+                      if(arguments.length > 1 && prop.includes("guardarPruebas")) {
+                          finalPayload = { form: arguments[0], soloGuardar: arguments[1] };
+                      } else if (arguments.length === 1 && typeof payload !== 'object') {
+                           // Si es un argumento simple (ej: ID string), lo metemos en un objeto
+                           finalPayload = { entrada: payload }; 
+                      } else if (arguments.length === 0) {
+                           finalPayload = {};
+                      }
+
+                      // PETICIÓN HTTP REAL
+                      fetch(URL_API_CAMPO, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: prop, payload: finalPayload })
+                      })
+                      .then(response => response.json())
+                      .then(data => {
+                        if (data.error) {
+                          if (failureCallback) failureCallback(data.error);
+                        } else {
+                          if (successCallback) successCallback(data);
+                        }
+                      })
+                      .catch(err => {
+                        if (failureCallback) failureCallback("Error de Red: " + err.message);
+                      });
                     }
-                }
+                  }
+                });
+              },
+              // Atajos directos para funciones comunes sin failure handler explícito
+              obtenerListasAutocompletado: () => this.withFailureHandler(console.error).obtenerListasAutocompletado(),
+              importarAgendaProduccion: () => this.withFailureHandler(console.error).importarAgendaProduccion()
             }
+          }
         }
+      }
     };
   </script>
 
@@ -99,7 +110,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V14.1 | Conectado</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V15.0 | GitHub Connect</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -115,17 +126,35 @@
     <div id="view-home" class="view active">
       <div class="text-center py-5">
         <h3 class="fw-bold text-dark mb-4">Panel de Control</h3>
+        
         <div class="mb-4">
             <button onclick="abrirAgenda()" class="btn btn-primary btn-lg fw-bold shadow-sm w-100 py-3" style="max-width: 400px;">
                 <i class="fas fa-cloud-download-alt me-2"></i> SINCRONIZAR AGENDA
             </button>
             <p class="text-muted small mt-2">Descargar pendientes de Producción</p>
         </div>
+
         <div class="row g-3 justify-content-center">
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-success" onclick="nav('insp')" style="cursor:pointer;"><i class="fas fa-clipboard-check fa-3x text-success mb-3"></i><h5>Visual</h5><p class="text-muted small">Recepción y Checklist.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-warning" onclick="nav('ini')" style="cursor:pointer;"><i class="fas fa-flask fa-3x text-warning mb-3"></i><h5>Iniciales</h5><p class="text-muted small">Diagnóstico de Entrada.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-primary" onclick="nav('fin')" style="cursor:pointer;"><i class="fas fa-check-circle fa-3x text-primary mb-3"></i><h5>Finales</h5><p class="text-muted small">Protocolo de Salida.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-dark" onclick="nav('hv')" style="cursor:pointer;"><i class="fas fa-edit fa-3x text-dark mb-3"></i><h5>Editar Placa</h5><p class="text-muted small">Corregir Hoja de Vida.</p></div></div>
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-success" onclick="nav('insp')" style="cursor:pointer;">
+              <i class="fas fa-clipboard-check fa-3x text-success mb-3"></i><h5>Visual</h5><p class="text-muted small">Recepción y Checklist.</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-warning" onclick="nav('ini')" style="cursor:pointer;">
+              <i class="fas fa-flask fa-3x text-warning mb-3"></i><h5>Iniciales</h5><p class="text-muted small">Diagnóstico de Entrada.</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-primary" onclick="nav('fin')" style="cursor:pointer;">
+              <i class="fas fa-check-circle fa-3x text-primary mb-3"></i><h5>Finales</h5><p class="text-muted small">Protocolo de Salida.</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-dark" onclick="nav('hv')" style="cursor:pointer;">
+              <i class="fas fa-edit fa-3x text-dark mb-3"></i><h5>Editar Placa</h5><p class="text-muted small">Corregir Hoja de Vida.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -139,11 +168,23 @@
         </div>
         <div class="card p-3">
             <label class="label-mini">SERVICIO</label>
-            <select id="insp_servicio" class="form-select fw-bold border-success"><option>MANTENIMIENTO</option><option>PRUEBAS ELÉCTRICAS</option><option>REPARACIÓN</option><option>GARANTÍA</option><option>OTROS</option></select>
+            <select id="insp_servicio" class="form-select fw-bold border-success">
+                <option>MANTENIMIENTO</option><option>PRUEBAS ELÉCTRICAS</option><option>REPARACIÓN</option><option>GARANTÍA</option><option>OTROS</option>
+            </select>
         </div>
         <div class="card mb-3"><div class="card-header bg-dark text-white fw-bold">CHECKLIST</div><div class="card-body p-0"><table class="table table-bordered mb-0 align-middle"><thead class="table-light"><tr><th width="50%">Item</th><th>Estado</th></tr></thead><tbody id="insp_body"></tbody></table></div></div>
-        <div class="card p-3 mb-3"><label class="label-mini">Observaciones</label><textarea id="insp_obs" class="form-control mb-3" rows="2"></textarea><label class="label-mini text-primary">Realizado Por</label><input id="insp_realizado" class="form-control fw-bold border-primary mb-3"><div class="row g-2"><div class="col-6"><button class="btn btn-secondary w-100" onclick="guardarInsp(false)">Solo Excel</button></div><div class="col-6"><button class="btn btn-success w-100" onclick="guardarInsp(true)">Generar PDF</button></div></div></div>
-        <div class="card p-3 bg-success-subtle border-success"><h6 class="fw-bold text-success text-center mb-2"><i class="fas fa-check-double me-2"></i>CERTIFICACIÓN DE CIERRE</h6><p class="small text-muted text-center mb-3">Al hacer clic, confirmas que la inspección está completa y notificas a producción.</p><button id="btn-certificar-insp" class="btn btn-success w-100 fw-bold py-3 shadow" onclick="certificarInspeccion()">✅ CERTIFICAR INSPECCIÓN LISTA</button></div>
+        <div class="card p-3 mb-3">
+            <label class="label-mini">Observaciones</label><textarea id="insp_obs" class="form-control mb-3" rows="2"></textarea>
+            <label class="label-mini text-primary">Realizado Por</label><input id="insp_realizado" class="form-control fw-bold border-primary mb-3">
+            <div class="row g-2">
+                <div class="col-6"><button class="btn btn-secondary w-100" onclick="guardarInsp(false)">Solo Excel</button></div>
+                <div class="col-6"><button class="btn btn-success w-100" onclick="guardarInsp(true)">Generar PDF</button></div>
+            </div>
+        </div>
+        <div class="card p-3 bg-success-subtle border-success">
+            <h6 class="fw-bold text-success text-center mb-2"><i class="fas fa-check-double me-2"></i>CERTIFICACIÓN DE CIERRE</h6>
+            <button id="btn-certificar-insp" class="btn btn-success w-100 fw-bold py-3 shadow" onclick="certificarInspeccion()">✅ CERTIFICAR INSPECCIÓN LISTA</button>
+        </div>
       </div>
     </div>
 
@@ -154,7 +195,7 @@
             <div class="card p-4">
                 <h6 class="text-muted fw-bold border-bottom pb-2 mb-3">DATOS GENERALES (Edición)</h6>
                 <div class="row g-3">
-                    <div class="col-md-4 col-6"><label class="label-mini">ENTRADA (NO EDITABLE)</label><input id="edit_entrada" class="form-control fw-bold bg-light" readonly></div>
+                    <div class="col-md-4 col-6"><label class="label-mini">ENTRADA</label><input id="edit_entrada" class="form-control fw-bold bg-light" readonly></div>
                     <div class="col-md-4 col-6"><label class="label-mini">KVA</label><input id="edit_kva" type="number" class="form-control"></div>
                     <div class="col-md-4 col-12"><label class="label-mini">CLIENTE</label><input id="edit_cliente" class="form-control"></div>
                     <div class="col-md-3 col-6"><label class="label-mini">MARCA</label><input id="edit_marca" class="form-control"></div>
@@ -184,7 +225,7 @@
   <div class="modal fade" id="modalAgenda" tabindex="-1">
     <div class="modal-dialog modal-fullscreen-sm-down modal-lg">
       <div class="modal-content">
-        <div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold"><i class="fas fa-list-alt me-2"></i>AGENDA PENDIENTE</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold">AGENDA</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
         <div class="modal-body bg-light">
             <div class="input-group mb-3"><span class="input-group-text"><i class="fas fa-search"></i></span><input type="text" id="filtroAgenda" class="form-control" placeholder="Filtrar..." onkeyup="filtrarAgenda()"></div>
             <div id="listaAgendaContainer"><div class="text-center py-5 text-muted">Cargando...</div></div>
@@ -197,14 +238,36 @@
     <div class="modal-dialog modal-fullscreen-sm-down modal-lg">
       <div class="modal-content">
         <div class="modal-header bg-warning"><h5 class="modal-title fw-bold">CREAR HOJA DE VIDA</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <div class="modal-body bg-light"><div class="container-fluid p-0"><div class="row g-2"><div class="col-md-4 col-6"><label class="label-mini">ENTRADA</label><input id="new_entrada" class="form-control fw-bold" readonly></div><div class="col-md-4 col-6"><label class="label-mini">KVA</label><input id="new_kva" type="number" class="form-control"></div><div class="col-md-4 col-12"><label class="label-mini">CLIENTE</label><input id="new_cliente" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">MARCA</label><input id="new_marca" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">SERIE</label><input id="new_serie" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">V.PRIM</label><input id="new_vp" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">V.SEC</label><input id="new_vs" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">FASES</label><select id="new_fases" class="form-select"><option value="3">3</option><option value="1">1</option></select></div><div class="col-md-3 col-6"><label class="label-mini">GRUPO</label><input id="new_grupo" class="form-control" placeholder="Dyn5"></div><div class="col-md-3 col-6"><label class="label-mini">AÑO</label><input id="new_anio" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">TIPO</label><select id="new_tipo" class="form-select"><option>Sumergido</option><option>Seco</option></select></div><div class="col-12 border-top mt-2 pt-2"><h6 class="small fw-bold text-muted">DETALLES FÍSICOS DE PLACA</h6></div><div class="col-md-4 col-6"><label class="label-mini">PESO (Kg)</label><input id="new_peso" type="number" class="form-control"></div><div class="col-md-4 col-6"><label class="label-mini">ACEITE (L)</label><input id="new_aceite" type="number" class="form-control"></div><div class="col-md-4 col-12"><label class="label-mini text-danger">DERIVACIONES (TAP NOM)</label><select id="new_deriv" class="form-select fw-bold text-danger border-danger"><option value="+2">+2</option><option value="+1">+1</option><option value="0">0</option></select></div><div class="col-6"><label class="label-mini">CELULAR</label><input id="new_celular" class="form-control"></div><div class="col-6"><label class="label-mini">PROYECTO</label><input id="new_proyecto" class="form-control"></div></div></div></div>
+        <div class="modal-body bg-light">
+            <div class="container-fluid p-0"><div class="row g-2">
+                <div class="col-md-4 col-6"><label class="label-mini">ENTRADA</label><input id="new_entrada" class="form-control fw-bold" readonly></div>
+                <div class="col-md-4 col-6"><label class="label-mini">KVA</label><input id="new_kva" type="number" class="form-control"></div>
+                <div class="col-md-4 col-12"><label class="label-mini">CLIENTE</label><input id="new_cliente" class="form-control"></div>
+                <div class="col-md-3 col-6"><label class="label-mini">MARCA</label><input id="new_marca" class="form-control"></div>
+                <div class="col-md-3 col-6"><label class="label-mini">SERIE</label><input id="new_serie" class="form-control"></div>
+                <div class="col-md-3 col-6"><label class="label-mini">V.PRIM</label><input id="new_vp" type="number" class="form-control"></div>
+                <div class="col-md-3 col-6"><label class="label-mini">V.SEC</label><input id="new_vs" type="number" class="form-control"></div>
+                <div class="col-md-3 col-6"><label class="label-mini">FASES</label><select id="new_fases" class="form-select"><option value="3">3</option><option value="1">1</option></select></div>
+                <div class="col-md-3 col-6"><label class="label-mini">GRUPO</label><input id="new_grupo" class="form-control" placeholder="Dyn5"></div>
+                <div class="col-md-3 col-6"><label class="label-mini">AÑO</label><input id="new_anio" type="number" class="form-control"></div>
+                <div class="col-md-3 col-6"><label class="label-mini">TIPO</label><select id="new_tipo" class="form-select"><option>Sumergido</option><option>Seco</option></select></div>
+                <div class="col-md-4 col-6"><label class="label-mini">PESO</label><input id="new_peso" type="number" class="form-control"></div>
+                <div class="col-md-4 col-6"><label class="label-mini">ACEITE</label><input id="new_aceite" type="number" class="form-control"></div>
+                <div class="col-md-4 col-12"><label class="label-mini text-danger">DERIV.</label><select id="new_deriv" class="form-select fw-bold text-danger border-danger"><option value="+2">+2</option><option value="+1">+1</option><option value="0">0</option></select></div>
+                <div class="col-6"><label class="label-mini">CELULAR</label><input id="new_celular" class="form-control"></div>
+                <div class="col-6"><label class="label-mini">PROYECTO</label><input id="new_proyecto" class="form-control"></div>
+            </div></div>
+        </div>
         <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-warning fw-bold" onclick="crearHoja()">GUARDAR</button></div>
       </div>
     </div>
   </div>
 
   <div id="loader" class="position-fixed top-50 start-50 translate-middle bg-white p-4 rounded shadow text-center d-none" style="z-index:2000"><div class="spinner-border text-primary"></div><p class="mt-2 fw-bold">Procesando...</p></div>
-  <datalist id="list_insp"></datalist><datalist id="list_ini"></datalist><datalist id="list_fin"></datalist>
+
+  <datalist id="list_insp"></datalist>
+  <datalist id="list_ini"></datalist>
+  <datalist id="list_fin"></datalist>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -216,7 +279,6 @@
     const modalCrear = new bootstrap.Modal(document.getElementById('modalCrear'));
     const modalAgenda = new bootstrap.Modal(document.getElementById('modalAgenda'));
 
-    // CARGA DE LISTAS
     document.addEventListener('DOMContentLoaded', function() {
        google.script.run.withSuccessHandler(fillDatalists).obtenerListasAutocompletado();
     });
@@ -233,7 +295,6 @@
        if(lists.fin) fill('list_fin', lists.fin);
     }
 
-    // GENERADOR DE VISTAS LAB
     function buildLabViews() {
       const labs = [
         { id: 'ini', title: 'Pruebas Iniciales', color: 'warning', icon: 'flask' },
@@ -459,7 +520,7 @@
                 document.querySelectorAll('.lbl-kva').forEach(e=>e.innerText=res.kva);
                 document.querySelectorAll('.lbl-cliente').forEach(e=>e.innerText=res.cliente);
                 
-                // Redirección inteligente según lo que falta
+                // Redirección inteligente
                 if(ITEM_SELECCIONADO.estadoTecnico.includes("INSPECCIÓN")) {
                     nav('insp');
                     initInsp();
@@ -467,7 +528,7 @@
                     nav('ini');
                     initLab('ini');
                 } else {
-                    nav('insp'); // Por defecto
+                    nav('insp'); 
                     initInsp();
                 }
                 
@@ -530,7 +591,7 @@
                     } else {
                         Swal.fire('Error', res.error, 'error');
                     }
-                }).procesarInspeccion(f); // Reutilizamos esta que ya tiene la lógica de notificar
+                }).procesarInspeccion(f); 
             }
         });
     }
@@ -616,7 +677,7 @@
 
     function guardarEdicionHV() {
         const d = { 
-            entrada: getVal('edit_entrada'), // Llave
+            entrada: getVal('edit_entrada'), 
             cliente: getVal('edit_cliente'), kva: getVal('edit_kva'), marca: getVal('edit_marca'), serie: getVal('edit_serie'), 
             grupo: getVal('edit_grupo'), vp: getVal('edit_vp'), vs: getVal('edit_vs'), fases: getVal('edit_fases'), anio: getVal('edit_anio'), 
             tipo: getVal('edit_tipo'), proyecto: getVal('edit_proyecto'), celular: getVal('edit_celular'),
@@ -704,7 +765,7 @@
        }
     }
 
-    // --- LABORATORIO LOGIC (TTR, RES, ETC) ---
+    // --- LABORATORIO LOGIC ---
     function initLab(mod) {
       document.getElementById('form_'+mod).classList.remove('d-none');
       document.querySelectorAll('.lbl-deriv').forEach(e=>e.innerText=DATA.derivaciones);
