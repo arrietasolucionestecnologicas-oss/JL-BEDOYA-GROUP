@@ -22,7 +22,7 @@
 <body class="p-4 md:p-8">
 
     <script>
-        // URL API PRODUCCIÓN V13
+        // URL API V13
         const URL_API = "https://script.google.com/macros/s/AKfycbzVU2GRgkaYB6BBUyh5QWCmiCSjnbwS_tGwEGbd6o8u7hz6JwC98cTVhhOb4AmIQJXREQ/exec";
     </script>
 
@@ -140,7 +140,7 @@
         }
 
         async function cargarListaAceites() {
-            // Mostrar loaders en ambas pestañas
+            // Loader
             document.getElementById('grid-pendientes').innerHTML = '<div class="col-span-full py-20 text-center text-slate-400"><i data-lucide="loader" class="w-10 h-10 animate-spin mx-auto mb-3"></i><p>Sincronizando...</p></div>';
             lucide.createIcons();
 
@@ -150,12 +150,11 @@
                 procesarListas(res);
             } catch (e) {
                 alert("Error de conexión: " + e.message);
-                document.getElementById('grid-pendientes').innerHTML = `<p class="col-span-full text-red-500 text-center">Error de conexión.</p>`;
             }
         }
 
         function procesarListas(data) {
-            // FILTRO ESTRICTO BASADO EN EL STATUS QUE MANDA EL BACKEND
+            // CLASIFICACIÓN ESTRICTA
             const pendientes = data.filter(i => i.status === 'PENDIENTE');
             const realizados = data.filter(i => i.status === 'REALIZADO');
             
@@ -163,14 +162,14 @@
             document.getElementById('stat-total').innerText = pendientes.length;
             document.getElementById('stat-hist').innerText = realizados.length;
             
-            // Renderizar Grids (Se limpia antes de pintar)
+            // Renderizar
             renderGrid(pendientes, 'grid-pendientes', false);
             renderGrid(realizados, 'grid-analizados', true);
         }
 
         function renderGrid(lista, containerId, esHistorial) {
             const grid = document.getElementById(containerId);
-            grid.innerHTML = ''; // LIMPIEZA CRÍTICA
+            grid.innerHTML = '';
 
             if (lista.length === 0) {
                 grid.innerHTML = `<div class="col-span-full py-10 text-center text-slate-300 italic">No hay registros en esta sección.</div>`;
@@ -257,7 +256,7 @@
                 document.getElementById('form-registro').classList.remove('hidden');
                 document.getElementById('modal-footer').classList.remove('hidden');
                 document.getElementById('info-historial').classList.add('hidden');
-                // Limpiar inputs
+                
                 document.getElementById('responsable').value = "";
                 document.getElementById('conclusion').value = "";
                 document.getElementById('btn-save').disabled = false;
@@ -287,7 +286,7 @@
                     tipoEnsayo: selItem.accion
                 });
                 cerrarFicha(); 
-                cargarListaAceites(); // Refrescar para mover a pestaña Historial
+                cargarListaAceites(); 
             } catch(e) {
                 alert("Error: " + e.message);
                 btn.innerText = "CONFIRMAR REALIZADO"; btn.disabled = false;
@@ -295,7 +294,6 @@
         }
 
         function switchTab(tab) {
-            // UI Toggle
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-' + tab).classList.add('active');
             
