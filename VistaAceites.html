@@ -22,7 +22,7 @@
 <body class="p-4 md:p-8">
 
     <script>
-        // URL NUEVA V13
+        // URL API PRODUCCIÓN V13
         const URL_API = "https://script.google.com/macros/s/AKfycbzVU2GRgkaYB6BBUyh5QWCmiCSjnbwS_tGwEGbd6o8u7hz6JwC98cTVhhOb4AmIQJXREQ/exec";
     </script>
 
@@ -38,7 +38,7 @@
 
     <main class="max-w-5xl mx-auto">
         
-        <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-2 gap-4 mb-6">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
                 <span class="text-3xl font-black text-slate-700" id="stat-total">0</span>
                 <span class="text-[10px] uppercase font-bold text-slate-400 mt-1">Pendientes</span>
@@ -47,15 +47,11 @@
                 <span class="text-3xl font-black text-green-600" id="stat-hist">0</span>
                 <span class="text-[10px] uppercase font-bold text-slate-400 mt-1">Analizados</span>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
-                <span class="text-3xl font-black text-blue-500" id="stat-litros">0</span>
-                <span class="text-[10px] uppercase font-bold text-slate-400 mt-1">Lts Procesados</span>
-            </div>
         </div>
 
         <div class="flex border-b border-slate-200 mb-6 sticky top-28 bg-[#f1f5f9] z-40">
             <button onclick="switchTab('pendientes')" id="btn-pendientes" class="tab-btn active flex-1">PENDIENTES</button>
-            <button onclick="switchTab('analizados')" id="btn-analizados" class="tab-btn flex-1">HISTORIAL / ANALIZADOS</button>
+            <button onclick="switchTab('analizados')" id="btn-analizados" class="tab-btn flex-1">HISTORIAL</button>
         </div>
 
         <div id="grid-pendientes" class="grid-view active grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -144,7 +140,7 @@
         }
 
         async function cargarListaAceites() {
-            // Mostrar loaders
+            // Mostrar loaders en ambas pestañas
             document.getElementById('grid-pendientes').innerHTML = '<div class="col-span-full py-20 text-center text-slate-400"><i data-lucide="loader" class="w-10 h-10 animate-spin mx-auto mb-3"></i><p>Sincronizando...</p></div>';
             lucide.createIcons();
 
@@ -154,10 +150,12 @@
                 procesarListas(res);
             } catch (e) {
                 alert("Error de conexión: " + e.message);
+                document.getElementById('grid-pendientes').innerHTML = `<p class="col-span-full text-red-500 text-center">Error de conexión.</p>`;
             }
         }
 
         function procesarListas(data) {
+            // FILTRO ESTRICTO BASADO EN EL STATUS QUE MANDA EL BACKEND
             const pendientes = data.filter(i => i.status === 'PENDIENTE');
             const realizados = data.filter(i => i.status === 'REALIZADO');
             
@@ -165,14 +163,14 @@
             document.getElementById('stat-total').innerText = pendientes.length;
             document.getElementById('stat-hist').innerText = realizados.length;
             
-            // Renderizar Grids
+            // Renderizar Grids (Se limpia antes de pintar)
             renderGrid(pendientes, 'grid-pendientes', false);
             renderGrid(realizados, 'grid-analizados', true);
         }
 
         function renderGrid(lista, containerId, esHistorial) {
             const grid = document.getElementById(containerId);
-            grid.innerHTML = '';
+            grid.innerHTML = ''; // LIMPIEZA CRÍTICA
 
             if (lista.length === 0) {
                 grid.innerHTML = `<div class="col-span-full py-10 text-center text-slate-300 italic">No hay registros en esta sección.</div>`;
@@ -193,7 +191,6 @@
 
                 const kva = item.info.kva || '-';
                 const serie = item.info.serie || 'S/N';
-                // Para encontrar el item en rawData luego
                 const jsonItem = encodeURIComponent(JSON.stringify(item));
 
                 const card = `
@@ -226,11 +223,9 @@
             document.getElementById('m-id').innerText = "#" + selItem.id;
             document.getElementById('m-cliente').innerText = selItem.cliente;
 
-            // Configurar Alerta
             const divAlerta = document.getElementById('m-alerta-accion');
             divAlerta.innerHTML = `<div class="bg-slate-100 text-slate-700 p-3 rounded-lg text-sm font-bold border border-slate-200 text-center uppercase">${selItem.textoBoton}</div>`;
 
-            // Configurar Campos Técnicos
             const fields = [
                 { l: "Potencia", v: info.kva, u: "KVA" }, { l: "Marca", v: info.marca },
                 { l: "Serie", v: info.serie }, { l: "Tensión P.", v: info.vp, u: "V" },
@@ -292,7 +287,7 @@
                     tipoEnsayo: selItem.accion
                 });
                 cerrarFicha(); 
-                cargarListaAceites(); // Refrescar para mover de pestaña
+                cargarListaAceites(); // Refrescar para mover a pestaña Historial
             } catch(e) {
                 alert("Error: " + e.message);
                 btn.innerText = "CONFIRMAR REALIZADO"; btn.disabled = false;
