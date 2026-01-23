@@ -228,7 +228,7 @@
 
         // 3. CLASIFICADOR (EL CEREBRO DEL FILTRO)
         function procesarListas(data) {
-            // Filtro estricto usando el flag que puso el Backend
+            // Filtro estricto usando el status que asigna el Backend
             const pendientes = data.filter(i => i.status === 'PENDIENTE');
             const realizados = data.filter(i => i.status === 'REALIZADO');
             
@@ -244,7 +244,7 @@
         // 4. RENDERIZADOR DE TARJETAS
         function renderGrid(lista, containerId, esHistorial) {
             const grid = document.getElementById(containerId);
-            grid.innerHTML = ''; // Limpiar antes de pintar
+            grid.innerHTML = ''; // <--- LIMPIEZA CRÍTICA PARA EVITAR DUPLICADOS VISUALES
 
             if (lista.length === 0) {
                 grid.innerHTML = `
