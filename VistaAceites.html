@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab Aceites JLB - Diagnóstico</title>
+    <title>Lab Aceites JLB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -54,10 +54,13 @@
             border-bottom-color: #ca8a04; 
         }
         
-        /* VISTAS */
-        .grid-view { display: none; }
+        /* --- CORRECCIÓN CRÍTICA DE VISTAS --- */
+        /* Usamos !important para obligar a ocultar la pestaña inactiva */
+        .grid-view { display: none !important; }
+        
+        /* Solo la activa se muestra */
         .grid-view.active { 
-            display: grid; 
+            display: grid !important; 
             animation: fadeIn 0.4s ease-out; 
         }
         
@@ -70,7 +73,6 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="p-4 md:p-8 text-slate-800">
@@ -223,66 +225,30 @@
             }
         }
 
-        // -------------------------------------------------------
-        // 3. FUNCIÓN DE DIAGNÓSTICO Y CLASIFICACIÓN (AUTO-FIX)
-        // -------------------------------------------------------
+        // 3. CLASIFICADOR (AUTO-CORRECCIÓN)
         function procesarListas(data) {
-            console.clear();
-            console.group("🕵️‍♂️ DIAGNÓSTICO DE DUPLICADOS JLB");
-            console.log("📦 Total de datos recibidos del servidor:", data.length);
-
-            // A. DETECTAR DUPLICADOS (Diagnóstico)
-            const conteo = {};
-            const idsDuplicados = [];
-            
-            data.forEach(item => {
-                const id = item.id;
-                if(!conteo[id]) conteo[id] = 0;
-                conteo[id]++;
-                if(conteo[id] === 2) idsDuplicados.push(id);
-            });
-
-            if (idsDuplicados.length > 0) {
-                console.warn(`🚨 ALERTA: ${idsDuplicados.length} TRANSFORMADORES VIENEN DUPLICADOS DESDE EL BACKEND.`);
-                console.table(
-                    data.filter(i => idsDuplicados.includes(i.id))
-                        .map(i => ({ ID: i.id, STATUS: i.status, ACCION: i.accion }))
-                        .sort((a,b) => a.ID - b.ID)
-                );
-                // alert(`⚠️ ALERTA DE SISTEMA: Se detectaron registros duplicados (Pendiente + Realizado).\n\nEl sistema aplicará una AUTO-CORRECCIÓN visual para mostrar solo el estado correcto.`);
-            } else {
-                console.log("✅ Data limpia. No hay duplicados en la respuesta.");
-            }
-            console.groupEnd();
-
-            // B. SEPARACIÓN Y AUTO-CORRECCIÓN (La Magia)
-            
-            // Paso 1: Identificar todo lo que ya está REALIZADO (Manda la parada)
+            // Paso 1: Sacamos los REALIZADOS
             const realizados = data.filter(i => i.status === 'REALIZADO');
-            const setIDsRealizados = new Set(realizados.map(i => i.id));
+            const idsRealizados = new Set(realizados.map(i => i.id));
 
-            // Paso 2: Filtrar Pendientes
-            // REGLA DE ORO: Solo entra a pendientes si NO existe ya en la lista de realizados.
+            // Paso 2: Filtramos PENDIENTES con Auto-Limpieza
+            // Si el ID ya existe en realizados, lo borramos de pendientes (aunque el backend lo mande)
             const pendientes = data.filter(i => {
                 if (i.status !== 'PENDIENTE') return false;
-                
-                // Aquí ocurre la limpieza:
-                if (setIDsRealizados.has(i.id)) {
-                    console.log(`🧹 AUTO-LIMPIEZA: Ocultando pendiente del ID ${i.id} porque ya aparece como Realizado.`);
-                    return false; // Se borra de la vista pendientes
-                }
+                if (idsRealizados.has(i.id)) return false; // CORRECCIÓN AUTOMÁTICA
                 return true;
             });
             
-            // Paso 3: Pintar
+            // Actualizar contadores
             document.getElementById('stat-total').innerText = pendientes.length;
             document.getElementById('stat-hist').innerText = realizados.length;
             
+            // Renderizar Grids
             renderGrid(pendientes, 'grid-pendientes', false);
             renderGrid(realizados, 'grid-analizados', true);
         }
 
-        // 4. RENDERIZADOR DE TARJETAS
+        // 4. RENDERIZADOR
         function renderGrid(lista, containerId, esHistorial) {
             const grid = document.getElementById(containerId);
             grid.innerHTML = ''; 
@@ -377,7 +343,7 @@
                 </div>
             `).join('');
 
-            // Lógica Visual: Historial vs Pendiente
+            // Lógica Visual
             if (esHistorial) {
                 document.getElementById('form-registro').classList.add('hidden');
                 document.getElementById('modal-footer').classList.add('hidden');
@@ -392,7 +358,6 @@
                 document.getElementById('modal-footer').classList.remove('hidden');
                 document.getElementById('info-historial').classList.add('hidden');
                 
-                // Reset inputs
                 document.getElementById('responsable').value = "";
                 document.getElementById('conclusion').value = "";
                 document.getElementById('btn-save').disabled = false;
@@ -421,7 +386,7 @@
                     fecha: new Date().toISOString().split('T')[0],
                     responsable: resp, 
                     conclusion: concl, 
-                    tipoEnsayo: selItem.accion // PCB, PARCIAL, FINAL
+                    tipoEnsayo: selItem.accion 
                 });
                 
                 // Éxito
