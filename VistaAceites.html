@@ -1,415 +1,327 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab Aceites JLB</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
-        
-        /* TARJETAS */
-        .card-oil { 
-            background: white; 
-            border-radius: 16px; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
-            border: 1px solid #e2e8f0; 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            cursor: pointer; 
-            position: relative;
-            overflow: hidden;
-        }
-        .card-oil:hover { 
-            transform: translateY(-4px); 
-            border-color: #ca8a04; 
-            box-shadow: 0 10px 15px -3px rgba(202, 138, 4, 0.2); 
-        }
-        
-        /* BADGES */
-        .badge-step { 
-            font-size: 10px; 
-            font-weight: 800; 
-            padding: 4px 8px; 
-            border-radius: 99px; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px; 
-        }
-        
-        /* TABS */
-        .tab-btn { 
-            padding: 12px 24px; 
-            font-weight: 800; 
-            color: #94a3b8; 
-            border-bottom: 3px solid transparent; 
-            transition: all 0.2s; 
-            text-transform: uppercase;
-            font-size: 0.8rem;
-        }
-        .tab-btn:hover { color: #475569; }
-        .tab-btn.active { 
-            color: #ca8a04; 
-            border-bottom-color: #ca8a04; 
-        }
-        
-        /* --- CORRECCIÓN CRÍTICA DE VISTAS --- */
-        /* Usamos !important para obligar a ocultar la pestaña inactiva */
-        .grid-view { display: none !important; }
-        
-        /* Solo la activa se muestra */
-        .grid-view.active { 
-            display: grid !important; 
-            animation: fadeIn 0.4s ease-out; 
-        }
-        
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(10px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-        
-        /* SCROLLBAR */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    </style>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Laboratorio de Aceites | JLB</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root { --primary-color: #2c3e50; --accent-color: #3498db; --success-color: #27ae60; }
+    body { background-color: #f8f9fa; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .header-bar { background: var(--primary-color); color: white; padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .card-trafo { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s; background: white; margin-bottom: 20px; border-left: 5px solid var(--accent-color); }
+    .card-trafo:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+    .badge-status { font-size: 0.8em; padding: 5px 10px; border-radius: 20px; }
+    .btn-action { border-radius: 20px; padding: 5px 20px; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; width: 100%; }
+    .tech-data { font-size: 0.9rem; color: #555; }
+    .tech-data strong { color: #2c3e50; }
+    .tech-row { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 4px 0; }
+    /* Estilos para el Historial */
+    .history-card { border-left-color: #95a5a6; opacity: 0.9; }
+    .history-card .btn-action { background-color: #95a5a6; border-color: #95a5a6; color: white; cursor: not-allowed; }
+    /* Modal de Detalles */
+    .modal-header { background: var(--primary-color); color: white; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .detail-item { background: #f8f9fa; padding: 10px; border-radius: 8px; }
+    .detail-label { font-size: 0.75rem; color: #7f8c8d; text-transform: uppercase; display: block; }
+    .detail-value { font-weight: 600; color: #2c3e50; font-size: 1rem; }
+  </style>
 </head>
-<body class="p-4 md:p-8 text-slate-800">
+<body>
 
-    <script>
-        // URL API V13 (Producción)
-        const URL_API = "https://script.google.com/macros/s/AKfycbzVU2GRgkaYB6BBUyh5QWCmiCSjnbwS_tGwEGbd6o8u7hz6JwC98cTVhhOb4AmIQJXREQ/exec";
-    </script>
-
-    <header class="max-w-6xl mx-auto bg-gradient-to-r from-yellow-600 to-yellow-500 text-white p-6 rounded-2xl shadow-xl flex justify-between items-center mb-8 sticky top-4 z-50">
-        <div>
-            <h1 class="font-black text-2xl tracking-tight flex items-center gap-2">
-                <i data-lucide="flask-conical" class="w-8 h-8"></i> LABORATORIO DE ACEITES
-            </h1>
-            <p class="text-xs opacity-90 font-medium uppercase tracking-widest mt-1 pl-10">Control de Calidad & PCB</p>
-        </div>
-        <button onclick="cargarListaAceites()" class="bg-white/20 hover:bg-white/30 p-3 rounded-full transition-all shadow-sm backdrop-blur-sm active:scale-95" title="Sincronizar">
-            <i data-lucide="refresh-cw" class="w-6 h-6 text-white"></i>
-        </button>
-    </header>
-
-    <main class="max-w-6xl mx-auto">
-        
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
-                <span class="text-4xl font-black text-slate-700" id="stat-total">0</span>
-                <span class="text-[10px] uppercase font-bold text-slate-400 mt-1">Pendientes</span>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
-                <span class="text-4xl font-black text-green-600" id="stat-hist">0</span>
-                <span class="text-[10px] uppercase font-bold text-slate-400 mt-1">Analizados</span>
-            </div>
-        </div>
-
-        <div class="flex border-b border-slate-200 mb-6 sticky top-28 bg-[#f1f5f9] z-40">
-            <button onclick="switchTab('pendientes')" id="btn-pendientes" class="tab-btn active flex-1 flex items-center justify-center gap-2">
-                <i data-lucide="list-todo" class="w-4 h-4"></i> PENDIENTES
-            </button>
-            <button onclick="switchTab('analizados')" id="btn-analizados" class="tab-btn flex-1 flex items-center justify-center gap-2">
-                <i data-lucide="history" class="w-4 h-4"></i> HISTORIAL
-            </button>
-        </div>
-
-        <div id="grid-pendientes" class="grid-view active grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="col-span-full py-20 text-center text-slate-400">
-                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-3"></i>
-                <p class="text-sm font-bold">Conectando con base de datos...</p>
-            </div>
-        </div>
-
-        <div id="grid-analizados" class="grid-view grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            </div>
-
-    </main>
-
-    <div id="modal-ficha" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden transform transition-all scale-100 my-8 flex flex-col max-h-[90vh]">
-            
-            <div class="bg-slate-50 border-b border-slate-100 p-6 flex justify-between items-start shrink-0">
-                <div>
-                    <span class="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-1 rounded uppercase mb-1 inline-block">Transformador</span>
-                    <h3 class="font-black text-2xl text-slate-800" id="m-id">#ID</h3>
-                    <p class="text-sm text-slate-500 font-medium mt-1 truncate max-w-[300px]" id="m-cliente">Cliente</p>
-                </div>
-                <button onclick="cerrarFicha()" class="text-slate-400 hover:text-red-500 transition-colors p-2 hover:bg-slate-100 rounded-full">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-
-            <div class="p-6 overflow-y-auto custom-scrollbar flex-1">
-                
-                <div class="mb-6" id="m-alerta-accion"></div>
-
-                <div class="mb-6">
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 border-b pb-2 flex items-center gap-2">
-                        <i data-lucide="info" class="w-3 h-3"></i> Ficha Técnica
-                    </h4>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="m-datos-tecnicos"></div>
-                </div>
-
-                <div id="form-registro" class="bg-yellow-50 p-5 rounded-xl border border-yellow-200 shadow-inner">
-                    <h4 class="text-sm font-bold text-yellow-800 uppercase mb-4 flex items-center gap-2">
-                        <i data-lucide="edit-3" class="w-4 h-4"></i> Registrar Análisis
-                    </h4>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Responsable Análisis</label>
-                            <input type="text" id="responsable" class="w-full border border-yellow-300 rounded-lg text-sm font-bold p-3 focus:ring-2 focus:ring-yellow-500 outline-none bg-white text-slate-700" placeholder="Ej: Juan Perez">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Dictamen Final</label>
-                            <select id="conclusion" class="w-full border border-yellow-300 rounded-lg text-sm p-3 font-bold focus:ring-2 focus:ring-yellow-500 outline-none bg-white text-slate-700">
-                                <option value="">-- Seleccione Resultado --</option>
-                                <option value="APROBADO">✅ APROBADO (CUMPLE NORMA)</option>
-                                <option value="RECHAZADO">❌ RECHAZADO (NO CUMPLE)</option>
-                                <option value="OBSERVADO">⚠️ APROBADO CON OBSERVACIONES</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="info-historial" class="hidden bg-green-50 p-5 rounded-xl border border-green-200">
-                    <h4 class="text-sm font-bold text-green-800 uppercase mb-4 flex items-center gap-2">
-                        <i data-lucide="check-circle-2" class="w-4 h-4"></i> Análisis Completado
-                    </h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <p class="text-xs text-green-600 font-bold uppercase">Analista</p>
-                            <p class="font-bold text-slate-800 text-lg" id="hist-resp">--</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xs text-green-600 font-bold uppercase">Resultado</p>
-                            <p class="font-black text-lg" id="hist-concl">--</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-4 bg-slate-50 border-t border-slate-200 shrink-0" id="modal-footer">
-                <button onclick="guardarEnsayo()" id="btn-save" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
-                    <i data-lucide="save" class="w-5 h-5"></i> <span>GUARDAR Y FINALIZAR</span>
-                </button>
-            </div>
-        </div>
+  <div class="header-bar d-flex justify-content-between align-items-center sticky-top">
+    <div class="d-flex align-items-center">
+      <i class="fas fa-flask fa-lg me-3"></i>
+      <h4 class="m-0">Laboratorio de Aceites JLB</h4>
     </div>
+    <div>
+      <button class="btn btn-outline-light btn-sm" onclick="cargarDatos()"><i class="fas fa-sync-alt"></i> Actualizar</button>
+    </div>
+  </div>
 
-    <script>
-        let rawData = [];
-        let selItem = null;
+  <div class="container">
+    
+    <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="pills-pendientes-tab" data-bs-toggle="pill" data-bs-target="#pills-pendientes" type="button" role="tab">
+          <i class="fas fa-clock me-2"></i>Pendientes <span id="badge-pendientes" class="badge bg-danger rounded-pill ms-1">0</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-historial-tab" data-bs-toggle="pill" data-bs-target="#pills-historial" type="button" role="tab">
+          <i class="fas fa-history me-2"></i>Historial Realizado
+        </button>
+      </li>
+    </ul>
 
-        // 1. CONECTOR API
-        async function apiRequest(action, payload = {}) {
-            const body = JSON.stringify({ action, payload });
-            const res = await fetch(URL_API, { method: 'POST', body });
-            return await res.json();
-        }
+    <div class="tab-content" id="pills-tabContent">
+      
+      <div class="tab-pane fade show active" id="pills-pendientes" role="tabpanel">
+        <div id="loader" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div>
+          <p class="mt-2 text-muted">Consultando Base de Datos Maestra...</p>
+        </div>
+        <div id="lista-pendientes" class="row"></div>
+      </div>
 
-        // 2. CARGA INICIAL
-        async function cargarListaAceites() {
-            document.getElementById('grid-pendientes').innerHTML = '<div class="col-span-full py-20 text-center text-slate-400"><i data-lucide="loader" class="w-10 h-10 animate-spin mx-auto mb-3"></i><p class="font-bold animate-pulse">Sincronizando Base de Datos...</p></div>';
-            lucide.createIcons();
+      <div class="tab-pane fade" id="pills-historial" role="tabpanel">
+        <div id="lista-historial" class="row"></div>
+      </div>
 
-            try {
-                const res = await apiRequest('Aceites_ObtenerPendientes');
-                rawData = res;
-                procesarListas(res);
-            } catch (e) {
-                alert("Error crítico: " + e.message);
-                document.getElementById('grid-pendientes').innerHTML = `<div class="col-span-full text-center text-red-500 font-bold">Error de conexión. Intente recargar.</div>`;
-            }
-        }
+    </div>
+  </div>
 
-        // 3. CLASIFICADOR (AUTO-CORRECCIÓN)
-        function procesarListas(data) {
-            // Paso 1: Sacamos los REALIZADOS
-            const realizados = data.filter(i => i.status === 'REALIZADO');
-            const idsRealizados = new Set(realizados.map(i => i.id));
-
-            // Paso 2: Filtramos PENDIENTES con Auto-Limpieza
-            // Si el ID ya existe en realizados, lo borramos de pendientes (aunque el backend lo mande)
-            const pendientes = data.filter(i => {
-                if (i.status !== 'PENDIENTE') return false;
-                if (idsRealizados.has(i.id)) return false; // CORRECCIÓN AUTOMÁTICA
-                return true;
-            });
-            
-            // Actualizar contadores
-            document.getElementById('stat-total').innerText = pendientes.length;
-            document.getElementById('stat-hist').innerText = realizados.length;
-            
-            // Renderizar Grids
-            renderGrid(pendientes, 'grid-pendientes', false);
-            renderGrid(realizados, 'grid-analizados', true);
-        }
-
-        // 4. RENDERIZADOR
-        function renderGrid(lista, containerId, esHistorial) {
-            const grid = document.getElementById(containerId);
-            grid.innerHTML = ''; 
-
-            if (lista.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full py-16 text-center opacity-50">
-                        <i data-lucide="${esHistorial ? 'history' : 'check-circle'}" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i>
-                        <p class="text-sm font-bold text-slate-400 italic">No hay registros aquí.</p>
-                    </div>`;
-                lucide.createIcons();
-                return;
-            }
-
-            lista.forEach((item) => {
-                let color = "bg-blue-50 text-blue-700 border-blue-200";
-                let icon = "test-tube-2";
+  <div class="modal fade" id="modalAnalisis" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-microscope me-2"></i>Registro de Análisis de Laboratorio</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          
+          <div class="card mb-4 border-info">
+            <div class="card-header bg-info text-white">
+              <i class="fas fa-info-circle me-2"></i>Hoja de Vida Técnica (BD Externa)
+            </div>
+            <div class="card-body bg-light">
+              <div class="detail-grid">
+                <div class="detail-item"><span class="detail-label">ID Transformador</span><span class="detail-value" id="m-id"></span></div>
+                <div class="detail-item"><span class="detail-label">Cliente</span><span class="detail-value" id="m-cliente"></span></div>
+                <div class="detail-item"><span class="detail-label">Potencia (KVA)</span><span class="detail-value text-primary" id="m-kva"></span></div>
+                <div class="detail-item"><span class="detail-label">Marca</span><span class="detail-value" id="m-marca"></span></div>
                 
-                if (esHistorial) {
-                    color = "bg-green-50 text-green-700 border-green-200";
-                    icon = "check-circle-2";
-                } else {
-                    if(item.accion.includes('PCB')) { color = "bg-red-50 text-red-700 border-red-200"; icon = "alert-triangle"; }
-                    else if(item.accion.includes('FINAL')) { color = "bg-green-50 text-green-700 border-green-200"; icon = "check-circle"; }
-                }
-
-                const kva = item.info.kva || '-';
-                const serie = item.info.serie || 'S/N';
-                const jsonItem = encodeURIComponent(JSON.stringify(item));
-
-                const card = `
-                    <div class="card-oil p-6 relative group ${esHistorial ? 'opacity-90 hover:opacity-100' : ''}" onclick="abrirFicha('${jsonItem}')">
-                        <div class="absolute -top-2 -right-2 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform rotate-12 group-hover:rotate-0 transition-transform duration-500">
-                            <i data-lucide="${icon}" class="w-32 h-32"></i>
-                        </div>
-                        
-                        <div class="flex justify-between items-center mb-4 relative z-10">
-                            <span class="badge-step ${color} border shadow-sm">${item.textoBoton}</span>
-                            <span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">${item.fechaIngreso}</span>
-                        </div>
-                        
-                        <div class="mb-4 relative z-10">
-                            <h3 class="font-black text-slate-800 text-2xl tracking-tight">#${item.id}</h3>
-                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wide truncate">${item.cliente}</p>
-                        </div>
-
-                        <div class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 relative z-10">
-                            <div class="flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3 text-yellow-500"></i> ${kva} KVA</div>
-                            <span class="text-slate-300">|</span>
-                            <div class="flex items-center gap-1"><i data-lucide="hash" class="w-3 h-3 text-blue-500"></i> ${serie}</div>
-                        </div>
-
-                        ${esHistorial ? `
-                            <div class="mt-4 pt-3 border-t border-slate-100 text-xs flex justify-between items-center relative z-10">
-                                <span class="text-slate-400 font-bold uppercase">Resultado:</span>
-                                <span class="font-black ${item.resultado==='APROBADO'?'text-green-600':'text-red-600'}">${item.resultado}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-                grid.insertAdjacentHTML('beforeend', card);
-            });
-            lucide.createIcons();
-        }
-
-        // 5. GESTOR DEL MODAL
-        function abrirFicha(jsonItem) {
-            selItem = JSON.parse(decodeURIComponent(jsonItem));
-            const info = selItem.info || {};
-            const esHistorial = selItem.status === 'REALIZADO';
-
-            document.getElementById('m-id').innerText = "#" + selItem.id;
-            document.getElementById('m-cliente').innerText = selItem.cliente;
-
-            const divAlerta = document.getElementById('m-alerta-accion');
-            divAlerta.innerHTML = `<div class="bg-slate-100 text-slate-600 p-3 rounded-xl text-xs font-bold border border-slate-200 text-center uppercase tracking-widest">ENSAYO REQUERIDO: <span class="text-slate-900">${selItem.textoBoton}</span></div>`;
-
-            const fields = [
-                { l: "Potencia", v: info.kva, u: "KVA" }, { l: "Marca", v: info.marca },
-                { l: "Serie", v: info.serie }, { l: "Tensión P.", v: info.vp, u: "V" },
-                { l: "Tensión S.", v: info.vs, u: "V" }, { l: "Aceite", v: info.litros, u: "Lts", hl: true },
-                { l: "Peso", v: info.peso, u: "Kg" }, { l: "Año", v: info.anio },
-                { l: "Grupo", v: info.grupo }, { l: "Tipo", v: info.tipo },
-                { l: "Fases", v: info.fases }, { l: "Taps", v: info.taps }
-            ];
-
-            const divTec = document.getElementById('m-datos-tecnicos');
-            divTec.innerHTML = fields.map(f => `
-                <div class="bg-white p-2 rounded-lg border ${f.hl ? 'border-blue-300 bg-blue-50' : 'border-slate-200'}">
-                    <p class="text-[9px] text-slate-400 uppercase font-bold tracking-wider">${f.l}</p>
-                    <p class="text-sm font-black ${f.hl ? 'text-blue-700' : 'text-slate-700'} truncate" title="${f.v}">${f.v || '-'} ${f.u || ''}</p>
-                </div>
-            `).join('');
-
-            // Lógica Visual
-            if (esHistorial) {
-                document.getElementById('form-registro').classList.add('hidden');
-                document.getElementById('modal-footer').classList.add('hidden');
-                document.getElementById('info-historial').classList.remove('hidden');
+                <div class="detail-item"><span class="detail-label">Tensión Primaria</span><span class="detail-value" id="m-vp"></span></div>
+                <div class="detail-item"><span class="detail-label">Tensión Secundaria</span><span class="detail-value" id="m-vs"></span></div>
+                <div class="detail-item"><span class="detail-label">Número de Fases</span><span class="detail-value" id="m-fases"></span></div>
+                <div class="detail-item"><span class="detail-label">Grupo Conexión</span><span class="detail-value" id="m-grupo"></span></div>
                 
-                document.getElementById('hist-resp').innerText = selItem.responsable || 'Desconocido';
-                const elConcl = document.getElementById('hist-concl');
-                elConcl.innerText = selItem.resultado || 'PENDIENTE';
-                elConcl.className = selItem.resultado === 'APROBADO' ? 'font-black text-lg text-green-600' : 'font-black text-lg text-red-600';
-            } else {
-                document.getElementById('form-registro').classList.remove('hidden');
-                document.getElementById('modal-footer').classList.remove('hidden');
-                document.getElementById('info-historial').classList.add('hidden');
+                <div class="detail-item"><span class="detail-label">Vol. Aceite (Litros)</span><span class="detail-value text-danger" id="m-litros"></span></div>
+                <div class="detail-item"><span class="detail-label">Peso Total</span><span class="detail-value" id="m-peso"></span></div>
+                <div class="detail-item"><span class="detail-label">Año Fabricación</span><span class="detail-value" id="m-anio"></span></div>
+                <div class="detail-item"><span class="detail-label">Tipo (Seco/Aceite)</span><span class="detail-value" id="m-tipo"></span></div>
                 
-                document.getElementById('responsable').value = "";
-                document.getElementById('conclusion').value = "";
-                document.getElementById('btn-save').disabled = false;
-                document.getElementById('btn-save').innerHTML = '<i data-lucide="save"></i> <span>GUARDAR Y FINALIZAR</span>';
-            }
+                <div class="detail-item"><span class="detail-label">N° Serie</span><span class="detail-value" id="m-serie"></span></div>
+                <div class="detail-item"><span class="detail-label">Taps / Derivaciones</span><span class="detail-value" id="m-taps"></span></div>
+              </div>
+            </div>
+          </div>
 
-            document.getElementById('modal-ficha').classList.remove('hidden');
-            lucide.createIcons();
-        }
+          <form id="formAnalisis">
+            <input type="hidden" id="f-id">
+            <input type="hidden" id="f-cliente">
+            <input type="hidden" id="f-tipoEnsayo">
 
-        // 6. GUARDADO
-        async function guardarEnsayo() {
-            const btn = document.getElementById('btn-save');
-            const resp = document.getElementById('responsable').value;
-            const concl = document.getElementById('conclusion').value;
+            <div class="mb-3">
+              <label class="form-label fw-bold">Responsable del Análisis</label>
+              <input type="text" class="form-control" id="f-responsable" required placeholder="Nombre del químico/técnico">
+            </div>
 
-            if(!resp || !concl) { alert("⚠️ Por favor completa Responsable y Conclusión."); return; }
+            <div class="mb-3">
+              <label class="form-label fw-bold">Fecha de Ejecución</label>
+              <input type="date" class="form-control" id="f-fecha" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Conclusión / Resultado</label>
+              <select class="form-select" id="f-conclusion" required>
+                <option value="APROBADO">✅ APROBADO (Cumple Normativa)</option>
+                <option value="RECHAZADO">❌ RECHAZADO (Requiere Tratamiento)</option>
+                <option value="OBSERVACION">⚠️ CON OBSERVACIONES</option>
+              </select>
+            </div>
+
+            <div class="alert alert-warning d-flex align-items-center" role="alert">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <div>
+                Al guardar, se actualizará el estado en Programación y el equipo avanzará de etapa.
+              </div>
+            </div>
+
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success" onclick="guardarInforme()">
+            <i class="fas fa-save me-2"></i>Guardar y Finalizar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    let DATA_PENDIENTE = [];
+    let DATA_HISTORIAL = [];
+
+    // INICIO
+    document.addEventListener('DOMContentLoaded', function() {
+      cargarDatos();
+      // Set fecha hoy por defecto
+      document.getElementById('f-fecha').valueAsDate = new Date();
+    });
+
+    function cargarDatos() {
+      document.getElementById('loader').style.display = 'block';
+      document.getElementById('lista-pendientes').innerHTML = '';
+      document.getElementById('lista-historial').innerHTML = '';
+
+      google.script.run
+        .withSuccessHandler(procesarDatos)
+        .withFailureHandler(error => {
+           Swal.fire('Error', 'No se pudo conectar con el servidor: ' + error, 'error');
+           document.getElementById('loader').style.display = 'none';
+        })
+        .Aceites_ObtenerPendientes();
+    }
+
+    function procesarDatos(data) {
+      document.getElementById('loader').style.display = 'none';
+      
+      DATA_PENDIENTE = data.filter(d => d.status === 'PENDIENTE');
+      DATA_HISTORIAL = data.filter(d => d.status === 'REALIZADO');
+
+      // Actualizar Badges
+      document.getElementById('badge-pendientes').textContent = DATA_PENDIENTE.length;
+
+      renderizarTarjetas(DATA_PENDIENTE, 'lista-pendientes', true);
+      renderizarTarjetas(DATA_HISTORIAL, 'lista-historial', false);
+    }
+
+    function renderizarTarjetas(lista, contenedorId, esPendiente) {
+      const contenedor = document.getElementById(contenedorId);
+      
+      if (lista.length === 0) {
+        contenedor.innerHTML = `<div class="col-12 text-center text-muted mt-4">
+            <i class="fas fa-folder-open fa-3x mb-3"></i><br>No hay registros en esta sección.
+        </div>`;
+        return;
+      }
+
+      let html = '';
+      lista.forEach(item => {
+        // Validación de datos técnicos para mostrar "-" si vienen vacíos
+        const kva = (item.info && item.info.kva) ? item.info.kva : '?';
+        const marca = (item.info && item.info.marca) ? item.info.marca : '-';
+        const serie = (item.info && item.info.serie) ? item.info.serie : '-';
+        const vp = (item.info && item.info.vp) ? item.info.vp : '-';
+        const vs = (item.info && item.info.vs) ? item.info.vs : '-';
+
+        // Estilos según acción
+        let btnClass = "btn-primary";
+        let cardBorder = "";
+        if (item.accion === "PCB") { btnClass = "btn-warning text-dark"; cardBorder = "border-warning"; }
+        if (item.accion === "FINAL") { btnClass = "btn-success"; cardBorder = "border-success"; }
+
+        // Si es historial, deshabilitar
+        const btnState = esPendiente ? `onclick="abrirModal('${item.id}')"` : "disabled";
+        const cssHist = !esPendiente ? "history-card" : "";
+
+        html += `
+        <div class="col-md-6 col-lg-4">
+          <div class="card card-trafo p-3 ${cssHist} ${cardBorder}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="fw-bold text-primary m-0">ID: ${item.id}</h5>
+              <span class="badge bg-secondary">${item.fechaIngreso}</span>
+            </div>
             
-            btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> <span>GUARDANDO...</span>'; 
-            btn.disabled = true;
+            <p class="mb-1 text-truncate fw-bold"><i class="fas fa-building me-1 text-muted"></i> ${item.cliente}</p>
+            <p class="mb-2 text-muted small"><i class="fas fa-tools me-1"></i> ${item.servicio}</p>
             
-            try {
-                await apiRequest('Aceites_GuardarInforme', {
-                    idTrafo: selItem.id, 
-                    cliente: selItem.cliente, 
-                    fecha: new Date().toISOString().split('T')[0],
-                    responsable: resp, 
-                    conclusion: concl, 
-                    tipoEnsayo: selItem.accion 
-                });
-                
-                // Éxito
-                cerrarFicha(); 
-                cargarListaAceites(); 
-            } catch(e) {
-                alert("Error al guardar: " + e.message);
-                btn.innerHTML = '<i data-lucide="save"></i> <span>REINTENTAR</span>'; 
-                btn.disabled = false;
-            }
-        }
+            <div class="bg-light p-2 rounded mb-3 tech-data">
+                <div class="tech-row"><span>KVA:</span> <strong>${kva}</strong></div>
+                <div class="tech-row"><span>Marca:</span> <strong>${marca}</strong></div>
+                <div class="tech-row"><span>Serie:</span> <strong>${serie}</strong></div>
+                <div class="tech-row"><span>Tensión:</span> <strong>${vp} / ${vs}</strong></div>
+            </div>
 
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-' + tab).classList.add('active');
-            
-            document.querySelectorAll('.grid-view').forEach(g => g.classList.remove('active'));
-            document.getElementById('grid-' + tab).classList.add('active');
-        }
+            <button class="btn ${btnClass} btn-action" ${btnState}>
+              ${esPendiente ? '<i class="fas fa-edit me-1"></i>' : '<i class="fas fa-check-circle me-1"></i>'} 
+              ${item.textoBoton}
+            </button>
+          </div>
+        </div>
+        `;
+      });
+      contenedor.innerHTML = html;
+    }
 
-        function cerrarFicha() { document.getElementById('modal-ficha').classList.add('hidden'); }
+    // ABRIR MODAL CON DATOS COMPLETOS
+    function abrirModal(id) {
+      const item = DATA_PENDIENTE.find(d => String(d.id) === String(id));
+      if(!item) return;
 
-        window.onload = cargarListaAceites;
-    </script>
+      // Llenar Ficha Técnica (Hoja de Vida)
+      document.getElementById('m-id').textContent = item.id;
+      document.getElementById('m-cliente').textContent = item.cliente;
+      document.getElementById('m-kva').textContent = item.info.kva || "-";
+      document.getElementById('m-marca').textContent = item.info.marca || "-";
+      document.getElementById('m-serie').textContent = item.info.serie || "-";
+      
+      document.getElementById('m-vp').textContent = item.info.vp || "-";
+      document.getElementById('m-vs').textContent = item.info.vs || "-";
+      document.getElementById('m-fases').textContent = item.info.fases || "-";
+      document.getElementById('m-grupo').textContent = item.info.grupo || "-";
+      
+      document.getElementById('m-peso').textContent = item.info.peso || "-";
+      document.getElementById('m-litros').textContent = item.info.litros || "-";
+      document.getElementById('m-anio').textContent = item.info.anio || "-";
+      document.getElementById('m-tipo').textContent = item.info.tipo_trafo || "-";
+      document.getElementById('m-taps').textContent = item.info.taps || "-";
+
+      // Preparar Formulario
+      document.getElementById('f-id').value = item.id;
+      document.getElementById('f-cliente').value = item.cliente;
+      document.getElementById('f-tipoEnsayo').value = item.accion; // PCB, FINAL, PARCIAL...
+      
+      var modal = new bootstrap.Modal(document.getElementById('modalAnalisis'));
+      modal.show();
+    }
+
+    // GUARDAR
+    function guardarInforme() {
+      const responsable = document.getElementById('f-responsable').value;
+      if (!responsable) { Swal.fire('Atención', 'Debe indicar el responsable.', 'warning'); return; }
+
+      const payload = {
+        idTrafo: document.getElementById('f-id').value,
+        cliente: document.getElementById('f-cliente').value,
+        fecha: document.getElementById('f-fecha').value,
+        responsable: responsable,
+        conclusion: document.getElementById('f-conclusion').value,
+        tipoEnsayo: document.getElementById('f-tipoEnsayo').value
+      };
+
+      // Loading visual
+      const btn = document.querySelector('#modalAnalisis .btn-success');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+      btn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.exito) {
+            Swal.fire('Guardado', 'El análisis se registró correctamente.', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalAnalisis')).hide();
+            cargarDatos(); // Recargar lista
+          } else {
+            Swal.fire('Error', res.error, 'error');
+          }
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        })
+        .withFailureHandler(err => {
+          Swal.fire('Error de Red', err.message, 'error');
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        })
+        .Aceites_GuardarInforme(payload);
+    }
+  </script>
 </body>
 </html>
