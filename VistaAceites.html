@@ -1,57 +1,150 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Laboratorio de Aceites | JLB</title>
+  <title>Sistema de Gestión de Aceites | JLB</title>
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
   <style>
-    :root { --primary-color: #2c3e50; --accent-color: #3498db; --success-color: #27ae60; }
-    body { background-color: #f8f9fa; font-family: 'Segoe UI', system-ui, sans-serif; }
-    .header-bar { background: var(--primary-color); color: white; padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    .card-trafo { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s; background: white; margin-bottom: 20px; border-left: 5px solid var(--accent-color); }
-    .card-trafo:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
-    .badge-status { font-size: 0.8em; padding: 5px 10px; border-radius: 20px; }
-    .btn-action { border-radius: 20px; padding: 5px 20px; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; width: 100%; }
-    .tech-data { font-size: 0.9rem; color: #555; }
-    .tech-data strong { color: #2c3e50; }
-    .tech-row { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 4px 0; }
-    /* Estilos para el Historial */
-    .history-card { border-left-color: #95a5a6; opacity: 0.9; }
-    .history-card .btn-action { background-color: #95a5a6; border-color: #95a5a6; color: white; cursor: not-allowed; }
-    /* Modal de Detalles */
+    /* --- ESTILOS PREMIUM --- */
+    :root { 
+      --primary-color: #1a237e; /* Azul Ingeniero */
+      --secondary-color: #0d47a1;
+      --accent-color: #2962ff;
+      --success-color: #00c853;
+      --warning-color: #ffab00;
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+    }
+
+    body { 
+      background-color: var(--bg-color); 
+      font-family: 'Roboto', sans-serif; 
+      color: #37474f;
+      padding-bottom: 50px;
+    }
+
+    /* HEADER */
+    .header-bar { 
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); 
+      color: white; 
+      padding: 15px 25px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+      margin-bottom: 25px; 
+      border-radius: 0 0 15px 15px;
+    }
+
+    .header-title { font-weight: 700; letter-spacing: 0.5px; }
+
+    /* TARJETAS (CARDS) */
+    .card-trafo { 
+      border: none; 
+      border-radius: 12px; 
+      background: var(--card-bg);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+      margin-bottom: 20px; 
+      border-left: 5px solid var(--accent-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-trafo:hover { 
+      transform: translateY(-5px); 
+      box-shadow: 0 10px 20px rgba(0,0,0,0.12); 
+    }
+
+    .card-trafo.border-warning { border-left-color: var(--warning-color) !important; }
+    .card-trafo.border-success { border-left-color: var(--success-color) !important; }
+    
+    /* Historial opaco */
+    .history-card { opacity: 0.85; border-left-color: #78909c !important; }
+    .history-card:hover { opacity: 1; }
+
+    /* DATOS EN TARJETA */
+    .tech-summary { 
+      background-color: #eceff1; 
+      border-radius: 8px; 
+      padding: 10px; 
+      margin: 10px 0; 
+      font-size: 0.85rem;
+    }
+    .tech-row { display: flex; justify-content: space-between; border-bottom: 1px solid #cfd8dc; padding: 3px 0; }
+    .tech-row:last-child { border-bottom: none; }
+    .tech-label { color: #546e7a; font-weight: 500; }
+    .tech-val { color: #263238; font-weight: 700; }
+
+    /* BOTONES */
+    .btn-action { 
+      border-radius: 50px; 
+      padding: 8px 20px; 
+      font-weight: 600; 
+      text-transform: uppercase; 
+      font-size: 0.8rem; 
+      letter-spacing: 0.5px; 
+      width: 100%; 
+      box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* MODAL DE DETALLES (HOJA DE VIDA) */
     .modal-header { background: var(--primary-color); color: white; }
-    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .detail-item { background: #f8f9fa; padding: 10px; border-radius: 8px; }
-    .detail-label { font-size: 0.75rem; color: #7f8c8d; text-transform: uppercase; display: block; }
-    .detail-value { font-weight: 600; color: #2c3e50; font-size: 1rem; }
+    .modal-content { border-radius: 15px; border: none; }
+    
+    .detail-section { background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; margin-bottom: 15px; }
+    .detail-section-title { font-size: 0.9rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid #f0f0f0; padding-bottom: 5px; }
+
+    .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    @media (max-width: 576px) { .detail-grid { grid-template-columns: 1fr; } }
+
+    .info-item { display: flex; flex-direction: column; }
+    .info-label { font-size: 0.7rem; color: #78909c; text-transform: uppercase; font-weight: 600; }
+    .info-value { font-size: 0.95rem; color: #263238; font-weight: 500; border-bottom: 1px dotted #ccc; }
+
+    /* UTILS */
+    .spinner-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
   </style>
 </head>
 <body>
 
+  <div id="global-loader" class="spinner-overlay">
+    <div class="text-center">
+      <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+      <p class="mt-3 fw-bold text-primary">Conectando con Laboratorio...</p>
+    </div>
+  </div>
+
   <div class="header-bar d-flex justify-content-between align-items-center sticky-top">
     <div class="d-flex align-items-center">
-      <i class="fas fa-flask fa-lg me-3"></i>
-      <h4 class="m-0">Laboratorio de Aceites JLB</h4>
+      <i class="fas fa-microscope fa-lg me-3"></i>
+      <div>
+        <h5 class="m-0 header-title">LABORATORIO DE ACEITES</h5>
+        <small class="opacity-75">Gestión de Análisis F.Q. y PCB</small>
+      </div>
     </div>
     <div>
-      <button class="btn btn-outline-light btn-sm" onclick="cargarDatos()"><i class="fas fa-sync-alt"></i> Actualizar</button>
+      <button class="btn btn-light btn-sm fw-bold text-primary" onclick="cargarDatos()">
+        <i class="fas fa-sync-alt me-1"></i> Actualizar
+      </button>
     </div>
   </div>
 
   <div class="container">
     
-    <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="pills-pendientes-tab" data-bs-toggle="pill" data-bs-target="#pills-pendientes" type="button" role="tab">
-          <i class="fas fa-clock me-2"></i>Pendientes <span id="badge-pendientes" class="badge bg-danger rounded-pill ms-1">0</span>
+    <ul class="nav nav-pills mb-4 nav-justified" id="pills-tab" role="tablist">
+      <li class="nav-item p-1" role="presentation">
+        <button class="nav-link active fw-bold" id="pills-pendientes-tab" data-bs-toggle="pill" data-bs-target="#pills-pendientes" type="button" role="tab">
+          <i class="fas fa-clipboard-list me-2"></i>PENDIENTES
+          <span id="badge-pendientes" class="badge bg-danger rounded-pill ms-2 shadow-sm">0</span>
         </button>
       </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="pills-historial-tab" data-bs-toggle="pill" data-bs-target="#pills-historial" type="button" role="tab">
-          <i class="fas fa-history me-2"></i>Historial Realizado
+      <li class="nav-item p-1" role="presentation">
+        <button class="nav-link fw-bold" id="pills-historial-tab" data-bs-toggle="pill" data-bs-target="#pills-historial" type="button" role="tab">
+          <i class="fas fa-check-double me-2"></i>HISTORIAL REALIZADO
         </button>
       </li>
     </ul>
@@ -59,93 +152,93 @@
     <div class="tab-content" id="pills-tabContent">
       
       <div class="tab-pane fade show active" id="pills-pendientes" role="tabpanel">
-        <div id="loader" class="text-center py-5">
-          <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div>
-          <p class="mt-2 text-muted">Consultando Base de Datos Maestra...</p>
-        </div>
-        <div id="lista-pendientes" class="row"></div>
+        <div id="lista-pendientes" class="row">
+          </div>
       </div>
 
       <div class="tab-pane fade" id="pills-historial" role="tabpanel">
-        <div id="lista-historial" class="row"></div>
+        <div id="lista-historial" class="row">
+          </div>
       </div>
 
     </div>
   </div>
 
-  <div class="modal fade" id="modalAnalisis" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
+  <div class="modal fade" id="modalAnalisis" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content shadow-lg">
+        
         <div class="modal-header">
-          <h5 class="modal-title"><i class="fas fa-microscope me-2"></i>Registro de Análisis de Laboratorio</h5>
+          <h5 class="modal-title"><i class="fas fa-file-signature me-2"></i>Hoja de Vida y Reporte</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body">
+        
+        <div class="modal-body bg-light">
           
-          <div class="card mb-4 border-info">
-            <div class="card-header bg-info text-white">
-              <i class="fas fa-info-circle me-2"></i>Hoja de Vida Técnica (BD Externa)
-            </div>
-            <div class="card-body bg-light">
-              <div class="detail-grid">
-                <div class="detail-item"><span class="detail-label">ID Transformador</span><span class="detail-value" id="m-id"></span></div>
-                <div class="detail-item"><span class="detail-label">Cliente</span><span class="detail-value" id="m-cliente"></span></div>
-                <div class="detail-item"><span class="detail-label">Potencia (KVA)</span><span class="detail-value text-primary" id="m-kva"></span></div>
-                <div class="detail-item"><span class="detail-label">Marca</span><span class="detail-value" id="m-marca"></span></div>
-                
-                <div class="detail-item"><span class="detail-label">Tensión Primaria</span><span class="detail-value" id="m-vp"></span></div>
-                <div class="detail-item"><span class="detail-label">Tensión Secundaria</span><span class="detail-value" id="m-vs"></span></div>
-                <div class="detail-item"><span class="detail-label">Número de Fases</span><span class="detail-value" id="m-fases"></span></div>
-                <div class="detail-item"><span class="detail-label">Grupo Conexión</span><span class="detail-value" id="m-grupo"></span></div>
-                
-                <div class="detail-item"><span class="detail-label">Vol. Aceite (Litros)</span><span class="detail-value text-danger" id="m-litros"></span></div>
-                <div class="detail-item"><span class="detail-label">Peso Total</span><span class="detail-value" id="m-peso"></span></div>
-                <div class="detail-item"><span class="detail-label">Año Fabricación</span><span class="detail-value" id="m-anio"></span></div>
-                <div class="detail-item"><span class="detail-label">Tipo (Seco/Aceite)</span><span class="detail-value" id="m-tipo"></span></div>
-                
-                <div class="detail-item"><span class="detail-label">N° Serie</span><span class="detail-value" id="m-serie"></span></div>
-                <div class="detail-item"><span class="detail-label">Taps / Derivaciones</span><span class="detail-value" id="m-taps"></span></div>
-              </div>
+          <div class="detail-section border-primary">
+            <div class="detail-section-title text-primary"><i class="fas fa-info-circle me-1"></i> Especificaciones Técnicas (BD Externa)</div>
+            
+            <div class="detail-grid">
+              <div class="info-item"><span class="info-label">ID Interno</span><span class="info-value text-primary fw-bold" id="m-id"></span></div>
+              <div class="info-item"><span class="info-label">Cliente</span><span class="info-value" id="m-cliente"></span></div>
+              
+              <div class="info-item"><span class="info-label">Potencia (KVA)</span><span class="info-value fw-bold" id="m-kva"></span></div>
+              <div class="info-item"><span class="info-label">Marca</span><span class="info-value" id="m-marca"></span></div>
+              
+              <div class="info-item"><span class="info-label">Serie</span><span class="info-value" id="m-serie"></span></div>
+              <div class="info-item"><span class="info-label">Tensión (Prim / Sec)</span><span class="info-value" id="m-tension"></span></div>
+              
+              <div class="info-item"><span class="info-label">Fases</span><span class="info-value" id="m-fases"></span></div>
+              <div class="info-item"><span class="info-label">Grupo Conexión</span><span class="info-value" id="m-grupo"></span></div>
+              
+              <div class="info-item"><span class="info-label">Litros Aceite</span><span class="info-value text-danger fw-bold" id="m-litros"></span></div>
+              <div class="info-item"><span class="info-label">Peso Total</span><span class="info-value" id="m-peso"></span></div>
+              
+              <div class="info-item"><span class="info-label">Año Fabricación</span><span class="info-value" id="m-anio"></span></div>
+              <div class="info-item"><span class="info-label">Derivaciones (Taps)</span><span class="info-value small" id="m-taps"></span></div>
             </div>
           </div>
 
-          <form id="formAnalisis">
-            <input type="hidden" id="f-id">
-            <input type="hidden" id="f-cliente">
-            <input type="hidden" id="f-tipoEnsayo">
+          <div class="detail-section border-success">
+            <div class="detail-section-title text-success"><i class="fas fa-flask me-1"></i> Dictamen de Laboratorio</div>
+            
+            <form id="formAnalisis">
+              <input type="hidden" id="f-id">
+              <input type="hidden" id="f-cliente">
+              <input type="hidden" id="f-tipoEnsayo">
 
-            <div class="mb-3">
-              <label class="form-label fw-bold">Responsable del Análisis</label>
-              <input type="text" class="form-control" id="f-responsable" required placeholder="Nombre del químico/técnico">
-            </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold text-muted small">RESPONSABLE</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fas fa-user"></i></span>
+                    <input type="text" class="form-control" id="f-responsable" required placeholder="Firma del Químico">
+                  </div>
+                </div>
 
-            <div class="mb-3">
-              <label class="form-label fw-bold">Fecha de Ejecución</label>
-              <input type="date" class="form-control" id="f-fecha" required>
-            </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold text-muted small">FECHA EJECUCIÓN</label>
+                  <input type="date" class="form-control" id="f-fecha" required>
+                </div>
 
-            <div class="mb-3">
-              <label class="form-label fw-bold">Conclusión / Resultado</label>
-              <select class="form-select" id="f-conclusion" required>
-                <option value="APROBADO">✅ APROBADO (Cumple Normativa)</option>
-                <option value="RECHAZADO">❌ RECHAZADO (Requiere Tratamiento)</option>
-                <option value="OBSERVACION">⚠️ CON OBSERVACIONES</option>
-              </select>
-            </div>
-
-            <div class="alert alert-warning d-flex align-items-center" role="alert">
-              <i class="fas fa-exclamation-triangle me-2"></i>
-              <div>
-                Al guardar, se actualizará el estado en Programación y el equipo avanzará de etapa.
+                <div class="col-12">
+                  <label class="form-label fw-bold text-muted small">CONCLUSIÓN FINAL</label>
+                  <select class="form-select form-select-lg border-success" id="f-conclusion" required>
+                    <option value="" selected disabled>Seleccione un resultado...</option>
+                    <option value="APROBADO">✅ APROBADO (Cumple Normativa)</option>
+                    <option value="RECHAZADO">❌ RECHAZADO (Requiere Tratamiento)</option>
+                    <option value="OBSERVACION">⚠️ CON OBSERVACIONES</option>
+                  </select>
+                </div>
               </div>
-            </div>
-
-          </form>
+            </form>
+          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-success" onclick="guardarInforme()">
-            <i class="fas fa-save me-2"></i>Guardar y Finalizar
+
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success fw-bold px-4" onclick="guardarInforme()">
+            <i class="fas fa-save me-2"></i> GUARDAR Y FINALIZAR
           </button>
         </div>
       </div>
@@ -159,164 +252,189 @@
     let DATA_PENDIENTE = [];
     let DATA_HISTORIAL = [];
 
-    // INICIO
     document.addEventListener('DOMContentLoaded', function() {
+      // Iniciar carga
       cargarDatos();
-      // Set fecha hoy por defecto
+      // Fecha por defecto
       document.getElementById('f-fecha').valueAsDate = new Date();
     });
 
     function cargarDatos() {
-      document.getElementById('loader').style.display = 'block';
-      document.getElementById('lista-pendientes').innerHTML = '';
-      document.getElementById('lista-historial').innerHTML = '';
-
+      document.getElementById('global-loader').style.display = 'flex';
+      
       google.script.run
         .withSuccessHandler(procesarDatos)
-        .withFailureHandler(error => {
-           Swal.fire('Error', 'No se pudo conectar con el servidor: ' + error, 'error');
-           document.getElementById('loader').style.display = 'none';
-        })
+        .withFailureHandler(mostrarError)
         .Aceites_ObtenerPendientes();
     }
 
     function procesarDatos(data) {
-      document.getElementById('loader').style.display = 'none';
+      document.getElementById('global-loader').style.display = 'none';
       
+      // Separar datos
       DATA_PENDIENTE = data.filter(d => d.status === 'PENDIENTE');
       DATA_HISTORIAL = data.filter(d => d.status === 'REALIZADO');
 
-      // Actualizar Badges
+      // Actualizar contadores
       document.getElementById('badge-pendientes').textContent = DATA_PENDIENTE.length;
 
-      renderizarTarjetas(DATA_PENDIENTE, 'lista-pendientes', true);
-      renderizarTarjetas(DATA_HISTORIAL, 'lista-historial', false);
+      // Renderizar vistas
+      renderizarGrid(DATA_PENDIENTE, 'lista-pendientes', true);
+      renderizarGrid(DATA_HISTORIAL, 'lista-historial', false);
     }
 
-    function renderizarTarjetas(lista, contenedorId, esPendiente) {
+    function mostrarError(error) {
+      document.getElementById('global-loader').style.display = 'none';
+      Swal.fire({
+        icon: 'error',
+        title: 'Error de Conexión',
+        text: 'No se pudo cargar la información: ' + error,
+        confirmButtonColor: '#1a237e'
+      });
+    }
+
+    function renderizarGrid(lista, contenedorId, esPendiente) {
       const contenedor = document.getElementById(contenedorId);
-      
+      contenedor.innerHTML = '';
+
       if (lista.length === 0) {
-        contenedor.innerHTML = `<div class="col-12 text-center text-muted mt-4">
-            <i class="fas fa-folder-open fa-3x mb-3"></i><br>No hay registros en esta sección.
-        </div>`;
+        contenedor.innerHTML = `
+          <div class="col-12 text-center py-5 opacity-50">
+            <i class="fas fa-folder-open fa-4x mb-3 text-muted"></i>
+            <h4>No hay registros disponibles</h4>
+            <p>Todo está al día en esta sección.</p>
+          </div>`;
         return;
       }
 
-      let html = '';
       lista.forEach(item => {
-        // Validación de datos técnicos para mostrar "-" si vienen vacíos
-        const kva = (item.info && item.info.kva) ? item.info.kva : '?';
-        const marca = (item.info && item.info.marca) ? item.info.marca : '-';
-        const serie = (item.info && item.info.serie) ? item.info.serie : '-';
-        const vp = (item.info && item.info.vp) ? item.info.vp : '-';
-        const vs = (item.info && item.info.vs) ? item.info.vs : '-';
-
-        // Estilos según acción
-        let btnClass = "btn-primary";
+        // Preparar datos visuales (evitar nulls)
+        const i = item.info || {};
+        const kva = i.kva || '?';
+        const marca = i.marca || '-';
+        const serie = i.serie || '-';
+        const vp = i.vp || '-';
+        const vs = i.vs || '-';
+        
+        // Colores dinámicos
+        let badgeColor = "bg-primary";
         let cardBorder = "";
-        if (item.accion === "PCB") { btnClass = "btn-warning text-dark"; cardBorder = "border-warning"; }
-        if (item.accion === "FINAL") { btnClass = "btn-success"; cardBorder = "border-success"; }
+        let btnClass = "btn-primary";
+        
+        if(item.accion === "PCB") { badgeColor = "bg-warning text-dark"; cardBorder = "border-warning"; btnClass = "btn-warning"; }
+        if(item.accion === "FINAL") { badgeColor = "bg-success"; cardBorder = "border-success"; btnClass = "btn-success"; }
 
-        // Si es historial, deshabilitar
-        const btnState = esPendiente ? `onclick="abrirModal('${item.id}')"` : "disabled";
-        const cssHist = !esPendiente ? "history-card" : "";
+        // Historial
+        const isDisabled = !esPendiente ? "disabled" : "";
+        const historyClass = !esPendiente ? "history-card" : "";
+        const iconBtn = esPendiente ? "fa-edit" : "fa-check";
 
-        html += `
-        <div class="col-md-6 col-lg-4">
-          <div class="card card-trafo p-3 ${cssHist} ${cardBorder}">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <h5 class="fw-bold text-primary m-0">ID: ${item.id}</h5>
-              <span class="badge bg-secondary">${item.fechaIngreso}</span>
-            </div>
-            
-            <p class="mb-1 text-truncate fw-bold"><i class="fas fa-building me-1 text-muted"></i> ${item.cliente}</p>
-            <p class="mb-2 text-muted small"><i class="fas fa-tools me-1"></i> ${item.servicio}</p>
-            
-            <div class="bg-light p-2 rounded mb-3 tech-data">
-                <div class="tech-row"><span>KVA:</span> <strong>${kva}</strong></div>
-                <div class="tech-row"><span>Marca:</span> <strong>${marca}</strong></div>
-                <div class="tech-row"><span>Serie:</span> <strong>${serie}</strong></div>
-                <div class="tech-row"><span>Tensión:</span> <strong>${vp} / ${vs}</strong></div>
+        const card = `
+        <div class="col-md-6 col-lg-4 col-xl-3">
+          <div class="card card-trafo p-3 ${historyClass} ${cardBorder}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge ${badgeColor}">${item.accion}</span>
+              <small class="text-muted"><i class="far fa-calendar-alt me-1"></i>${item.fechaIngreso}</small>
             </div>
 
-            <button class="btn ${btnClass} btn-action" ${btnState}>
-              ${esPendiente ? '<i class="fas fa-edit me-1"></i>' : '<i class="fas fa-check-circle me-1"></i>'} 
-              ${item.textoBoton}
+            <h5 class="fw-bold text-dark mb-1">ID: ${item.id}</h5>
+            <p class="text-muted small text-truncate mb-2" title="${item.cliente}">
+              <i class="fas fa-user-tie me-1"></i> ${item.cliente}
+            </p>
+
+            <div class="tech-summary">
+              <div class="tech-row"><span class="tech-label">KVA</span> <span class="tech-val text-primary">${kva}</span></div>
+              <div class="tech-row"><span class="tech-label">MARCA</span> <span class="tech-val">${marca}</span></div>
+              <div class="tech-row"><span class="tech-label">SERIE</span> <span class="tech-val text-truncate" style="max-width:100px;">${serie}</span></div>
+              <div class="tech-row"><span class="tech-label">VOLT.</span> <span class="tech-val small">${vp}/${vs}</span></div>
+            </div>
+
+            <button class="btn ${btnClass} btn-action mt-2" onclick="abrirModal('${item.id}')" ${isDisabled}>
+              <i class="fas ${iconBtn} me-2"></i> ${item.textoBoton}
             </button>
           </div>
-        </div>
-        `;
+        </div>`;
+        
+        contenedor.innerHTML += card;
       });
-      contenedor.innerHTML = html;
     }
 
-    // ABRIR MODAL CON DATOS COMPLETOS
+    // ABRIR MODAL Y LLENAR HOJA DE VIDA COMPLETA
     function abrirModal(id) {
       const item = DATA_PENDIENTE.find(d => String(d.id) === String(id));
       if(!item) return;
+      const i = item.info || {};
 
-      // Llenar Ficha Técnica (Hoja de Vida)
-      document.getElementById('m-id').textContent = item.id;
-      document.getElementById('m-cliente').textContent = item.cliente;
-      document.getElementById('m-kva').textContent = item.info.kva || "-";
-      document.getElementById('m-marca').textContent = item.info.marca || "-";
-      document.getElementById('m-serie').textContent = item.info.serie || "-";
+      // 1. Inyectar Datos Técnicos (Full Spectrum)
+      const setText = (id, val) => document.getElementById(id).textContent = (val && val !== '') ? val : '-';
       
-      document.getElementById('m-vp').textContent = item.info.vp || "-";
-      document.getElementById('m-vs').textContent = item.info.vs || "-";
-      document.getElementById('m-fases').textContent = item.info.fases || "-";
-      document.getElementById('m-grupo').textContent = item.info.grupo || "-";
-      
-      document.getElementById('m-peso').textContent = item.info.peso || "-";
-      document.getElementById('m-litros').textContent = item.info.litros || "-";
-      document.getElementById('m-anio').textContent = item.info.anio || "-";
-      document.getElementById('m-tipo').textContent = item.info.tipo_trafo || "-";
-      document.getElementById('m-taps').textContent = item.info.taps || "-";
+      setText('m-id', item.id);
+      setText('m-cliente', item.cliente);
+      setText('m-kva', i.kva);
+      setText('m-marca', i.marca);
+      setText('m-serie', i.serie);
+      setText('m-tension', `${i.vp || '?'} / ${i.vs || '?'}`);
+      setText('m-fases', i.fases);
+      setText('m-grupo', i.grupo);
+      setText('m-litros', i.litros);
+      setText('m-peso', i.peso);
+      setText('m-anio', i.anio);
+      setText('m-taps', i.taps);
 
-      // Preparar Formulario
+      // 2. Preparar Formulario Oculto
       document.getElementById('f-id').value = item.id;
       document.getElementById('f-cliente').value = item.cliente;
-      document.getElementById('f-tipoEnsayo').value = item.accion; // PCB, FINAL, PARCIAL...
-      
-      var modal = new bootstrap.Modal(document.getElementById('modalAnalisis'));
-      modal.show();
+      document.getElementById('f-tipoEnsayo').value = item.accion;
+      document.getElementById('f-responsable').value = '';
+      document.getElementById('f-conclusion').value = '';
+
+      // Mostrar
+      new bootstrap.Modal(document.getElementById('modalAnalisis')).show();
     }
 
-    // GUARDAR
     function guardarInforme() {
-      const responsable = document.getElementById('f-responsable').value;
-      if (!responsable) { Swal.fire('Atención', 'Debe indicar el responsable.', 'warning'); return; }
+      // Validaciones
+      const resp = document.getElementById('f-responsable').value;
+      const conc = document.getElementById('f-conclusion').value;
+      
+      if (!resp.trim()) { Swal.fire('Falta Información', 'Por favor firma el responsable.', 'warning'); return; }
+      if (!conc) { Swal.fire('Falta Información', 'Debes seleccionar una conclusión.', 'warning'); return; }
 
       const payload = {
         idTrafo: document.getElementById('f-id').value,
         cliente: document.getElementById('f-cliente').value,
         fecha: document.getElementById('f-fecha').value,
-        responsable: responsable,
-        conclusion: document.getElementById('f-conclusion').value,
+        responsable: resp,
+        conclusion: conc,
         tipoEnsayo: document.getElementById('f-tipoEnsayo').value
       };
 
-      // Loading visual
+      // Bloquear botón
       const btn = document.querySelector('#modalAnalisis .btn-success');
       const originalText = btn.innerHTML;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
       btn.disabled = true;
 
       google.script.run
         .withSuccessHandler(res => {
           if (res.exito) {
-            Swal.fire('Guardado', 'El análisis se registró correctamente.', 'success');
+            Swal.fire({
+              icon: 'success',
+              title: '¡Proceso Exitoso!',
+              text: 'Informe guardado y estado actualizado en Producción.',
+              timer: 2000,
+              showConfirmButton: false
+            });
             bootstrap.Modal.getInstance(document.getElementById('modalAnalisis')).hide();
-            cargarDatos(); // Recargar lista
+            cargarDatos(); // Refresh automático
           } else {
-            Swal.fire('Error', res.error, 'error');
+            Swal.fire('Error Backend', res.error, 'error');
           }
           btn.innerHTML = originalText;
           btn.disabled = false;
         })
         .withFailureHandler(err => {
-          Swal.fire('Error de Red', err.message, 'error');
+          Swal.fire('Error Crítico', err.message, 'error');
           btn.innerHTML = originalText;
           btn.disabled = false;
         })
