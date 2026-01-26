@@ -6,18 +6,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <style>
     :root { --primary: #0d6efd; --sidebar-w: 260px; }
     body { background-color: #f4f6f8; font-family: 'Segoe UI', Roboto, sans-serif; padding-bottom: 80px; font-size: 0.9rem; }
+    
+    /* UI ELEMENTS */
     .sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; top: 0; left: 0; background: #fff; border-right: 1px solid #dee2e6; z-index: 1000; transition: 0.3s; }
     .brand { padding: 20px; border-bottom: 1px solid #eee; }
     .nav-link { color: #555; padding: 15px 20px; display: flex; align-items: center; border-radius: 0 25px 25px 0; margin-bottom: 5px; cursor: pointer; text-decoration: none; }
     .nav-link:hover { background: #f0f8ff; color: var(--primary); }
     .nav-link.active { background: #e3f2fd; color: var(--primary); font-weight: bold; border-right: 3px solid var(--primary); }
+    
     .main { margin-left: var(--sidebar-w); padding: 20px; transition: 0.3s; }
     .view { display: none; animation: fadeIn 0.3s; }
     .view.active { display: block; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* RESPONSIVE */
     .mobile-header { display: none; }
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); }
@@ -27,49 +33,32 @@
       .overlay { position: fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999; display:none; }
       .overlay.show { display:block; }
     }
+
+    /* CUSTOM COMPONENTS */
     .card { border:none; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.03); margin-bottom:15px; background: white; }
-    .hover-effect { transition: transform 0.2s; cursor: pointer; }
-    .hover-effect:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     .scroll-x { overflow-x: auto; white-space: nowrap; }
     .input-group-text { font-size: 0.8rem; font-weight: bold; width: 60px; justify-content: center; }
     .table-input { min-width: 80px; text-align: center; }
     .label-mini { font-size: 0.7rem; color: #6c757d; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
     .unit-select { max-width: 70px; font-weight: bold; background-color: #f8f9fa; border: 1px solid #ced4da; font-size: 0.8rem; }
     .bg-garantia { background-color: #e8f5e9; border-color: #c8e6c9; color: #1b5e20; }
+    
+    /* AGENDA CARDS */
     .agenda-card { border-left: 4px solid var(--primary); transition: transform 0.2s; cursor: pointer; }
     .agenda-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .badge-jlb { background-color: #0d6efd; color: white; }
     .badge-group { background-color: #fd7e14; color: white; }
+
+    /* ANIMACIONES ALERTAS */
+    .blink { animation: blinker 1.5s linear infinite; }
+    @keyframes blinker { 50% { opacity: 0.5; } }
+    
+    /* EFECTO HOVER PARA BOTONES DEL DASHBOARD */
+    .hover-effect { transition: transform 0.2s; cursor: pointer; }
+    .hover-effect:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
-
-  <script>
-    // URL DEL BACKEND V8.1
-    const URL_API_CAMPO = "https://script.google.com/macros/s/AKfycbwd4ckii8-VM9sCzrOHhijQ1-BImInqTZ5YfhVpS2wyQE6BE2PDRmPb-yHJgY0910csBQ/exec";
-
-    class GasRunner {
-        constructor() {
-            this._success = null; this._failure = null;
-            this.argMap = { 'buscarInfoEntrada': ['entrada'], 'guardarPruebasIniciales': ['form', 'soloGuardar'], 'guardarPruebasFinales': ['form', 'soloGuardar'], 'default': ['payload'] };
-            return new Proxy(this, {
-                get: (target, prop, receiver) => {
-                    if (prop === 'withSuccessHandler') return (cb) => { target._success = cb; return receiver; };
-                    if (prop === 'withFailureHandler') return (cb) => { target._failure = cb; return receiver; };
-                    return (...args) => {
-                        let payload = {}; const keys = target.argMap[prop] || target.argMap['default'];
-                        if (args.length === 1 && typeof args[0] === 'object' && keys[0] === 'payload') payload = args[0];
-                        else args.forEach((val, i) => { if (keys[i]) payload[keys[i]] = val; });
-                        fetch(URL_API_CAMPO, { method: 'POST', body: JSON.stringify({ action: prop, payload: payload }) })
-                        .then(r => r.json()).then(data => { if (data.error) { console.error(data.error); if(target._failure) target._failure(data.error); } else { if(target._success) target._success(data); } })
-                        .catch(err => { console.error(err); if(target._failure) target._failure(err.toString()); });
-                    };
-                }
-            });
-        }
-    }
-    const google = { script: { get run() { return new GasRunner(); } } };
-  </script>
 
   <div class="mobile-header">
     <button class="btn btn-light text-primary" onclick="toggleMenu()"><i class="fas fa-bars fa-lg"></i></button>
@@ -91,20 +80,39 @@
   </div>
 
   <div class="main">
+
     <div id="view-home" class="view active">
       <div class="text-center py-5">
         <h3 class="fw-bold text-dark mb-4">Panel de Control</h3>
+        
         <div class="mb-4">
             <button onclick="abrirAgenda()" class="btn btn-primary btn-lg fw-bold shadow-sm w-100 py-3" style="max-width: 400px;">
                 <i class="fas fa-cloud-download-alt me-2"></i> SINCRONIZAR AGENDA
             </button>
             <p class="text-muted small mt-2">Descargar pendientes de Producción</p>
         </div>
+
         <div class="row g-3 justify-content-center">
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-success hover-effect" onclick="nav('insp')"><i class="fas fa-clipboard-check fa-3x text-success mb-3"></i><h5>Visual</h5><p class="text-muted small">Recepción y Checklist.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-warning hover-effect" onclick="nav('ini')"><i class="fas fa-flask fa-3x text-warning mb-3"></i><h5>Iniciales</h5><p class="text-muted small">Diagnóstico de Entrada.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-primary hover-effect" onclick="nav('fin')"><i class="fas fa-check-circle fa-3x text-primary mb-3"></i><h5>Finales</h5><p class="text-muted small">Protocolo de Salida.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-dark hover-effect" onclick="nav('hv')"><i class="fas fa-edit fa-3x text-dark mb-3"></i><h5>Editar Placa</h5><p class="text-muted small">Corregir Hoja de Vida.</p></div></div>
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-success hover-effect" onclick="nav('insp')">
+              <i class="fas fa-clipboard-check fa-3x text-success mb-3"></i><h5>Visual</h5><p class="text-muted small">Recepción y Checklist.</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-warning hover-effect" onclick="nav('ini')">
+              <i class="fas fa-flask fa-3x text-warning mb-3"></i><h5>Iniciales</h5><p class="text-muted small">Diagnóstico de Entrada.</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-primary hover-effect" onclick="nav('fin')">
+              <i class="fas fa-check-circle fa-3x text-primary mb-3"></i><h5>Finales</h5><p class="text-muted small">Protocolo de Salida.</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-dark hover-effect" onclick="nav('hv')">
+              <i class="fas fa-edit fa-3x text-dark mb-3"></i><h5>Editar Placa</h5><p class="text-muted small">Corregir Hoja de Vida.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -116,25 +124,31 @@
         <div class="alert alert-success py-2 mb-3 text-center">
           <div class="row"><div class="col-4 border-end"><small>ENTRADA</small><div class="fw-bold lbl-entrada"></div></div><div class="col-4 border-end"><small>KVA</small><div class="fw-bold lbl-kva"></div></div><div class="col-4"><small>CLIENTE</small><div class="fw-bold lbl-cliente text-truncate"></div></div></div>
         </div>
+        
         <div class="card p-3">
             <label class="label-mini">SERVICIO</label>
             <select id="insp_servicio" class="form-select fw-bold border-success">
                 <option>MANTENIMIENTO</option><option>PRUEBAS ELÉCTRICAS</option><option>REPARACIÓN</option><option>GARANTÍA</option><option>OTROS</option>
             </select>
         </div>
+
         <div class="card mb-3"><div class="card-header bg-dark text-white fw-bold">CHECKLIST</div><div class="card-body p-0"><table class="table table-bordered mb-0 align-middle"><thead class="table-light"><tr><th width="50%">Item</th><th>Estado</th></tr></thead><tbody id="insp_body"></tbody></table></div></div>
-        <div class="card p-3">
+        
+        <div class="card p-3 mb-3">
             <label class="label-mini">Observaciones</label><textarea id="insp_obs" class="form-control mb-3" rows="2"></textarea>
             <label class="label-mini text-primary">Realizado Por</label><input id="insp_realizado" class="form-control fw-bold border-primary mb-3">
             <div class="row g-2">
-                <div class="col-6"><button class="btn btn-secondary w-100" onclick="guardarInsp(false)">Solo Excel (Borrador)</button></div>
-                <div class="col-6"><button class="btn btn-success w-100" onclick="guardarInsp(true)">Ver PDF (Sin Certificar)</button></div>
+                <div class="col-6"><button class="btn btn-secondary w-100" onclick="guardarInsp(false)">Solo Excel</button></div>
+                <div class="col-6"><button class="btn btn-success w-100" onclick="guardarInsp(true)">Generar PDF</button></div>
             </div>
         </div>
-        <div class="card p-3 bg-success-subtle border-success mt-3">
+
+        <div class="card p-3 bg-success-subtle border-success">
             <h6 class="fw-bold text-success text-center mb-2"><i class="fas fa-check-double me-2"></i>CERTIFICACIÓN DE CIERRE</h6>
-            <p class="small text-muted text-center mb-3">Finaliza el proceso y notifica a producción.</p>
-            <button id="btn-certificar-insp" class="btn btn-success w-100 fw-bold py-3 shadow" onclick="certificarInspeccion()">✅ CERTIFICAR INSPECCIÓN LISTA</button>
+            <p class="small text-muted text-center mb-3">Al hacer clic, confirmas que la inspección está completa y notificas a producción.</p>
+            <button id="btn-certificar-insp" class="btn btn-success w-100 fw-bold py-3 shadow" onclick="certificarInspeccion()">
+                ✅ CERTIFICAR INSPECCIÓN LISTA
+            </button>
         </div>
       </div>
     </div>
@@ -146,7 +160,7 @@
             <div class="card p-4">
                 <h6 class="text-muted fw-bold border-bottom pb-2 mb-3">DATOS GENERALES (Edición)</h6>
                 <div class="row g-3">
-                    <div class="col-md-4 col-6"><label class="label-mini">ENTRADA</label><input id="edit_entrada" class="form-control fw-bold bg-light" readonly></div>
+                    <div class="col-md-4 col-6"><label class="label-mini">ENTRADA (NO EDITABLE)</label><input id="edit_entrada" class="form-control fw-bold bg-light" readonly></div>
                     <div class="col-md-4 col-6"><label class="label-mini">KVA</label><input id="edit_kva" type="number" class="form-control"></div>
                     <div class="col-md-4 col-12"><label class="label-mini">CLIENTE</label><input id="edit_cliente" class="form-control"></div>
                     <div class="col-md-3 col-6"><label class="label-mini">MARCA</label><input id="edit_marca" class="form-control"></div>
@@ -154,13 +168,13 @@
                     <div class="col-md-3 col-6"><label class="label-mini">V.PRIM</label><input id="edit_vp" type="number" class="form-control"></div>
                     <div class="col-md-3 col-6"><label class="label-mini">V.SEC</label><input id="edit_vs" type="number" class="form-control"></div>
                     <div class="col-md-3 col-6"><label class="label-mini">FASES</label><select id="edit_fases" class="form-select"><option value="3">3</option><option value="1">1</option></select></div>
-                    <div class="col-md-3 col-6"><label class="label-mini">GRUPO</label><input id="edit_grupo" class="form-control" placeholder="Dyn5"></div>
+                    <div class="col-md-3 col-6"><label class="label-mini">GRUPO</label><input id="edit_grupo" class="form-control"></div>
                     <div class="col-md-3 col-6"><label class="label-mini">AÑO</label><input id="edit_anio" type="number" class="form-control"></div>
                     <div class="col-md-3 col-6"><label class="label-mini">TIPO</label><select id="edit_tipo" class="form-select"><option>Sumergido</option><option>Seco</option></select></div>
                     <div class="col-12 border-top mt-2 pt-2"><h6 class="small fw-bold text-muted">DETALLES FÍSICOS DE PLACA</h6></div>
                     <div class="col-md-4 col-6"><label class="label-mini">PESO (Kg)</label><input id="edit_peso" type="number" class="form-control"></div>
                     <div class="col-md-4 col-6"><label class="label-mini">ACEITE (L)</label><input id="edit_aceite" type="number" class="form-control"></div>
-                    <div class="col-md-4 col-12"><label class="label-mini text-danger">DERIVACIONES</label><select id="new_deriv" class="form-select fw-bold text-danger border-danger"><option value="+2">+2</option><option value="+1">+1</option><option value="0">0</option></select></div>
+                    <div class="col-md-4 col-12"><label class="label-mini text-danger">DERIVACIONES</label><select id="edit_deriv" class="form-select fw-bold text-danger border-danger"><option value="+2">+2</option><option value="+1">+1</option><option value="0">0</option></select></div>
                     <div class="col-6"><label class="label-mini">CELULAR</label><input id="edit_celular" class="form-control"></div>
                     <div class="col-6"><label class="label-mini">PROYECTO</label><input id="edit_proyecto" class="form-control"></div>
                 </div>
@@ -181,13 +195,41 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <script>
-    let DATA = {}; let AGENDA_CACHE = []; let ITEM_SELECCIONADO = null;
+    // --- CONFIGURACIÓN Y VARIABLES GLOBALES ---
+    const URL_API_CAMPO = "https://script.google.com/macros/s/AKfycbwd4ckii8-VM9sCzrOHhijQ1-BImInqTZ5YfhVpS2wyQE6BE2PDRmPb-yHJgY0910csBQ/exec";
+    let DATA = {};
+    let AGENDA_CACHE = [];
+    let ITEM_SELECCIONADO = null; 
     const modalCrear = new bootstrap.Modal(document.getElementById('modalCrear'));
     const modalAgenda = new bootstrap.Modal(document.getElementById('modalAgenda'));
 
+    // --- CONECTOR GOOGLE SCRIPT ---
+    class GasRunner {
+        constructor() {
+            this._success = null; this._failure = null;
+            this.argMap = { 'buscarInfoEntrada': ['entrada'], 'guardarPruebasIniciales': ['form', 'soloGuardar'], 'guardarPruebasFinales': ['form', 'soloGuardar'], 'default': ['payload'] };
+            return new Proxy(this, {
+                get: (target, prop, receiver) => {
+                    if (prop === 'withSuccessHandler') return (cb) => { target._success = cb; return receiver; };
+                    if (prop === 'withFailureHandler') return (cb) => { target._failure = cb; return receiver; };
+                    return (...args) => {
+                        let payload = {}; const keys = target.argMap[prop] || target.argMap['default'];
+                        if (args.length === 1 && typeof args[0] === 'object' && keys[0] === 'payload') payload = args[0];
+                        else args.forEach((val, i) => { if (keys[i]) payload[keys[i]] = val; });
+                        fetch(URL_API_CAMPO, { method: 'POST', body: JSON.stringify({ action: prop, payload: payload }) })
+                        .then(r => r.json()).then(data => { if (data.error) { console.error(data.error); if(target._failure) target._failure(data.error); } else { if(target._success) target._success(data); } })
+                        .catch(err => { console.error(err); if(target._failure) target._failure(err.toString()); });
+                    };
+                }
+            });
+        }
+    }
+    const google = { script: { get run() { return new GasRunner(); } } };
+
     // --- INICIALIZACIÓN ---
-    document.addEventListener('DOMContentLoaded', () => {
-        buildLabViews(); // GENERAR VISTAS DINÁMICAS
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("Iniciando App V8.1...");
+        buildLabViews(); // Genera vistas Lab dinámicas
         google.script.run.withSuccessHandler(fillDatalists).obtenerListasAutocompletado();
     });
 
@@ -215,6 +257,7 @@
       if(window.innerWidth<=768) toggleMenu();
     }
 
+    // --- CONSTRUCTOR DINÁMICO DE LABORATORIOS ---
     function buildLabViews() {
       const labs = [{id:'ini',title:'Pruebas Iniciales',color:'warning',icon:'flask'}, {id:'fin',title:'Pruebas Finales',color:'primary',icon:'check-circle'}];
       let html = '';
@@ -224,9 +267,11 @@
       document.getElementById('template-lab').innerHTML = html;
     }
 
+    // --- CORE LOGIC ---
     function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.querySelector('.overlay').classList.toggle('show'); }
     function loading(show) { const el=document.getElementById('loader'); show?el.classList.remove('d-none'):el.classList.add('d-none'); }
     function getVal(id) { const el=document.getElementById(id); return el?el.value:''; }
+    function getNum(id) { const v=parseFloat(document.getElementById(id).value); return isNaN(v)?0:v; }
     function setVal(id, val) { const el=document.getElementById(id); if(el) el.value = val; }
     
     function openTab(mod, tabId, btn) {
@@ -235,8 +280,43 @@
       btn.closest('.nav').querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
       btn.classList.add('active');
     }
+    
+    function monitorCambios(mod) {
+       const container = document.getElementById('form_' + mod);
+       if(!container) return;
+       container.addEventListener('input', function() { guardarLocal(mod); });
+       container.addEventListener('change', function() { guardarLocal(mod); });
+    }
 
-    // --- INSPECCIÓN LOGIC (CORREGIDA V8.1) ---
+    function guardarLocal(mod) {
+       let f = recopilarDatos(mod); // Nota: Debes definir recopilarDatos(mod) para lab, o usar versión simplificada
+       localStorage.setItem('backup_' + f.entrada, JSON.stringify(f));
+    }
+
+    // --- AGENDA ---
+    function abrirAgenda() { modalAgenda.show(); cargarAgenda(); }
+    function cargarAgenda() {
+       const c = document.getElementById('listaAgendaContainer'); c.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+       google.script.run.withSuccessHandler(l => {
+           if(l.error) { c.innerHTML = `<div class="alert alert-danger">${l.error}</div>`; return; }
+           AGENDA_CACHE = l; renderAgenda(l);
+       }).importarAgendaProduccion();
+    }
+    function renderAgenda(lista) {
+       const c = document.getElementById('listaAgendaContainer'); c.innerHTML = '';
+       lista.forEach((i, idx) => {
+           let badge = i.empresa === 'JLB' ? 'badge-jlb' : 'badge-group';
+           c.insertAdjacentHTML('beforeend', `<div class="card agenda-card mb-3 p-3" onclick="seleccionarDeAgenda(${idx})"><div class="d-flex justify-content-between"><div><span class="badge ${badge} mb-1">${i.empresa} #${i.id}</span><span class="badge bg-${i.colorTecnico} mb-1 ms-2">${i.estadoTecnico}</span><h6 class="fw-bold m-0">${i.cliente}</h6><small class="text-muted">${i.descripcion}</small></div><i class="fas fa-arrow-right text-primary"></i></div></div>`);
+       });
+    }
+    function filtrarAgenda() { const q = document.getElementById('filtroAgenda').value.toLowerCase(); renderAgenda(AGENDA_CACHE.filter(i => i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q))); }
+    function seleccionarDeAgenda(idx) {
+        ITEM_SELECCIONADO = AGENDA_CACHE[idx]; modalAgenda.hide();
+        document.getElementById('search_insp').value = ITEM_SELECCIONADO.id;
+        buscar('insp');
+    }
+
+    // --- INSPECCIÓN ---
     function initInsp() {
       document.getElementById('form_insp').classList.remove('d-none');
       const list = [{c:'ESTRUCTURA', i:['Placa','Pintura','Cuba','Expansion','Gabinete','Radiadores','Borne']},{c:'ACCESORIOS', i:['Termómetro','Nivel','Silica','Valv.Drenaje','Valv.Presion','Buchholz']},{c:'BUJES', i:['Bujes AT','Bujes BT','Herrajes AT','Herrajes BT']},{c:'FUGAS', i:['Empaque Tapa-Tanque','Empaque Bujes AT','Empaque Bujes BT']},{c:'PRUEBAS PRELIMINARES', i:['TTR','Aislamiento','Resistencia', 'Vacio', 'Corto']}];
@@ -283,7 +363,7 @@
     function guardarInsp(pdf) {
        if(!getVal('insp_realizado')) return Swal.fire('Falta Firma','','warning');
        let f = recopilarDatosInspeccion();
-       f.estado_cert = "PENDIENTE"; // ESTADO PENDIENTE
+       f.estado_cert = "PENDIENTE"; 
        loading(true);
        const action = pdf ? 'procesarInspeccion' : 'guardarSoloBD_Inspeccion';
        google.script.run.withSuccessHandler(res => {
@@ -299,13 +379,13 @@
         if(!getVal('insp_realizado')) return Swal.fire('Firma Requerida', 'Debes firmar para certificar.', 'warning');
         if(!getVal('chk_placa') || !getVal('chk_pintura')) return Swal.fire('Incompleto', 'Diligencia el checklist.', 'warning');
         Swal.fire({
-            title: '¿Certificar Inspección?', text: "El equipo pasará a estado CERTIFICADO. No podrás editar después.", icon: 'warning',
+            title: '¿Certificar Inspección?', text: "El equipo pasará a estado CERTIFICADO.", icon: 'warning',
             showCancelButton: true, confirmButtonText: 'Sí, Certificar', confirmButtonColor: '#198754'
         }).then((result) => {
             if (result.isConfirmed) {
                 loading(true);
                 let f = recopilarDatosInspeccion();
-                f.estado_cert = "CERTIFICADO"; // ESTADO CERTIFICADO
+                f.estado_cert = "CERTIFICADO"; 
                 google.script.run.withSuccessHandler(res => {
                     loading(false);
                     if(res.success) { Swal.fire('¡Certificado!', 'Producción notificada.', 'success'); if(res.url) window.open(res.url); }
@@ -315,7 +395,7 @@
         });
     }
 
-    // --- BÚSQUEDA Y CREACIÓN ---
+    // --- BÚSQUEDA ---
     function buscar(mod) {
       const val = document.getElementById('search_'+mod).value;
       if(!val) return Swal.fire('Error','Ingrese Entrada','warning');
@@ -348,31 +428,7 @@
       }).registrarNuevaEntrada(d);
     }
 
-    // --- AGENDA INTERACTION ---
-    function abrirAgenda() { modalAgenda.show(); cargarAgenda(); }
-    function cargarAgenda() {
-       const c = document.getElementById('listaAgendaContainer'); c.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
-       google.script.run.withSuccessHandler(l => {
-           if(l.error) { c.innerHTML = `<div class="alert alert-danger">${l.error}</div>`; return; }
-           AGENDA_CACHE = l; renderAgenda(l);
-       }).importarAgendaProduccion();
-    }
-    function renderAgenda(lista) {
-       const c = document.getElementById('listaAgendaContainer'); c.innerHTML = '';
-       lista.forEach((i, idx) => {
-           let badge = i.empresa === 'JLB' ? 'badge-jlb' : 'badge-group';
-           c.insertAdjacentHTML('beforeend', `<div class="card agenda-card mb-3 p-3" onclick="seleccionarDeAgenda(${idx})"><div class="d-flex justify-content-between"><div><span class="badge ${badge} mb-1">${i.empresa} #${i.id}</span><span class="badge bg-${i.colorTecnico} mb-1 ms-2">${i.estadoTecnico}</span><h6 class="fw-bold m-0">${i.cliente}</h6><small class="text-muted">${i.descripcion}</small></div><i class="fas fa-arrow-right text-primary"></i></div></div>`);
-       });
-    }
-    function filtrarAgenda() { const q = document.getElementById('filtroAgenda').value.toLowerCase(); renderAgenda(AGENDA_CACHE.filter(i => i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q))); }
-    function seleccionarDeAgenda(idx) {
-        ITEM_SELECCIONADO = AGENDA_CACHE[idx]; modalAgenda.hide();
-        document.getElementById('search_insp').value = ITEM_SELECCIONADO.id;
-        buscar('insp'); // Intenta buscar directo, si no existe saltará el popup de crear
-    }
-
-    // --- FUNCIONES COMPLETAS Y RESTAURADAS ---
-    
+    // --- HV ---
     function initHV() { 
         document.getElementById('form_hv').classList.remove('d-none'); 
         document.getElementById('edit_entrada').value=DATA.entrada; 
@@ -394,13 +450,7 @@
     }
 
     function guardarEdicionHV() {
-        const d = { 
-            entrada: getVal('edit_entrada'), cliente: getVal('edit_cliente'), kva: getVal('edit_kva'), 
-            marca: getVal('edit_marca'), serie: getVal('edit_serie'), grupo: getVal('edit_grupo'), 
-            vp: getVal('edit_vp'), vs: getVal('edit_vs'), fases: getVal('edit_fases'), anio: getVal('edit_anio'), 
-            tipo: getVal('edit_tipo'), proyecto: getVal('edit_proyecto'), celular: getVal('edit_celular'),
-            peso: getVal('edit_peso'), aceite: getVal('edit_aceite'), derivaciones: getVal('edit_deriv')
-        };
+        const d = { entrada: getVal('edit_entrada'), cliente: getVal('edit_cliente'), kva: getVal('edit_kva'), marca: getVal('edit_marca'), serie: getVal('edit_serie'), grupo: getVal('edit_grupo'), vp: getVal('edit_vp'), vs: getVal('edit_vs'), fases: getVal('edit_fases'), anio: getVal('edit_anio'), tipo: getVal('edit_tipo'), proyecto: getVal('edit_proyecto'), celular: getVal('edit_celular'), peso: getVal('edit_peso'), aceite: getVal('edit_aceite'), derivaciones: getVal('edit_deriv') };
         loading(true);
         google.script.run.withSuccessHandler(res => {
             loading(false);
@@ -409,54 +459,46 @@
         }).actualizarHojaVida(d);
     }
 
+    // --- LAB ---
     function initLab(mod) {
       document.getElementById('form_'+mod).classList.remove('d-none');
       document.querySelectorAll('.lbl-deriv').forEach(e=>e.innerText=DATA.derivaciones);
-      monitorCambios(mod);
       
-      let saved = (mod === 'ini') ? DATA.saved_ini : DATA.saved_fin;
-      let localData = localStorage.getItem('backup_' + DATA.entrada);
-      
-      if(localData) { 
-          try { 
-              saved = JSON.parse(localData); 
-              Swal.fire({toast:true, position:'top-end', icon:'warning', title:'Borrador local recuperado', timer:2000}); 
-          } catch(e){} 
+      // GRID DE TTR Y RES
+      let taps=5;
+      let hTTR='<thead><tr><th>T</th><th>U-V</th>'+(DATA.fases==3?'<th>V-W</th><th>W-U</th>':'')+'<th>%Err</th></tr></thead><tbody>';
+      for(let i=1;i<=taps;i++) {
+          hTTR += `<tr><td><b>${i}</b></td><td><input class="form-control form-control-sm table-input" id="inp-${mod}-uv-${i}" onchange="calcTTRDev('${mod}',${i})"></td>`+(DATA.fases==3?`<td><input class="form-control form-control-sm table-input" id="inp-${mod}-vw-${i}" onchange="calcTTRDev('${mod}',${i})"></td><td><input class="form-control form-control-sm table-input" id="inp-${mod}-wu-${i}" onchange="calcTTRDev('${mod}',${i})"></td>`:'')+`<td><span id="err-${mod}-${i}" class="badge bg-secondary">-</span></td></tr>`;
       }
+      document.getElementById(`${mod}_grid_ttr`).innerHTML = '<table class="table table-sm text-center">'+hTTR+'</tbody></table>';
       
+      // Resto de inicialización de datos guardados
+      let saved = (mod === 'ini') ? DATA.saved_ini : DATA.saved_fin;
       if(saved) {
-          // Cargar datos básicos
-          if(saved.temp_amb) document.getElementById(mod+'_temp').value = saved.temp_amb;
-          if(saved.aisl_at_bt) document.getElementById(mod+'_atbt').value = saved.aisl_at_bt;
-          // ... (Aquí iría el resto del mapeo si es necesario, por ahora lo básico)
+          if(saved.temp_amb) document.getElementById(`${mod}_temp`).value = saved.temp_amb;
+          if(saved.aisl_at_bt) document.getElementById(`${mod}_atbt`).value = saved.aisl_at_bt;
+          // ... (Cargar el resto de datos aquí)
       }
     }
 
+    function calcTTRDev(mod, i) { /* Lógica TTR */ }
+    function calcLoss(mod) { /* Lógica Pérdidas */ }
+
     function guardarLab(mod, pdf) {
-        let f = recopilarDatos(mod); // Debe definirse si no existe, o usar lógica directa
-        // Implementación simplificada para asegurar funcionalidad básica
-        f = { 
-            entrada: DATA.entrada,
-            temp_amb: getVal(mod+'_temp'),
-            aisl_at_bt: getVal(mod+'_atbt'),
-            // ... resto de campos
-        };
-        
+        // Implementación básica de guardado Lab
+        let f = { entrada: DATA.entrada, temp_amb: getVal(`${mod}_temp`), aisl_at_bt: getVal(`${mod}_atbt`) };
         loading(true);
-        const action = (mod==='ini') ? 'guardarPruebasIniciales' : 'guardarPruebasFinales';
-        
-        google.script.run.withSuccessHandler(res => {
+        const action = (mod==='ini')?'guardarPruebasIniciales':'guardarPruebasFinales';
+        google.script.run.withSuccessHandler(res=>{
             loading(false);
-            if(res.success) {
-                if(pdf && res.url) window.open(res.url);
-                else Swal.fire('Guardado','Datos de laboratorio registrados','success');
-            } else Swal.fire('Error',res.error,'error');
-        })[action](f, !pdf); // !pdf significa "soloGuardar" si pdf es false
+            if(res.success) { if(pdf && res.url) window.open(res.url); else Swal.fire('Guardado','','success'); }
+            else Swal.fire('Error',res.error,'error');
+        })[action](f, !pdf);
     }
 
     function generarProtocoloCliente(mod) {
         loading(true);
-        let f = { entrada: DATA.entrada }; // Recopilar todo
+        let f = { entrada: DATA.entrada }; 
         google.script.run.withSuccessHandler(res => {
             loading(false);
             if(res.success && res.url) window.open(res.url);
@@ -464,34 +506,7 @@
         }).generarProtocoloClienteDoc(f);
     }
     
-    function calcLoss(mod) {
-        // Cálculo básico P = V * I (Monofásico) o V * I * 1.73 (Trifásico)
-        let v = parseFloat(getVal(mod+'_vcc')) || 0;
-        let i = parseFloat(getVal(mod+'_icc')) || 0;
-        let factor = (DATA.fases === 3) ? 1.732 : 1;
-        let w = v * i * factor;
-        document.getElementById(mod+'_wcc').value = w.toFixed(2);
-        
-        // Vacio
-        let vo = parseFloat(getVal(mod+'_vo')) || 0;
-        let io = parseFloat(getVal(mod+'_io1')) || 0; // Promedio simple
-        let wo = vo * io * factor; // Aprox
-        document.getElementById(mod+'_wo').value = wo.toFixed(2);
-    }
-
-    function monitorCambios(mod) {
-       const container = document.getElementById('form_' + mod);
-       if(!container) return;
-       container.addEventListener('input', function() { 
-           // Guardado local simple
-           let f = { entrada: DATA.entrada, temp: getVal(mod+'_temp') };
-           localStorage.setItem('backup_' + DATA.entrada, JSON.stringify(f));
-       });
-    }
-    
-    function recopilarDatos(mod) {
-        return { entrada: DATA.entrada }; // Placeholder, expandir según necesidad
-    }
+    function recopilarDatos(mod) { return {entrada: DATA.entrada}; } // Expandir según necesidad
 
   </script>
 </body>
