@@ -28,6 +28,8 @@
       .overlay.show { display:block; }
     }
     .card { border:none; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.03); margin-bottom:15px; background: white; }
+    .hover-effect { transition: transform 0.2s; cursor: pointer; }
+    .hover-effect:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     .scroll-x { overflow-x: auto; white-space: nowrap; }
     .input-group-text { font-size: 0.8rem; font-weight: bold; width: 60px; justify-content: center; }
     .table-input { min-width: 80px; text-align: center; }
@@ -43,7 +45,7 @@
 <body>
 
   <script>
-    // URL DEL BACKEND (V8.1)
+    // URL DEL BACKEND (V8.1) - ASEGURARSE QUE ES LA CORRECTA DEL DEPLOY
     const URL_API_CAMPO = "https://script.google.com/macros/s/AKfycbwd4ckii8-VM9sCzrOHhijQ1-BImInqTZ5YfhVpS2wyQE6BE2PDRmPb-yHJgY0910csBQ/exec";
 
     class GasRunner {
@@ -77,7 +79,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V8.1 | QA Verified</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V8.1 | Producción</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -99,10 +101,10 @@
             <p class="text-muted small mt-2">Descargar pendientes de Producción</p>
         </div>
         <div class="row g-3 justify-content-center">
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-success" onclick="nav('insp')"><i class="fas fa-clipboard-check fa-3x text-success mb-3"></i><h5>Visual</h5><p class="text-muted small">Recepción y Checklist.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-warning" onclick="nav('ini')"><i class="fas fa-flask fa-3x text-warning mb-3"></i><h5>Iniciales</h5><p class="text-muted small">Diagnóstico de Entrada.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-primary" onclick="nav('fin')"><i class="fas fa-check-circle fa-3x text-primary mb-3"></i><h5>Finales</h5><p class="text-muted small">Protocolo de Salida.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-dark" onclick="nav('hv')"><i class="fas fa-edit fa-3x text-dark mb-3"></i><h5>Editar Placa</h5><p class="text-muted small">Corregir Hoja de Vida.</p></div></div>
+          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-success hover-effect" onclick="nav('insp')"><i class="fas fa-clipboard-check fa-3x text-success mb-3"></i><h5>Visual</h5><p class="text-muted small">Recepción y Checklist.</p></div></div>
+          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-warning hover-effect" onclick="nav('ini')"><i class="fas fa-flask fa-3x text-warning mb-3"></i><h5>Iniciales</h5><p class="text-muted small">Diagnóstico de Entrada.</p></div></div>
+          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-primary hover-effect" onclick="nav('fin')"><i class="fas fa-check-circle fa-3x text-primary mb-3"></i><h5>Finales</h5><p class="text-muted small">Protocolo de Salida.</p></div></div>
+          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-dark hover-effect" onclick="nav('hv')"><i class="fas fa-edit fa-3x text-dark mb-3"></i><h5>Editar Placa</h5><p class="text-muted small">Corregir Hoja de Vida.</p></div></div>
         </div>
       </div>
     </div>
@@ -183,7 +185,11 @@
     const modalCrear = new bootstrap.Modal(document.getElementById('modalCrear'));
     const modalAgenda = new bootstrap.Modal(document.getElementById('modalAgenda'));
 
-    document.addEventListener('DOMContentLoaded', () => google.script.run.withSuccessHandler(fillDatalists).obtenerListasAutocompletado());
+    // --- INICIALIZACIÓN ---
+    document.addEventListener('DOMContentLoaded', () => {
+        buildLabViews(); // GENERAR VISTAS DINÁMICAS
+        google.script.run.withSuccessHandler(fillDatalists).obtenerListasAutocompletado();
+    });
 
     function fillDatalists(lists) {
        const fill = (id, arr) => {
@@ -193,7 +199,22 @@
        if(lists) { fill('list_insp', lists.insp); fill('list_ini', lists.ini); fill('list_fin', lists.fin); }
     }
 
-    // --- GENERADOR LABS ---
+    // --- NAVEGACIÓN ---
+    function nav(viewId, btnElement) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      const target = document.getElementById('view-' + viewId);
+      if(target) target.classList.add('active');
+      else return Swal.fire("Error","Vista no disponible","error");
+
+      document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
+      if(btnElement) btnElement.classList.add('active');
+      else { 
+          const map = {'insp':1,'ini':2,'fin':3,'hv':4}; 
+          if(map[viewId]) document.querySelectorAll('.sidebar .nav-link')[map[viewId]].classList.add('active'); 
+      }
+      if(window.innerWidth<=768) toggleMenu();
+    }
+
     function buildLabViews() {
       const labs = [{id:'ini',title:'Pruebas Iniciales',color:'warning',icon:'flask'}, {id:'fin',title:'Pruebas Finales',color:'primary',icon:'check-circle'}];
       let html = '';
@@ -207,14 +228,6 @@
     function loading(show) { const el=document.getElementById('loader'); show?el.classList.remove('d-none'):el.classList.add('d-none'); }
     function getVal(id) { const el=document.getElementById(id); return el?el.value:''; }
     function setVal(id, val) { const el=document.getElementById(id); if(el) el.value = val; }
-    
-    function nav(id, btn) {
-      document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
-      document.getElementById('view-'+id).classList.add('active');
-      document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
-      if(btn) btn.classList.add('active');
-      if(window.innerWidth<=768) toggleMenu();
-    }
     
     function openTab(mod, tabId, btn) {
       document.querySelectorAll(`.tab-content-${mod}`).forEach(e => e.classList.add('d-none'));
