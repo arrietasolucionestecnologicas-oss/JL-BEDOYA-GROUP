@@ -151,6 +151,20 @@
                                   <h4 class="font-bold text-slate-600 uppercase text-sm"><i data-lucide="images" class="inline w-4 h-4 mb-1"></i> Actividad Reciente</h4>
                                   <button onclick="cargarGaleriaFotos()" class="text-xs text-blue-600 font-bold hover:underline">Actualizar</button>
                               </div>
+                              
+                              <div class="flex gap-2 mb-4 bg-white p-2 rounded-lg border border-slate-200">
+                                  <input id="filtro-foto-id" onkeyup="filtrarFotos()" placeholder="Buscar ID..." class="w-full border rounded p-2 text-sm">
+                                  <select id="filtro-foto-etapa" onchange="filtrarFotos()" class="w-full border rounded p-2 text-sm">
+                                      <option value="TODAS">Todas Etapas</option>
+                                      <option value="ENTRADA">Entrada</option>
+                                      <option value="DESARME">Desarme</option>
+                                      <option value="BOBINADO">Bobinado</option>
+                                      <option value="ENSAMBLE">Ensamble</option>
+                                      <option value="PRUEBAS">Pruebas</option>
+                                      <option value="SALIDA">Salida</option>
+                                  </select>
+                              </div>
+
                               <div id="galeria-fotos-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                   <div class="col-span-full text-center text-slate-400 text-xs py-8 animate-pulse">Cargando galería...</div>
                               </div>
