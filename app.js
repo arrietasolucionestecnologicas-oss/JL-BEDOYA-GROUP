@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V23.0 - GALERIA & FILTROS) */
+/* JLB OPERACIONES - APP.JS (V23.2 - GALERIA PRO + FILTROS) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -72,7 +72,7 @@ function nav(id) {
     if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-// --- FIX FECHAS ---
+// --- UTILIDADES ---
 function fechaParaInput(f){
     if(!f || f === "") return "";
     if(f.includes("T")) return f.split("T")[0];
@@ -85,6 +85,18 @@ function fechaParaInput(f){
         if(p.length === 3) return `${p[2]}-${p[1].length===1?'0'+p[1]:p[1]}-${p[0].length===1?'0'+p[0]:p[0]}`;
     }
     return "";
+}
+
+// HACK: Convertir URL de Drive para ver directa
+function convertirLinkDrive(url) {
+    try {
+        // Extrae el ID del archivo (ej: 1ABC...)
+        const match = url.match(/[-\w]{25,}/);
+        if (match && match[0]) {
+            return `https://drive.google.com/uc?export=view&id=${match[0]}`;
+        }
+        return url;
+    } catch (e) { return url; }
 }
 
 function irAlDashboard() { google.script.run.withSuccessHandler(url => window.open(url, '_top')).getUrlDashboard(); }
@@ -164,12 +176,10 @@ function abrirModal(i){
     document.getElementById('in-ods').value = d.ods; 
     document.getElementById('in-desc').value = d.desc; 
     
-    // Asignar TIPO en Select
     const selTipo = document.getElementById('in-tipo');
-    selTipo.value = d.tipo; // Intenta asignar el valor exacto
-    if(selTipo.value === "") { // Si no coincide (texto libre viejo), lo deja en "Seleccionar"
-        // Opcional: Podrías forzar el valor si quieres que se vea aunque no esté en la lista
-        // pero mejor dejarlo así para obligar a estandarizar.
+    selTipo.value = d.tipo; 
+    if(selTipo.value === "") { 
+        // Si el valor no coincide con la lista, no forzamos nada (queda en Seleccionar)
     }
 
     renderPasosSeguimiento(d);
@@ -239,7 +249,6 @@ function guardarCambios(){
         proveedor: document.getElementById('in-proveedor-dyn')?.value || ''
     }; 
     
-    // UI OPTIMISTA
     let nuevoEstado = datosProg[indiceActual].estado;
     if(c.entrega) nuevoEstado = "ENTREGADO";
     else if(c.listo) nuevoEstado = "FINALIZADO / LISTO";
@@ -304,7 +313,7 @@ function cargarAlquiler() { google.script.run.withSuccessHandler(d => { datosAlq
 function filtrarAlquiler() {
     const kva = document.getElementById('filtro-kva').value.toLowerCase();
     const volt = document.getElementById('filtro-voltaje').value.toLowerCase();
-    const estadoFiltro = document.getElementById('filtro-estado').value; // NUEVO FILTRO
+    const estadoFiltro = document.getElementById('filtro-estado').value;
     
     const t = document.getElementById('tabla-alq');
     if(!t) return;
@@ -320,7 +329,7 @@ function filtrarAlquiler() {
     if(filtrados.length === 0) { t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>'; return; }
     
     filtrados.forEach((r, i) => {
-        const btnFoto = r.foto ? `<a href="${r.foto}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="folder-open" class="w-5 h-5"></i></a>` : '<span class="text-slate-300">-</span>';
+        const btnFoto = r.foto ? `<a href="${convertirLinkDrive(r.foto)}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="image" class="w-5 h-5"></i></a>` : '<span class="text-slate-300">-</span>';
         let badgeClass = 'bg-gray-100 text-slate-700';
         if (r.estado.includes("DISPONIBLE")) badgeClass = 'bg-green-100 text-green-700';
         else if (r.estado === "PRESTADO" || r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700';
@@ -332,13 +341,11 @@ function filtrarAlquiler() {
     if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-// --- FUNCIÓN NUEVA: CARGAR GALERÍA ---
-// --- FUNCIÓN GALERÍA (VERSIÓN ROBUSTA V23.1) ---
+// --- FUNCIÓN GALERÍA ---
 function cargarGaleriaFotos() {
     const grid = document.getElementById('galeria-fotos-grid');
     if(!grid) return;
     
-    // Spinner de carga
     grid.innerHTML = '<div class="col-span-full text-center text-blue-500 py-8"><i data-lucide="loader-2" class="animate-spin w-8 h-8 mx-auto"></i><p class="text-xs mt-2">Sincronizando fotos recientes...</p></div>';
     if(typeof lucide !== 'undefined') lucide.createIcons();
 
@@ -351,14 +358,17 @@ function cargarGaleriaFotos() {
                 return;
             }
             fotos.forEach(f => {
+                // Generamos URL directa
+                const directUrl = convertirLinkDrive(f.url);
+                // Card limpia, sin opacidad oscura
                 const card = `
-                    <div class="relative group bg-slate-900 rounded-lg overflow-hidden aspect-square border border-slate-700 shadow-md hover:shadow-xl transition-all">
-                        <img src="${f.url}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity cursor-pointer" onclick="window.open('${f.url}', '_blank')">
-                        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3">
-                            <span class="text-white font-black text-sm block tracking-wide">${f.idTrafo}</span>
-                            <span class="text-[10px] text-slate-300 uppercase font-bold bg-slate-800/50 px-1.5 py-0.5 rounded">${f.etapa}</span>
+                    <div class="gallery-card relative group bg-white rounded-lg overflow-hidden aspect-square border border-slate-200 shadow-sm hover:shadow-lg transition-all cursor-pointer" onclick="window.open('${directUrl}', '_blank')">
+                        <img src="${directUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-105">
+                        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3 pt-8">
+                            <span class="text-white font-bold text-sm block shadow-black drop-shadow-md trafo-id">${f.idTrafo}</span>
+                            <span class="text-[10px] text-white/90 uppercase font-bold bg-black/30 px-1.5 py-0.5 rounded backdrop-blur-sm etapa-tag">${f.etapa}</span>
                         </div>
-                        <div class="absolute top-2 right-2 bg-black/60 text-white text-[9px] px-2 py-1 rounded-full backdrop-blur-sm font-mono border border-white/10">
+                        <div class="absolute top-2 right-2 bg-white/90 text-slate-700 text-[9px] px-2 py-1 rounded-full shadow-sm font-bold border border-slate-100">
                             ${f.fecha ? f.fecha.split(' ')[0] : 'Hoy'}
                         </div>
                     </div>
@@ -373,7 +383,29 @@ function cargarGaleriaFotos() {
         })
         .obtenerUltimasFotos();
 }
-// RESTO DE FUNCIONES SIN CAMBIOS
+
+// --- FUNCIÓN FILTRADO GALERÍA CLIENTE ---
+function filtrarFotos() {
+    const idQuery = document.getElementById('filtro-foto-id').value.toUpperCase();
+    const etapaQuery = document.getElementById('filtro-foto-etapa').value.toUpperCase();
+    
+    const cards = document.querySelectorAll('.gallery-card');
+    cards.forEach(card => {
+        const idText = card.querySelector('.trafo-id').innerText.toUpperCase();
+        const etapaText = card.querySelector('.etapa-tag').innerText.toUpperCase();
+        
+        const matchId = idText.includes(idQuery);
+        const matchEtapa = etapaQuery === "TODAS" || etapaText.includes(etapaQuery);
+        
+        if(matchId && matchEtapa) {
+            card.classList.remove('hidden');
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+}
+
+// RESTO DE FUNCIONES
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); if(!dl) return; dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
 function abrirModalNuevaEntrada() { document.getElementById('modal-nueva-entrada').classList.remove('hidden'); setTimeout(initCanvas, 100); }
@@ -387,7 +419,6 @@ function filtrarProg() {
     f.forEach(r => insertarFilaHTML(r, datosProg.indexOf(r), tDesk, tMob)); 
     if(typeof lucide !== 'undefined') lucide.createIcons(); 
 }
-// Las funciones auxiliares (Firmas, Alquiler, Tareas, etc.) se mantienen igual que en la V21.0
 function initCanvas() { canvas = document.getElementById('signature-pad'); if(!canvas) return; ctx = canvas.getContext('2d'); const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#000'; canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', endDraw); canvas.addEventListener('mouseout', endDraw); canvas.addEventListener('touchstart', (e)=>{e.preventDefault();startDraw(e.touches[0])}); canvas.addEventListener('touchmove', (e)=>{e.preventDefault();draw(e.touches[0])}); canvas.addEventListener('touchend', (e)=>{e.preventDefault();endDraw()}); }
 function startDraw(e) { isDrawing = true; const r = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo((e.clientX||e.pageX)-r.left, (e.clientY||e.pageY)-r.top); }
 function draw(e) { if(!isDrawing)return; const r = canvas.getBoundingClientRect(); ctx.lineTo((e.clientX||e.pageX)-r.left, (e.clientY||e.pageY)-r.top); ctx.stroke(); }
