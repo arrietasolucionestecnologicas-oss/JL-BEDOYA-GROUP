@@ -333,36 +333,46 @@ function filtrarAlquiler() {
 }
 
 // --- FUNCIÓN NUEVA: CARGAR GALERÍA ---
+// --- FUNCIÓN GALERÍA (VERSIÓN ROBUSTA V23.1) ---
 function cargarGaleriaFotos() {
     const grid = document.getElementById('galeria-fotos-grid');
     if(!grid) return;
+    
+    // Spinner de carga
     grid.innerHTML = '<div class="col-span-full text-center text-blue-500 py-8"><i data-lucide="loader-2" class="animate-spin w-8 h-8 mx-auto"></i><p class="text-xs mt-2">Sincronizando fotos recientes...</p></div>';
     if(typeof lucide !== 'undefined') lucide.createIcons();
 
-    google.script.run.withSuccessHandler(fotos => {
-        grid.innerHTML = '';
-        if(fotos.length === 0) {
-            grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-8">Sin fotos recientes.</div>';
-            return;
-        }
-        fotos.forEach(f => {
-            const card = `
-                <div class="relative group bg-slate-900 rounded-lg overflow-hidden aspect-square border border-slate-700">
-                    <img src="${f.url}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer" onclick="window.open('${f.url}', '_blank')">
-                    <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-2">
-                        <span class="text-white font-bold text-xs block">${f.idTrafo}</span>
-                        <span class="text-[10px] text-slate-300 uppercase">${f.etapa}</span>
+    google.script.run
+        .withSuccessHandler(fotos => {
+            grid.innerHTML = '';
+            if(!fotos || fotos.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-8 bg-slate-50 rounded-lg border border-dashed border-slate-300"><i data-lucide="image-off" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p>Aún no hay fotos registradas.</p></div>';
+                if(typeof lucide !== 'undefined') lucide.createIcons();
+                return;
+            }
+            fotos.forEach(f => {
+                const card = `
+                    <div class="relative group bg-slate-900 rounded-lg overflow-hidden aspect-square border border-slate-700 shadow-md hover:shadow-xl transition-all">
+                        <img src="${f.url}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity cursor-pointer" onclick="window.open('${f.url}', '_blank')">
+                        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3">
+                            <span class="text-white font-black text-sm block tracking-wide">${f.idTrafo}</span>
+                            <span class="text-[10px] text-slate-300 uppercase font-bold bg-slate-800/50 px-1.5 py-0.5 rounded">${f.etapa}</span>
+                        </div>
+                        <div class="absolute top-2 right-2 bg-black/60 text-white text-[9px] px-2 py-1 rounded-full backdrop-blur-sm font-mono border border-white/10">
+                            ${f.fecha ? f.fecha.split(' ')[0] : 'Hoy'}
+                        </div>
                     </div>
-                    <div class="absolute top-2 right-2 bg-black/50 text-white text-[9px] px-1.5 py-0.5 rounded backdrop-blur-sm">
-                        ${f.fecha.split(' ')[0]}
-                    </div>
-                </div>
-            `;
-            grid.insertAdjacentHTML('beforeend', card);
-        });
-    }).obtenerUltimasFotos();
+                `;
+                grid.insertAdjacentHTML('beforeend', card);
+            });
+        })
+        .withFailureHandler(error => {
+            console.error("Error Galería:", error);
+            grid.innerHTML = `<div class="col-span-full text-center text-red-400 py-8"><i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i><p>Error de conexión.</p><button onclick="cargarGaleriaFotos()" class="text-blue-500 underline mt-2">Reintentar</button></div>`;
+            if(typeof lucide !== 'undefined') lucide.createIcons();
+        })
+        .obtenerUltimasFotos();
 }
-
 // RESTO DE FUNCIONES SIN CAMBIOS
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); if(!dl) return; dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
