@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V21.0 - OPTIMISTIC UI + DATE FIX) */
+/* JLB OPERACIONES - APP.JS (V23.0 - GALERIA & FILTROS) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -6,7 +6,7 @@
 const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbzVU2GRgkaYB6BBUyh5QWCmiCSjnbwS_tGwEGbd6o8u7hz6JwC98cTVhhOb4AmIQJXREQ/exec"; 
 
 // =============================================================
-// 2. ADAPTADOR (SIN CAMBIOS)
+// 2. ADAPTADOR
 // =============================================================
 class GasRunner {
     constructor() {
@@ -40,7 +40,7 @@ class GasRunner {
 const google = { script: { get run() { return new GasRunner(); } } };
 
 // =============================================================
-// 3. LÓGICA DE NEGOCIO (OPTIMIZADA)
+// 3. LÓGICA DE NEGOCIO
 // =============================================================
 
 let datosProg=[], datosEntradas=[], datosAlq=[], dbClientes = [], tareasCache = [];
@@ -65,7 +65,6 @@ function nav(id) {
     document.querySelectorAll('.nav-btn-mob').forEach(b => b.classList.remove('mobile-nav-active'));
     const mobBtn = document.getElementById('mob-'+id); if(mobBtn) mobBtn.classList.add('mobile-nav-active');
 
-    // Carga perezosa: Solo carga si está vacío o se fuerza explícitamente
     if(id==='programacion' && datosProg.length === 0) cargarProgramacion(); 
     if(id==='entradas') cargarEntradas(); 
     if(id==='logistica') subLog('term'); 
@@ -73,32 +72,17 @@ function nav(id) {
     if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-// --- FIX FECHAS (BLINDADO) ---
+// --- FIX FECHAS ---
 function fechaParaInput(f){
     if(!f || f === "") return "";
-    // Caso ISO Completo (2026-01-27T05:00:00.000Z)
     if(f.includes("T")) return f.split("T")[0];
-    
-    // Caso Texto Guiones (2026-1-20 o 2026-01-20)
     if(f.includes("-")) {
         const p = f.split("-");
-        if(p.length === 3) {
-            const y = p[0];
-            const m = p[1].length === 1 ? "0"+p[1] : p[1];
-            const d = p[2].split(" ")[0].length === 1 ? "0"+p[2].split(" ")[0] : p[2].split(" ")[0];
-            // Validación básica de año
-            if(y.length === 4) return `${y}-${m}-${d}`;
-        }
+        if(p.length === 3 && p[0].length === 4) return `${p[0]}-${p[1].length===1?'0'+p[1]:p[1]}-${p[2].split(' ')[0].length===1?'0'+p[2].split(' ')[0]:p[2].split(' ')[0]}`;
     }
-    // Caso Texto Barras (20/1/2026 o 20/01/2026)
     if(f.includes("/")){
         const p = f.split("/");
-        if(p.length === 3) {
-             const d = p[0].length === 1 ? "0"+p[0] : p[0];
-             const m = p[1].length === 1 ? "0"+p[1] : p[1];
-             const y = p[2].split(" ")[0];
-             return `${y}-${m}-${d}`;
-        }
+        if(p.length === 3) return `${p[2]}-${p[1].length===1?'0'+p[1]:p[1]}-${p[0].length===1?'0'+p[0]:p[0]}`;
     }
     return "";
 }
@@ -109,7 +93,7 @@ function abrirAceites() { window.open('VistaAceites.html', '_blank'); }
 function recargarActual() { 
     const active = document.querySelector('.view-section.active'); 
     if(active) {
-        if(active.id === 'programacion') cargarProgramacion(); // Forzar recarga
+        if(active.id === 'programacion') cargarProgramacion(); 
         else nav(active.id);
     }
 }
@@ -132,8 +116,7 @@ function renderTablaProg() {
     const tMob = document.getElementById('lista-prog-mobile');
     if(!tDesk || !tMob) return;
 
-    tDesk.innerHTML = ''; 
-    tMob.innerHTML = '';
+    tDesk.innerHTML = ''; tMob.innerHTML = '';
     
     if(datosProg.length === 0) { 
         const empty = '<div class="text-center py-4 text-slate-400">No hay datos recientes.</div>'; 
@@ -142,9 +125,7 @@ function renderTablaProg() {
         return; 
     } 
 
-    datosProg.forEach((r, i) => { 
-        insertarFilaHTML(r, i, tDesk, tMob);
-    }); 
+    datosProg.forEach((r, i) => insertarFilaHTML(r, i, tDesk, tMob)); 
     if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
@@ -160,11 +141,9 @@ function insertarFilaHTML(r, i, tDesk, tMob) {
     let b = `<span class="font-mono font-bold text-slate-700">${r.idJLB||'--'}</span>`; 
     if(r.idGroup) b += `<br><span class="bg-orange-100 text-orange-800 px-1 rounded text-[10px] font-bold">G:${r.idGroup}</span>`; 
     
-    // Desktop Row
     const tr = `<tr id="tr-${i}" class="border-b ${c} hover:bg-slate-50"><td class="px-6 py-4">${b}</td><td class="px-6 py-4 text-xs font-mono text-slate-600">${r.fecha||'S/F'}</td><td class="px-6 py-4 font-medium">${r.cliente}</td><td class="px-6 py-4"><span class="text-xs font-bold px-2 py-1 rounded ${badgeColor}">${r.estado}</span></td><td class="px-6 py-4 text-center"><button onclick="abrirModal(${i})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`;
     tDesk.insertAdjacentHTML('beforeend', tr); 
 
-    // Mobile Card
     const card = `<div id="mob-${i}" class="mobile-card relative ${c} p-4" onclick="abrirModal(${i})"><div class="flex justify-between items-start mb-2"><div><span class="font-black text-lg text-slate-800">#${r.idJLB || r.idGroup}</span><span class="text-xs text-slate-500 block">${r.fecha}</span></div><span class="text-[10px] font-bold px-2 py-1 rounded ${badgeColor} uppercase tracking-wide">${r.estado}</span></div><h4 class="font-bold text-blue-900 text-base mb-1">${r.cliente}</h4><p class="text-sm text-slate-600 truncate">${r.desc}</p><div class="mt-3 pt-2 border-t border-slate-200/50 flex justify-end"><button class="text-blue-600 text-xs font-bold flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-blue-100 shadow-sm"><i data-lucide="pencil" class="w-3 h-3"></i> EDITAR / VER</button></div></div>`;
     tMob.insertAdjacentHTML('beforeend', card);
 }
@@ -175,20 +154,24 @@ function abrirModal(i){
     document.getElementById('modal-detalle').classList.remove('hidden'); 
     document.getElementById('m-cliente').innerText = d.cliente; 
     document.getElementById('m-ids-badge').innerText = `ID: ${d.idJLB} | GRUPO: ${d.idGroup||'N/A'}`; 
-    
-    // FECHAS (Ahora sí cargan gracias al fix)
     document.getElementById('date-f-oferta').value = fechaParaInput(d.f_oferta); 
     document.getElementById('date-f-aut').value = fechaParaInput(d.f_autorizacion); 
     document.getElementById('date-entrega').value = fechaParaInput(d.f_entrega); 
     document.getElementById('input-obs-prog').value = d.observacion; 
     document.getElementById('input-remision-prog').value = d.remision; 
-    
     document.getElementById('in-idgroup').value = d.idGroup; 
     document.getElementById('in-serie').value = d.serie; 
     document.getElementById('in-ods').value = d.ods; 
     document.getElementById('in-desc').value = d.desc; 
-    document.getElementById('in-tipo').value = d.tipo;
     
+    // Asignar TIPO en Select
+    const selTipo = document.getElementById('in-tipo');
+    selTipo.value = d.tipo; // Intenta asignar el valor exacto
+    if(selTipo.value === "") { // Si no coincide (texto libre viejo), lo deja en "Seleccionar"
+        // Opcional: Podrías forzar el valor si quieres que se vea aunque no esté en la lista
+        // pero mejor dejarlo así para obligar a estandarizar.
+    }
+
     renderPasosSeguimiento(d);
 }
 
@@ -196,46 +179,20 @@ function renderPasosSeguimiento(d) {
     const stepsContainer = document.getElementById('steps-container'); 
     stepsContainer.innerHTML = ''; 
 
-    // Selector Ejecución
     const esExterno = d.tipo_ejecucion === 'EXTERNA';
-    const htmlEjecucion = `
-        <div class="col-span-full bg-slate-50 p-3 rounded border mb-4 border-slate-300">
-            <h6 class="font-bold text-xs text-slate-500 mb-2 uppercase flex items-center gap-2">
-               <i data-lucide="settings-2" class="w-3 h-3"></i> Configuración de Ejecución
-            </h6>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-600 block mb-1">TIPO EJECUCIÓN</label>
-                    <select id="sel-ejecucion" class="w-full border rounded p-2 text-sm bg-white font-bold text-slate-700 outline-none" onchange="toggleProveedor(this.value)">
-                        <option value="INTERNA" ${!esExterno?'selected':''}>🏠 INTERNA</option>
-                        <option value="EXTERNA" ${esExterno?'selected':''}>🚚 EXTERNA</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-600 block mb-1">PROVEEDOR</label>
-                    <input id="in-proveedor-dyn" class="w-full border rounded p-2 text-sm" value="${d.proveedor_ext||''}" ${!esExterno?'disabled':''} placeholder="Nombre...">
-                </div>
-            </div>
-        </div>`;
+    const htmlEjecucion = `<div class="col-span-full bg-slate-50 p-3 rounded border mb-4 border-slate-300"><h6 class="font-bold text-xs text-slate-500 mb-2 uppercase flex items-center gap-2"><i data-lucide="settings-2" class="w-3 h-3"></i> Configuración de Ejecución</h6><div class="grid grid-cols-2 gap-4"><div><label class="text-[10px] font-bold text-slate-600 block mb-1">TIPO EJECUCIÓN</label><select id="sel-ejecucion" class="w-full border rounded p-2 text-sm bg-white font-bold text-slate-700 outline-none" onchange="toggleProveedor(this.value)"><option value="INTERNA" ${!esExterno?'selected':''}>🏠 INTERNA</option><option value="EXTERNA" ${esExterno?'selected':''}>🚚 EXTERNA</option></select></div><div><label class="text-[10px] font-bold text-slate-600 block mb-1">PROVEEDOR</label><input id="in-proveedor-dyn" class="w-full border rounded p-2 text-sm" value="${d.proveedor_ext||''}" ${!esExterno?'disabled':''} placeholder="Nombre..."></div></div></div>`;
     stepsContainer.insertAdjacentHTML('beforeend', htmlEjecucion);
 
-    // Alertas de Estado
     const estado = (d.estado || "").toUpperCase().trim();
     if(estado === "SIN INGRESAR A SISTEMA" || estado === "PENDIENTE" || estado === "") {
         stepsContainer.insertAdjacentHTML('beforeend', `<div class="col-span-full mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-orange-800 font-bold text-sm uppercase">⚠️ Equipo pendiente de ingreso</p><button onclick="avanzarEstado('FALTA INSPECCION INICIAL', 'CONFIRMAR_ZIUR')" class="bg-orange-600 text-white px-6 py-2 rounded-lg font-bold shadow text-xs">✅ CONFIRMAR INGRESO</button></div>`);
     }
 
-    // Pasos
     const tipoServ = (d.tipo || "").toUpperCase();
     const desc = (d.desc || "").toUpperCase();
     const esSoloAceite = tipoServ.includes("ACEITE") || desc.includes("ACEITE");
     
-    let ps = [
-        {id:'pruebas_ini',l:'1. Pruebas Ini'}, {id:'desencube',l:'2. Desencube'}, {id:'desensamble',l:'3. Desensamble'},
-        {id:'bobinado',l:'4. Bobinado'}, {id:'ensamble',l:'5. Ensamble'}, {id:'horno',l:'6. Horno'},
-        {id:'encube',l:'7. Encube'}, {id:'pruebas_fin',l:'8. Pruebas Fin'}, {id:'pintura',l:'9. Pintura'}, {id:'listo',l:'10. Listo'}
-    ]; 
-
+    let ps = [{id:'pruebas_ini',l:'1. Pruebas Ini'}, {id:'desencube',l:'2. Desencube'}, {id:'desensamble',l:'3. Desensamble'}, {id:'bobinado',l:'4. Bobinado'}, {id:'ensamble',l:'5. Ensamble'}, {id:'horno',l:'6. Horno'}, {id:'encube',l:'7. Encube'}, {id:'pruebas_fin',l:'8. Pruebas Fin'}, {id:'pintura',l:'9. Pintura'}, {id:'listo',l:'10. Listo'}]; 
     if(esSoloAceite) ps = [{id:'pruebas_ini',l:'1. Inicial'}, {id:'pruebas_fin',l:'2. Terminado'}, {id:'listo',l:'3. Listo'}];
     if (esExterno) ps = ps.filter(p => ['pruebas_ini','pruebas_fin','pintura','listo'].includes(p.id));
 
@@ -257,15 +214,12 @@ function guardarCambios(){
     const b = document.getElementById('btn-guardar-prog'); 
     const txtOriginal = b.innerHTML; b.innerHTML = 'GUARDANDO...'; b.disabled = true; 
     
-    // 1. Recoger datos
     const c = { 
         f_oferta: document.getElementById('date-f-oferta').value, 
         f_autorizacion: document.getElementById('date-f-aut').value, 
         observacion: document.getElementById('input-obs-prog').value, 
         remision: document.getElementById('input-remision-prog').value, 
         entrega: document.getElementById('date-entrega').value, 
-        
-        // Fases
         pruebas_ini: document.getElementById('date-pruebas_ini')?.value, 
         desencube: document.getElementById('date-desencube')?.value, 
         desensamble: document.getElementById('date-desensamble')?.value, 
@@ -274,51 +228,39 @@ function guardarCambios(){
         horno: document.getElementById('date-horno')?.value, 
         encube: document.getElementById('date-encube')?.value, 
         pruebas_fin: document.getElementById('date-pruebas_fin')?.value, 
-        pintura: document.getElementById('date-pintura')?.value || document.getElementById('date-pruebas_fin')?.value, // Fallback visual
+        pintura: document.getElementById('date-pintura')?.value || document.getElementById('date-pruebas_fin')?.value, 
         listo: document.getElementById('date-listo')?.value, 
-        
         idGroup: document.getElementById('in-idgroup').value, 
         serie: document.getElementById('in-serie').value, 
         ods: document.getElementById('in-ods').value, 
         desc: document.getElementById('in-desc').value, 
         tipo: document.getElementById('in-tipo').value,
-        
         tipo_ejecucion: document.getElementById('sel-ejecucion')?.value || 'INTERNA',
         proveedor: document.getElementById('in-proveedor-dyn')?.value || ''
     }; 
     
-    // 2. ACTUALIZACIÓN OPTIMISTA (UI INSTANTÁNEA)
-    // Calculamos el nuevo estado localmente para feedback inmediato
+    // UI OPTIMISTA
     let nuevoEstado = datosProg[indiceActual].estado;
     if(c.entrega) nuevoEstado = "ENTREGADO";
     else if(c.listo) nuevoEstado = "FINALIZADO / LISTO";
     else if(c.tipo_ejecucion === 'EXTERNA') nuevoEstado = "EN PROVEEDOR / EXTERNO";
     
-    // Actualizamos el array local
     const item = datosProg[indiceActual];
     item.estado = nuevoEstado;
-    item.cliente = document.getElementById('m-cliente').innerText; // Por si acaso
+    item.cliente = document.getElementById('m-cliente').innerText; 
     item.desc = c.desc;
-    item.fecha = item.fecha; // Se mantiene
-    
-    // Actualizamos el DOM específico (Sin recargar toda la tabla)
     actualizarFilaDOM(indiceActual, item);
 
-    // 3. ENVIAR AL SERVIDOR EN SEGUNDO PLANO
     google.script.run.withSuccessHandler(() => { 
-        b.innerHTML = txtOriginal; b.disabled = false; 
-        showToast("Cambios guardados"); // Solo mostramos confirmación discreta
-        // NO LLAMAMOS A cargarProgramacion() AQUÍ PARA EVITAR EL SALTO
+        b.innerHTML = txtOriginal; b.disabled = false; showToast("Cambios guardados"); 
     }).withFailureHandler(e => { 
-        b.innerHTML = txtOriginal; b.disabled = false; 
-        alert("Hubo un error al guardar en la nube: " + e + ". Por favor recarga."); 
+        b.innerHTML = txtOriginal; b.disabled = false; alert("Hubo un error al guardar en la nube: " + e + ". Por favor recarga."); 
     }).guardarAvance({rowIndex: item.rowIndex, cambios: c}); 
     
     cerrarModal(); 
 }
 
 function actualizarFilaDOM(i, r) {
-    // Busca y reemplaza solo el contenido de la fila Desktop
     const tr = document.getElementById(`tr-${i}`);
     if(tr) {
         let badgeColor = "bg-slate-100 text-slate-600";
@@ -327,43 +269,101 @@ function actualizarFilaDOM(i, r) {
         else if(s.includes("PROCESO") || s.includes("AUTO")) badgeColor = "bg-blue-100 text-blue-700";
         else if(s.includes("PENDIENTE")) badgeColor = "bg-orange-100 text-orange-700";
         if (r.tipo_ejecucion === 'EXTERNA') badgeColor = "bg-purple-100 text-purple-700 border border-purple-200";
-
-        // Actualizamos celda estado (indice 3 en tds)
         const tds = tr.getElementsByTagName('td');
         if(tds[3]) tds[3].innerHTML = `<span class="text-xs font-bold px-2 py-1 rounded ${badgeColor}">${r.estado}</span>`;
-        // Actualizamos cliente/desc si cambiaron (opcional)
     }
-
-    // Busca y reemplaza la tarjeta Mobile
     const card = document.getElementById(`mob-${i}`);
     if(card) {
-        // Simple: reemplazamos todo el HTML de la card o solo el badge
-        // Para consistencia rápida, podemos reconstruirla con insertarFilaHTML logic, pero es mas complejo.
-        // Mejor solo actualizamos el badge que es lo vital.
         const badge = card.querySelector('span.rounded');
-        if(badge) {
-            badge.innerText = r.estado;
-            // Reset clases colores
-            badge.className = `text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide`;
-            // Aplicar color nuevo... (simplificado)
-        }
+        if(badge) { badge.innerText = r.estado; badge.className = `text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide`; }
     }
 }
 
 function avanzarEstado(nuevoEstado, accion) {
     if(!confirm("¿Confirmar cambio?")) return;
     const d = datosProg[indiceActual];
-    // Optimista
-    d.estado = "EN PROCESO"; // Asumimos éxito
+    d.estado = "EN PROCESO"; 
     actualizarFilaDOM(indiceActual, d);
     cerrarModal();
-    
-    google.script.run.withSuccessHandler(res => {
-        if(!res.exito) alert("Error al sincronizar estado.");
-    }).avanzarEstadoAdmin({ rowIndex: d.rowIndex, nuevoEstado: nuevoEstado, accion: accion, idTrafo: d.idJLB||d.idGroup });
+    google.script.run.withSuccessHandler(res => { if(!res.exito) alert("Error al sincronizar estado."); }).avanzarEstadoAdmin({ rowIndex: d.rowIndex, nuevoEstado: nuevoEstado, accion: accion, idTrafo: d.idJLB||d.idGroup });
 }
 
-// --- RESTO DE FUNCIONES (Idénticas pero asegurando que no rompan) ---
+function subLog(id) { document.querySelectorAll('.log-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.log-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-log-'+id).classList.add('active'); if(id==='term') cargarTerminados(); if(id==='alq') cargarAlquiler(); if(id==='pat') cargarPatio(); }
+function subNav(id) { 
+    document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); 
+    document.querySelectorAll('.cp-btn').forEach(e=>e.classList.remove('active')); 
+    document.getElementById('view-'+id).classList.add('active'); 
+    document.getElementById('btn-cp-'+id).classList.add('active');
+    
+    // TRIGGER GALERÍA
+    if(id === 'fot') cargarGaleriaFotos();
+}
+
+function cargarAlquiler() { google.script.run.withSuccessHandler(d => { datosAlq = d; filtrarAlquiler(); }).obtenerLogistica({ tipo: 'ALQUILER' }); }
+
+function filtrarAlquiler() {
+    const kva = document.getElementById('filtro-kva').value.toLowerCase();
+    const volt = document.getElementById('filtro-voltaje').value.toLowerCase();
+    const estadoFiltro = document.getElementById('filtro-estado').value; // NUEVO FILTRO
+    
+    const t = document.getElementById('tabla-alq');
+    if(!t) return;
+    t.innerHTML = '';
+    
+    const filtrados = datosAlq.filter(item => {
+        const matchKVA = kva === "" || item.kva.toString().toLowerCase().includes(kva);
+        const matchVolt = volt === "" || item.voltajes.toString().toLowerCase().includes(volt);
+        const matchEstado = estadoFiltro === "TODOS" || item.estado.toUpperCase().includes(estadoFiltro);
+        return matchKVA && matchVolt && matchEstado;
+    });
+
+    if(filtrados.length === 0) { t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>'; return; }
+    
+    filtrados.forEach((r, i) => {
+        const btnFoto = r.foto ? `<a href="${r.foto}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="folder-open" class="w-5 h-5"></i></a>` : '<span class="text-slate-300">-</span>';
+        let badgeClass = 'bg-gray-100 text-slate-700';
+        if (r.estado.includes("DISPONIBLE")) badgeClass = 'bg-green-100 text-green-700';
+        else if (r.estado === "PRESTADO" || r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700';
+        else if (r.estado.includes("MANTENIMIENTO")) badgeClass = 'bg-orange-100 text-orange-700';
+        else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700';
+        const indexReal = datosAlq.indexOf(r);
+        t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`);
+    });
+    if(typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// --- FUNCIÓN NUEVA: CARGAR GALERÍA ---
+function cargarGaleriaFotos() {
+    const grid = document.getElementById('galeria-fotos-grid');
+    if(!grid) return;
+    grid.innerHTML = '<div class="col-span-full text-center text-blue-500 py-8"><i data-lucide="loader-2" class="animate-spin w-8 h-8 mx-auto"></i><p class="text-xs mt-2">Sincronizando fotos recientes...</p></div>';
+    if(typeof lucide !== 'undefined') lucide.createIcons();
+
+    google.script.run.withSuccessHandler(fotos => {
+        grid.innerHTML = '';
+        if(fotos.length === 0) {
+            grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-8">Sin fotos recientes.</div>';
+            return;
+        }
+        fotos.forEach(f => {
+            const card = `
+                <div class="relative group bg-slate-900 rounded-lg overflow-hidden aspect-square border border-slate-700">
+                    <img src="${f.url}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer" onclick="window.open('${f.url}', '_blank')">
+                    <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-2">
+                        <span class="text-white font-bold text-xs block">${f.idTrafo}</span>
+                        <span class="text-[10px] text-slate-300 uppercase">${f.etapa}</span>
+                    </div>
+                    <div class="absolute top-2 right-2 bg-black/50 text-white text-[9px] px-1.5 py-0.5 rounded backdrop-blur-sm">
+                        ${f.fecha.split(' ')[0]}
+                    </div>
+                </div>
+            `;
+            grid.insertAdjacentHTML('beforeend', card);
+        });
+    }).obtenerUltimasFotos();
+}
+
+// RESTO DE FUNCIONES SIN CAMBIOS
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); if(!dl) return; dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
 function abrirModalNuevaEntrada() { document.getElementById('modal-nueva-entrada').classList.remove('hidden'); setTimeout(initCanvas, 100); }
@@ -374,11 +374,10 @@ function filtrarProg() {
     const tMob = document.getElementById('lista-prog-mobile'); 
     tDesk.innerHTML = ''; tMob.innerHTML = ''; 
     const f = datosProg.filter(r => ((r.idJLB || "") + " " + (r.idGroup || "") + " " + (r.cliente || "") + " " + (r.desc || "") + " " + (r.estado || "")).toLowerCase().includes(q)); 
-    f.forEach(r => insertarFilaHTML(r, datosProg.indexOf(r), tDesk, tMob)); // Usamos el indice real
+    f.forEach(r => insertarFilaHTML(r, datosProg.indexOf(r), tDesk, tMob)); 
     if(typeof lucide !== 'undefined') lucide.createIcons(); 
 }
-// ... Resto de funciones auxiliares (Firmas, Alquiler, etc) se mantienen igual ...
-// Incluir aquí las funciones de initCanvas, startDraw, etc. tal cual estaban en tu código original.
+// Las funciones auxiliares (Firmas, Alquiler, Tareas, etc.) se mantienen igual que en la V21.0
 function initCanvas() { canvas = document.getElementById('signature-pad'); if(!canvas) return; ctx = canvas.getContext('2d'); const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#000'; canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', endDraw); canvas.addEventListener('mouseout', endDraw); canvas.addEventListener('touchstart', (e)=>{e.preventDefault();startDraw(e.touches[0])}); canvas.addEventListener('touchmove', (e)=>{e.preventDefault();draw(e.touches[0])}); canvas.addEventListener('touchend', (e)=>{e.preventDefault();endDraw()}); }
 function startDraw(e) { isDrawing = true; const r = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo((e.clientX||e.pageX)-r.left, (e.clientY||e.pageY)-r.top); }
 function draw(e) { if(!isDrawing)return; const r = canvas.getBoundingClientRect(); ctx.lineTo((e.clientX||e.pageX)-r.left, (e.clientY||e.pageY)-r.top); ctx.stroke(); }
@@ -393,12 +392,8 @@ function showToast(msg, type = 'success') { const container = document.getElemen
 function copiarTexto(t){ navigator.clipboard.writeText(t).then(()=>showToast("Copiado")); }
 function switchTab(t){ document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+t).classList.add('active'); document.getElementById('tab-btn-'+t).classList.add('active'); }
 function cerrarModal() { document.getElementById('modal-detalle').classList.add('hidden'); }
-function subLog(id) { document.querySelectorAll('.log-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.log-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-log-'+id).classList.add('active'); if(id==='term') cargarTerminados(); if(id==='alq') cargarAlquiler(); if(id==='pat') cargarPatio(); }
-function subNav(id) { document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.cp-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-cp-'+id).classList.add('active'); }
 function cargarTerminados() { google.script.run.withSuccessHandler(d => { const c = document.getElementById('lista-terminados'); if(!c) return; c.innerHTML = ''; if(d.length === 0) c.innerHTML = '<p class="text-center text-slate-400 py-4">Sin pendientes.</p>'; d.forEach(i => { const txt = `ENTRADA: ${i.id} | CLIENTE: ${i.cliente} | EQUIPO: ${i.desc} | ODS: ${i.ods}`; c.insertAdjacentHTML('beforeend', `<div class="bg-white border border-green-200 p-4 rounded-lg shadow-sm flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i data-lucide="check" class="w-6 h-6"></i></div><div><h4 class="font-bold text-slate-700">${i.cliente}</h4><p class="text-xs text-slate-500">${i.desc} (ID: ${i.id})</p></div></div><button onclick="copiarTexto('${txt}')" class="bg-slate-100 text-slate-600 p-2 rounded hover:bg-slate-200"><i data-lucide="copy" class="w-4 h-4"></i></button></div>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerLogistica({ tipo: 'TERMINADOS' }); }
 function cargarPatio() { google.script.run.withSuccessHandler(d => { const t = document.getElementById('tabla-pat'); if(!t) return; t.innerHTML = ''; d.forEach(r => { t.insertAdjacentHTML('beforeend', `<tr class="border-b"><td class="p-3 font-mono text-blue-600">${r.id}</td><td class="p-3">${r.cliente}</td><td class="p-3 text-xs text-red-500">${r.motivo}</td></tr>`); }); }).obtenerLogistica({ tipo: 'PATIO' }); }
-function cargarAlquiler() { google.script.run.withSuccessHandler(d => { datosAlq = d; filtrarAlquiler(); }).obtenerLogistica({ tipo: 'ALQUILER' }); }
-function filtrarAlquiler() { const kva = document.getElementById('filtro-kva').value.toLowerCase(); const volt = document.getElementById('filtro-voltaje').value.toLowerCase(); const t = document.getElementById('tabla-alq'); if(!t) return; t.innerHTML = ''; const filtrados = datosAlq.filter(item => { const matchKVA = kva === "" || item.kva.toString().toLowerCase().includes(kva); const matchVolt = volt === "" || item.voltajes.toString().toLowerCase().includes(volt); return matchKVA && matchVolt; }); if(filtrados.length === 0) { t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>'; return; } filtrados.forEach((r, i) => { const btnFoto = r.foto ? `<a href="${r.foto}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="folder-open" class="w-5 h-5"></i></a>` : '<span class="text-slate-300">-</span>'; let badgeClass = 'bg-gray-100 text-slate-700'; if (r.estado.includes("DISPONIBLE")) badgeClass = 'bg-green-100 text-green-700'; else if (r.estado === "PRESTADO" || r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700'; else if (r.estado.includes("MANTENIMIENTO")) badgeClass = 'bg-orange-100 text-orange-700'; else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700'; const indexReal = datosAlq.indexOf(r); t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }
 function editarAlquiler(i) { const d = datosAlq[i]; abrirModalAlq(false); document.getElementById('title-modal-alq').innerText = "Editar Alquiler"; document.getElementById('alq-codigo').value = d.codigo; document.getElementById('alq-codigo').readOnly = true; document.getElementById('alq-kva').value = d.kva; document.getElementById('alq-marca').value = d.marca; document.getElementById('alq-volt').value = d.voltajes; document.getElementById('alq-cliente').value = d.cliente; document.getElementById('alq-salida').value = fechaParaInput(d.salida); document.getElementById('alq-regreso').value = fechaParaInput(d.regreso); const sel = document.getElementById('alq-estado-manual'); const estadosValidos = ["DISPONIBLE", "MANTENIMIENTO", "REPARACION", "PRESTADO"]; if(estadosValidos.includes(d.estado)) { sel.value = d.estado; } else { if(d.estado.includes("DISPONIBLE")) sel.value = "DISPONIBLE"; else if(d.estado.includes("MANTENIMIENTO")) sel.value = "MANTENIMIENTO"; else if(d.estado.includes("REPARACION")) sel.value = "REPARACION"; else if(d.estado.includes("PRESTADO")) sel.value = "PRESTADO"; else sel.value = "DISPONIBLE"; } alqFotosNuevas = []; document.getElementById('alq-preview-container').innerHTML = ''; document.getElementById('alq-preview-container').classList.add('hidden'); }
 function abrirModalAlq(nuevo) { document.getElementById('modal-alq').classList.remove('hidden'); const btn = document.getElementById('btn-alq-save'); btn.innerText = "Guardar"; btn.disabled = false; if(nuevo) { document.getElementById('title-modal-alq').innerText = "Registrar Nuevo"; document.getElementById('form-alq').reset(); document.getElementById('alq-codigo').readOnly = false; alqFotosNuevas = []; document.getElementById('alq-preview-container').innerHTML = ''; document.getElementById('alq-preview-container').classList.add('hidden'); } }
 function cerrarModalAlq() { document.getElementById('modal-alq').classList.add('hidden'); }
