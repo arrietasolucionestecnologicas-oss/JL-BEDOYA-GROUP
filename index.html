@@ -109,7 +109,7 @@
                     <div class="cp-nav no-scrollbar"><button class="cp-btn active" onclick="subNav('act')" id="btn-cp-act">Actividades</button><button class="cp-btn" onclick="subNav('fot')" id="btn-cp-fot">Fotos</button></div>
                       <div id="view-act" class="cp-view active">
                          <div class="flex justify-end mb-4 gap-2">
-                              <button onclick="abrirModalTarea(false)" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex gap-2"><i data-lucide="plus"></i> Nueva Tarea</button>
+                             <button onclick="abrirModalTarea(false)" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex gap-2"><i data-lucide="plus"></i> Nueva Tarea</button>
                          </div>
                          <div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="bg-slate-200 p-3 rounded-lg"><h4 class="font-bold text-slate-600 mb-3 text-sm uppercase">Pendientes</h4><div id="col-pendiente" class="space-y-2 min-h-[100px]"></div></div><div class="bg-blue-100 p-3 rounded-lg"><h4 class="font-bold text-blue-800 mb-3 text-sm uppercase">En Proceso</h4><div id="col-proceso" class="space-y-2 min-h-[100px]"></div></div><div class="bg-green-100 p-3 rounded-lg"><h4 class="font-bold text-green-800 mb-3 text-sm uppercase">Terminado</h4><div id="col-terminado" class="space-y-2 min-h-[100px]"></div></div></div>
                       </div>
@@ -182,7 +182,25 @@
                             <input id="in-idgroup" placeholder="ID Group" class="border p-1 text-xs rounded">
                             <input id="in-serie" placeholder="Serie" class="border p-1 text-xs rounded">
                             <input id="in-ods" placeholder="ODS" class="border p-1 text-xs rounded">
-                            <input id="in-tipo" placeholder="Tipo" class="border p-1 text-xs rounded">
+                            
+                            <div class="col-span-2">
+                                <label class="text-[10px] font-bold text-slate-400 block mb-1">TIPO SERVICIO FINAL</label>
+                                <select id="in-tipo" class="w-full border p-2 text-xs rounded font-bold bg-white outline-none focus:ring-1 focus:ring-blue-500">
+                                    <option value="">-- SELECCIONAR --</option>
+                                    <option value="MANTENIMIENTO GENERAL">MANTENIMIENTO GENERAL</option>
+                                    <option value="REPARACION">REPARACION (BOBINADOS)</option>
+                                    <option value="FABRICACION">FABRICACION</option>
+                                    <option value="REGENERACION">REGENERACION ACEITE</option>
+                                    <option value="TERMOVACIO">TERMOVACIO</option>
+                                    <option value="PRUEBAS ELECTRICAS">PRUEBAS ELECTRICAS</option>
+                                    <option value="REDISEÑO">REDISEÑO</option>
+                                    <option value="ALQUILER">ALQUILER</option>
+                                    <option value="COMPRA">COMPRA (STOCK JLB)</option>
+                                    <option value="DEVOLUCION">DEVOLUCIÓN (NO AUTORIZADO)</option>
+                                    <option value="GARANTIA">GARANTIA</option>
+                                </select>
+                            </div>
+
                             <input id="in-desc" placeholder="Descripción" class="col-span-2 border p-1 text-xs rounded">
                         </div>
                     </div>
