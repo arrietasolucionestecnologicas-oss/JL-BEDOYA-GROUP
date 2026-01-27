@@ -60,6 +60,7 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-3 md:p-6 bg-slate-100 pb-24 md:pb-6">
+                
                 <section id="programacion" class="view-section active">
                     <div class="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-3">
                           <div class="flex-1 w-full"><input type="text" id="searchProg" onkeyup="filtrarProg()" placeholder="Buscar cliente, ID o estado..." class="w-full px-4 py-3 border border-slate-300 rounded-xl shadow-sm outline-none focus:ring-2 ring-blue-500 text-base"></div>
@@ -78,17 +79,28 @@
 
                 <section id="logistica" class="view-section">
                       <div class="log-nav no-scrollbar"><button class="log-btn active" onclick="subLog('term')" id="btn-log-term">Terminados</button><button class="log-btn" onclick="subLog('alq')" id="btn-log-alq">Alquiler JLB</button><button class="log-btn" onclick="subLog('pat')" id="btn-log-pat">Patio</button></div>
+                      
                       <div id="view-term" class="log-view active"><div class="bg-white rounded-xl border border-slate-200 p-4"><div id="lista-terminados" class="space-y-3"></div></div></div>
                       
                       <div id="view-alq" class="log-view">
                           <div class="flex flex-col md:flex-row justify-between items-end mb-4 gap-4">
                               <div class="flex gap-2 w-full md:w-auto">
-                                  <div class="w-full md:w-40">
-                                     <label class="text-[10px] font-bold text-slate-500 uppercase">Filtrar KVA</label>
+                                  <div class="w-full md:w-32">
+                                     <label class="text-[10px] font-bold text-slate-500 uppercase">Estado</label>
+                                     <select id="filtro-estado" onchange="filtrarAlquiler()" class="w-full border rounded p-2 text-sm bg-white font-bold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500">
+                                         <option value="TODOS">TODOS</option>
+                                         <option value="DISPONIBLE">DISPONIBLE 🟢</option>
+                                         <option value="PRESTADO">PRESTADO 🔵</option>
+                                         <option value="MANTENIMIENTO">MANTEN. 🟠</option>
+                                         <option value="REPARACION">REPAR. 🔴</option>
+                                     </select>
+                                  </div>
+                                  <div class="w-full md:w-32">
+                                     <label class="text-[10px] font-bold text-slate-500 uppercase">KVA</label>
                                      <input id="filtro-kva" onkeyup="filtrarAlquiler()" class="w-full border rounded p-2 text-sm" placeholder="Ej: 75">
                                   </div>
-                                  <div class="w-full md:w-40">
-                                     <label class="text-[10px] font-bold text-slate-500 uppercase">Filtrar Tensión</label>
+                                  <div class="w-full md:w-32">
+                                     <label class="text-[10px] font-bold text-slate-500 uppercase">Tensión</label>
                                      <input id="filtro-voltaje" onkeyup="filtrarAlquiler()" class="w-full border rounded p-2 text-sm" placeholder="Ej: 13200">
                                   </div>
                               </div>
@@ -107,12 +119,14 @@
                 
                 <section id="control" class="view-section">
                     <div class="cp-nav no-scrollbar"><button class="cp-btn active" onclick="subNav('act')" id="btn-cp-act">Actividades</button><button class="cp-btn" onclick="subNav('fot')" id="btn-cp-fot">Fotos</button></div>
+                      
                       <div id="view-act" class="cp-view active">
                          <div class="flex justify-end mb-4 gap-2">
                              <button onclick="abrirModalTarea(false)" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex gap-2"><i data-lucide="plus"></i> Nueva Tarea</button>
                          </div>
                          <div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="bg-slate-200 p-3 rounded-lg"><h4 class="font-bold text-slate-600 mb-3 text-sm uppercase">Pendientes</h4><div id="col-pendiente" class="space-y-2 min-h-[100px]"></div></div><div class="bg-blue-100 p-3 rounded-lg"><h4 class="font-bold text-blue-800 mb-3 text-sm uppercase">En Proceso</h4><div id="col-proceso" class="space-y-2 min-h-[100px]"></div></div><div class="bg-green-100 p-3 rounded-lg"><h4 class="font-bold text-green-800 mb-3 text-sm uppercase">Terminado</h4><div id="col-terminado" class="space-y-2 min-h-[100px]"></div></div></div>
                       </div>
+                      
                       <div id="view-fot" class="cp-view">
                           <div class="bg-white p-6 rounded-xl border border-slate-200 max-w-2xl mx-auto shadow-sm">
                             <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="camera" class="text-blue-600"></i> Registro Fotográfico</h3>
@@ -130,6 +144,16 @@
                             <input type="file" id="input-galeria" accept="image/*" multiple class="hidden" onchange="procesarFotosInmediato(this)">
                             <div id="status-fotos" class="text-center font-bold text-sm h-6"></div>
                             <div id="lista-fotos" class="space-y-2 mt-4 max-h-60 overflow-y-auto pr-1"></div>
+                          </div>
+                          
+                          <div class="mt-8">
+                              <div class="flex justify-between items-center mb-4">
+                                  <h4 class="font-bold text-slate-600 uppercase text-sm"><i data-lucide="images" class="inline w-4 h-4 mb-1"></i> Actividad Reciente</h4>
+                                  <button onclick="cargarGaleriaFotos()" class="text-xs text-blue-600 font-bold hover:underline">Actualizar</button>
+                              </div>
+                              <div id="galeria-fotos-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                  <div class="col-span-full text-center text-slate-400 text-xs py-8 animate-pulse">Cargando galería...</div>
+                              </div>
                           </div>
                       </div>
                 </section>
@@ -243,40 +267,32 @@
                         <input type="text" class="input-form bg-slate-50" value="Automático" disabled>
                     </div>
                 </div>
-                
                 <div class="relative">
                     <label class="label-form">Cliente</label>
                     <input list="lista-clientes" name="cliente" class="input-form uppercase font-bold" placeholder="Buscar cliente..." onchange="autocompletarCliente(this)" required>
                     <datalist id="lista-clientes"></datalist>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="label-form">NIT/CC</label><input name="cedula" id="in-cedula-ent" class="input-form"></div>
                     <div><label class="label-form">Teléfono</label><input name="telefono" id="in-telefono-ent" class="input-form"></div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="label-form">Contacto</label><input name="contacto" id="in-contacto-ent" class="input-form"></div>
                     <div><label class="label-form">Ciudad</label><input name="ciudad" id="in-ciudad-ent" class="input-form"></div>
                 </div>
-
                 <div>
                     <label class="label-form">Descripción Equipo</label>
                     <input name="descripcion" class="input-form font-bold" placeholder="Ej: 75KVA 13200/220..." required>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="label-form">Cantidad</label><input type="number" name="cantidad" value="1" class="input-form font-bold"></div>
                     <div><label class="label-form">Placa / Serie (Opcional)</label><input name="codigo" class="input-form font-bold" placeholder="N° Serie"></div>
                 </div>
-                
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="label-form">Recibe (JLB)</label><input name="quienRecibe" value="Gerson Arrieta" class="input-form"></div>
                     <div><label class="label-form">Entrega (Cliente)</label><input name="quienEntrega" class="input-form"></div>
                 </div>
-
                 <div><label class="label-form">Observaciones</label><textarea name="observaciones" class="input-form h-20"></textarea></div>
-
                 <div class="border rounded-lg p-2 bg-slate-50">
                     <label class="label-form mb-2 block">Firma Quien Entrega</label>
                     <canvas id="signature-pad" class="w-full h-32 bg-white border border-slate-300 rounded shadow-sm touch-none"></canvas>
@@ -370,12 +386,9 @@
     <script src="app.js"></script>
 
     <style>
-        /* ESTILOS EXTRA FORMULARIOS */
         .label-form { display: block; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
         .input-form { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; transition: border-color 0.2s; }
         .input-form:focus { border-color: #22c55e; ring: 2px solid #bbf7d0; }
-        
-        /* ANIMACIONES */
         .animate-in-up { animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
