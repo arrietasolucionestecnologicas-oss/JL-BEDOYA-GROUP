@@ -66,7 +66,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V8.3 | Conexión Fix</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V8.4 | Fix Final</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -106,7 +106,7 @@
         <div class="alert alert-success py-2 mb-3 text-center"><div class="row"><div class="col-4 border-end"><small>ENTRADA</small><div class="fw-bold lbl-entrada"></div></div><div class="col-4 border-end"><small>KVA</small><div class="fw-bold lbl-kva"></div></div><div class="col-4"><small>CLIENTE</small><div class="fw-bold lbl-cliente text-truncate"></div></div></div></div>
         <div class="card p-3"><label class="label-mini">SERVICIO</label><select id="insp_servicio" class="form-select fw-bold border-success"><option>MANTENIMIENTO</option><option>PRUEBAS ELÉCTRICAS</option><option>REPARACIÓN</option><option>GARANTÍA</option><option>OTROS</option></select></div>
         <div class="card mb-3"><div class="card-header bg-dark text-white fw-bold">CHECKLIST</div><div class="card-body p-0"><table class="table table-bordered mb-0 align-middle"><thead class="table-light"><tr><th width="50%">Item</th><th>Estado</th></tr></thead><tbody id="insp_body"></tbody></table></div></div>
-        <div class="card p-3 mb-3"><label class="label-mini">Observaciones</label><textarea id="insp_obs" class="form-control mb-3" rows="2"></textarea><label class="label-mini text-primary">Realizado Por</label><input id="insp_realizado" class="form-control fw-bold border-primary mb-3"><div class="row g-2"><div class="col-6"><button class="btn btn-secondary w-100" onclick="guardarInsp(false)">Solo Excel</button></div><div class="col-6"><button class="btn btn-success w-100" onclick="guardarInsp(true)">Generar PDF</button></div></div></div>
+        <div class="card p-3 mb-3"><label class="label-mini">Observaciones</label><textarea id="insp_obs" class="form-control mb-3" rows="2"></textarea><label class="label-mini text-primary">Realizado Por</label><input id="insp_realizado" class="form-control fw-bold border-primary mb-3"><div class="row g-2"><div class="col-6"><button class="btn btn-secondary w-100" onclick="guardarInsp(false)">Solo Excel (Borrador)</button></div><div class="col-6"><button class="btn btn-success w-100" onclick="guardarInsp(true)">Ver PDF (Sin Certificar)</button></div></div></div>
         <div class="card p-3 bg-success-subtle border-success mt-3"><h6 class="fw-bold text-success text-center mb-2"><i class="fas fa-check-double me-2"></i>CERTIFICACIÓN DE CIERRE</h6><p class="small text-muted text-center mb-3">Finaliza el proceso y notifica a producción.</p><button id="btn-certificar-insp" class="btn btn-success w-100 fw-bold py-3 shadow" onclick="certificarInspeccion()">✅ CERTIFICAR INSPECCIÓN LISTA</button></div>
       </div>
     </div>
@@ -138,7 +138,7 @@
                 <div class="row g-3">
                     <div class="col-md-4 col-6"><label class="label-mini">ENTRADA</label><input id="edit_entrada" class="form-control fw-bold bg-light" readonly></div><div class="col-md-4 col-6"><label class="label-mini">KVA</label><input id="edit_kva" type="number" class="form-control"></div><div class="col-md-4 col-12"><label class="label-mini">CLIENTE</label><input id="edit_cliente" class="form-control"></div>
                     <div class="col-md-3 col-6"><label class="label-mini">MARCA</label><input id="edit_marca" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">SERIE</label><input id="edit_serie" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">V.PRIM</label><input id="edit_vp" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">V.SEC</label><input id="edit_vs" type="number" class="form-control"></div>
-                    <div class="col-md-3 col-6"><label class="label-mini">FASES</label><select id="edit_fases" class="form-select"><option value="3">3</option><option value="1">1</option></select></div><div class="col-md-3 col-6"><label class="label-mini">GRUPO</label><input id="edit_grupo" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">AÑO</label><input id="edit_anio" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">TIPO</label><select id="edit_tipo" class="form-select"><option>Sumergido</option><option>Seco</option></select></div>
+                    <div class="col-md-3 col-6"><label class="label-mini">FASES</label><select id="edit_fases" class="form-select"><option value="3">3</option><option value="1">1</option></select></div><div class="col-md-3 col-6"><label class="label-mini">GRUPO</label><input id="edit_grupo" class="form-control" placeholder="Dyn5"></div><div class="col-md-3 col-6"><label class="label-mini">AÑO</label><input id="edit_anio" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">TIPO</label><select id="edit_tipo" class="form-select"><option>Sumergido</option><option>Seco</option></select></div>
                     <div class="col-12 border-top mt-2 pt-2"><h6 class="small fw-bold text-muted">DETALLES FÍSICOS DE PLACA</h6></div><div class="col-md-4 col-6"><label class="label-mini">PESO (Kg)</label><input id="edit_peso" type="number" class="form-control"></div><div class="col-md-4 col-6"><label class="label-mini">ACEITE (L)</label><input id="edit_aceite" type="number" class="form-control"></div><div class="col-md-4 col-12"><label class="label-mini text-danger">DERIVACIONES</label><select id="edit_deriv" class="form-select fw-bold text-danger border-danger"><option value="+2">+2</option><option value="+1">+1</option><option value="0">0</option></select></div>
                     <div class="col-6"><label class="label-mini">CELULAR</label><input id="edit_celular" class="form-control"></div><div class="col-6"><label class="label-mini">PROYECTO</label><input id="edit_proyecto" class="form-control"></div>
                 </div>
@@ -162,7 +162,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <script>
-    // URL DEL BACKEND V8.2.1
+    // URL DEL BACKEND V8.4 (Asegurate que sea la correcta de tu deployment)
     const URL_API_CAMPO = "https://script.google.com/macros/s/AKfycbwd4ckii8-VM9sCzrOHhijQ1-BImInqTZ5YfhVpS2wyQE6BE2PDRmPb-yHJgY0910csBQ/exec";
     
     let DATA = {};
@@ -173,8 +173,6 @@
     const modalAgenda = new bootstrap.Modal(document.getElementById('modalAgenda'));
 
     // --- CONECTOR BLINDADO ---
-    // Esta clase crea una interfaz compatible con google.script.run
-    // pero usa fetch() hacia tu URL de Web App. Esto soluciona los errores de referencia.
     class GasRunner {
         constructor() {
             this._success = null; this._failure = null;
@@ -190,8 +188,8 @@
                 'obtenerDatosProgramacion': [],
                 'importarAgendaProduccion': [],
                 'obtenerListasAutocompletado': [],
-                'obtenerDatosCurva': ['entrada'], // Agregado para Curva
-                'registrarLecturaCurva': ['payload'], // Agregado para Curva
+                'obtenerDatosCurva': ['entrada'], 
+                'registrarLecturaCurva': ['payload'], 
                 'default': ['payload'] 
             };
             return new Proxy(this, {
@@ -229,11 +227,9 @@
         }
     }
 
-    // --- INYECCIÓN SEGURA DEL OBJETO GOOGLE ---
-    // Si google.script.run no existe (local o web app externa), inyectamos el nuestro.
+    // --- INYECCIÓN SEGURA ---
     var google = window.google || {};
     if (!google.script || !google.script.run) {
-        console.log("Inicializando conector GasRunner...");
         google = { script: { run: new GasRunner() } };
     }
 
@@ -267,7 +263,7 @@
       if(window.innerWidth<=768) toggleMenu();
     }
 
-    // --- CURVA LÓGICA ---
+    // --- CURVA SECAMIENTO LÓGICA ---
     function buscarCurva() {
         const entrada = getVal('search_curva');
         if(!entrada) return Swal.fire('Error', 'Ingrese número de entrada', 'warning');
@@ -337,6 +333,73 @@
         });
     }
 
+    // --- AGENDA (CORREGIDA V8.4.1) ---
+    function abrirAgenda() { modalAgenda.show(); cargarAgenda(); }
+    
+    function cargarAgenda() {
+       const c = document.getElementById('listaAgendaContainer');
+       c.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Sincronizando con Producción...</p></div>';
+       
+       google.script.run.withSuccessHandler(res => {
+           // CORRECCIÓN CLAVE: Validar si 'res' es el objeto contenedor o el array directo
+           let lista = res.data || res; 
+           
+           if(res.error) { 
+               c.innerHTML = `<div class="alert alert-danger">Error: ${res.error}</div>`; 
+               return; 
+           }
+           
+           // Asegurarse de que 'lista' es un Array antes de usar forEach
+           if(!Array.isArray(lista) || lista.length === 0) { 
+               c.innerHTML = `<div class="text-center py-5 text-muted"><i class="fas fa-check-circle fa-2x mb-2 text-success"></i><br>¡Todo al día! No hay pendientes.</div>`; 
+               return; 
+           }
+           
+           AGENDA_CACHE = lista;
+           renderAgenda(lista);
+           
+       }).withFailureHandler(e => { 
+           c.innerHTML = `<div class="alert alert-danger">Error de Conexión: ${e}</div>`; 
+       }).obtenerDatosProgramacion(); // Llama a la función tolerante a fallos
+    }
+
+    function renderAgenda(lista) {
+       const c = document.getElementById('listaAgendaContainer'); c.innerHTML = '';
+       lista.forEach((item, index) => {
+           let badgeClass = item.empresa === 'JLB' ? 'badge-jlb' : 'badge-group';
+           let estadoTecnico = item.estadoTecnico || "PENDIENTE";
+           let colorTecnico = item.colorTecnico || "secondary";
+           // CORRECCIÓN CLAVE: Usar ${index} en el onclick, no ${idx}
+           let html = `
+           <div class="card agenda-card mb-3 p-3" onclick="seleccionarDeAgenda(${index})">
+               <div class="d-flex justify-content-between align-items-start">
+                   <div>
+                       <span class="badge ${badgeClass} mb-1">${item.empresa} #${item.id}</span>
+                       <span class="badge bg-${colorTecnico} mb-1 ms-2 blink">${estadoTecnico}</span>
+                       <h6 class="fw-bold text-dark mb-0">${item.cliente}</h6>
+                       <small class="text-muted text-uppercase">${item.descripcion}</small>
+                       <div class="mt-1"><span class="badge bg-light text-dark border">${item.estado}</span><span class="text-xs text-muted ms-2"><i class="far fa-calendar-alt"></i> ${item.fecha}</span></div>
+                   </div>
+                   <button class="btn btn-outline-primary btn-sm rounded-pill"><i class="fas fa-arrow-right"></i></button>
+               </div>
+           </div>`;
+           c.insertAdjacentHTML('beforeend', html);
+       });
+    }
+
+    function filtrarAgenda() {
+       const q = document.getElementById('filtroAgenda').value.toLowerCase();
+       const filtrados = AGENDA_CACHE.filter(i => i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q));
+       renderAgenda(filtrados);
+    }
+    
+    function seleccionarDeAgenda(index) {
+        ITEM_SELECCIONADO = AGENDA_CACHE[index];
+        modalAgenda.hide();
+        document.getElementById('search_insp').value = ITEM_SELECCIONADO.id;
+        buscar('insp');
+    }
+
     // --- RESTO FUNCIONES (V8.2) ---
     function buildLabViews() {
       const labs = [{id:'ini',title:'Pruebas Iniciales',color:'warning',icon:'flask'}, {id:'fin',title:'Pruebas Finales',color:'primary',icon:'check-circle'}];
@@ -367,30 +430,6 @@
            let f = recopilarDatos(mod);
            localStorage.setItem('backup_' + f.entrada, JSON.stringify(f));
        });
-    }
-
-    function abrirAgenda() { modalAgenda.show(); cargarAgenda(); }
-    function cargarAgenda() {
-       const c = document.getElementById('listaAgendaContainer'); c.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Sincronizando con Producción...</p></div>';
-       google.script.run.withSuccessHandler(lista => {
-           if(lista.error) { c.innerHTML = `<div class="alert alert-danger">Error: ${lista.error}</div>`; return; }
-           if(!lista || lista.length === 0) { c.innerHTML = `<div class="text-center py-5 text-muted"><i class="fas fa-check-circle fa-2x mb-2 text-success"></i><br>¡Todo al día! No hay pendientes.</div>`; return; }
-           AGENDA_CACHE = lista;
-           renderAgenda(lista);
-       }).withFailureHandler(e => { c.innerHTML = `<div class="alert alert-danger">Error de Conexión: ${e}</div>`; }).importarAgendaProduccion();
-    }
-    function renderAgenda(lista) {
-       const c = document.getElementById('listaAgendaContainer'); c.innerHTML = '';
-       lista.forEach((item, index) => {
-           let badgeClass = item.empresa === 'JLB' ? 'badge-jlb' : 'badge-group';
-           c.insertAdjacentHTML('beforeend', `<div class="card agenda-card mb-3 p-3" onclick="seleccionarDeAgenda(${idx})"><div class="d-flex justify-content-between"><div><span class="badge ${badge} mb-1">${item.empresa} #${item.id}</span><span class="badge bg-${item.colorTecnico} mb-1 ms-2">${item.estadoTecnico}</span><h6 class="fw-bold m-0">${item.cliente}</h6><small class="text-muted">${item.descripcion}</small></div><i class="fas fa-arrow-right text-primary"></i></div></div>`);
-       });
-    }
-    function filtrarAgenda() { const q = document.getElementById('filtroAgenda').value.toLowerCase(); renderAgenda(AGENDA_CACHE.filter(i => i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q))); }
-    function seleccionarDeAgenda(idx) {
-        ITEM_SELECCIONADO = AGENDA_CACHE[idx]; modalAgenda.hide();
-        document.getElementById('search_insp').value = ITEM_SELECCIONADO.id;
-        buscar('insp');
     }
 
     function initInsp() {
