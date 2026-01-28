@@ -12,7 +12,6 @@
     :root { --primary: #0d6efd; --sidebar-w: 260px; }
     body { background-color: #f4f6f8; font-family: 'Segoe UI', Roboto, sans-serif; padding-bottom: 80px; font-size: 0.9rem; }
     
-    /* UI ELEMENTS */
     .sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; top: 0; left: 0; background: #fff; border-right: 1px solid #dee2e6; z-index: 1000; transition: 0.3s; }
     .brand { padding: 20px; border-bottom: 1px solid #eee; }
     .nav-link { color: #555; padding: 15px 20px; display: flex; align-items: center; border-radius: 0 25px 25px 0; margin-bottom: 5px; cursor: pointer; text-decoration: none; }
@@ -24,7 +23,6 @@
     .view.active { display: block; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
-    /* RESPONSIVE */
     .mobile-header { display: none; }
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); }
@@ -35,7 +33,6 @@
       .overlay.show { display:block; }
     }
 
-    /* CUSTOM COMPONENTS */
     .card { border:none; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.03); margin-bottom:15px; background: white; }
     .scroll-x { overflow-x: auto; white-space: nowrap; }
     .input-group-text { font-size: 0.8rem; font-weight: bold; width: 60px; justify-content: center; }
@@ -49,17 +46,15 @@
     .badge-jlb { background-color: #0d6efd; color: white; }
     .badge-group { background-color: #fd7e14; color: white; }
 
-    /* ANIMACIONES */
     .blink { animation: blinker 1.5s linear infinite; }
     @keyframes blinker { 50% { opacity: 0.5; } }
     .hover-effect { transition: transform 0.2s; cursor: pointer; }
     .hover-effect:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     
-    /* HISTORIAL TABLE */
     .table-historial th { background-color: #f8f9fa; font-size: 0.85rem; text-transform: uppercase; color: #6c757d; }
     .table-historial td { font-size: 0.9rem; vertical-align: middle; }
-    .icon-check { color: #198754; }
-    .icon-cross { color: #dee2e6; }
+    .icon-check { color: #198754; font-size: 1.2rem; }
+    .icon-cross { color: #dee2e6; font-size: 0.8rem; }
   </style>
 </head>
 <body>
@@ -72,16 +67,15 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V8.5 | Historial</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V8.5 | Local DB</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
-      <div class="nav-link" onclick="nav('insp', this)"><i class="fas fa-clipboard-check me-2"></i> Inspección Visual</div>
+      <div class="nav-link" onclick="nav('hv', this)"><i class="fas fa-edit me-2"></i> Hoja de Vida</div> <div class="nav-link" onclick="nav('insp', this)"><i class="fas fa-clipboard-check me-2"></i> Inspección Visual</div>
       <div class="nav-link" onclick="nav('curva', this)"><i class="fas fa-temperature-high me-2"></i> Curva Secamiento</div>
       <div class="nav-link" onclick="nav('ini', this)"><i class="fas fa-flask me-2"></i> Pruebas Iniciales</div>
       <div class="nav-link" onclick="nav('fin', this)"><i class="fas fa-check-circle me-2"></i> Pruebas Finales</div>
-      <div class="nav-link" onclick="nav('hist', this)"><i class="fas fa-history me-2"></i> Historial General</div>
-      <div class="nav-link" onclick="nav('hv', this)"><i class="fas fa-edit me-2"></i> Hoja de Vida</div>
+      <div class="nav-link" onclick="nav('hist', this)"><i class="fas fa-history me-2"></i> Historial</div>
     </div>
   </div>
 
@@ -94,14 +88,55 @@
             <button onclick="abrirAgenda()" class="btn btn-primary btn-lg fw-bold shadow-sm w-100 py-3" style="max-width: 400px;">
                 <i class="fas fa-cloud-download-alt me-2"></i> SINCRONIZAR AGENDA
             </button>
-            <p class="text-muted small mt-2">Descargar pendientes de Producción</p>
+            <p class="text-muted small mt-2">Agenda de Producción</p>
         </div>
         <div class="row g-3 justify-content-center">
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-success hover-effect" onclick="nav('insp')"><i class="fas fa-clipboard-check fa-3x text-success mb-3"></i><h5>Visual</h5><p class="text-muted small">Recepción y Checklist.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-danger hover-effect" onclick="nav('curva')"><i class="fas fa-temperature-high fa-3x text-danger mb-3"></i><h5>Secamiento</h5><p class="text-muted small">Control de Horno.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-warning hover-effect" onclick="nav('ini')"><i class="fas fa-flask fa-3x text-warning mb-3"></i><h5>Iniciales</h5><p class="text-muted small">Diagnóstico de Entrada.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-primary hover-effect" onclick="nav('fin')"><i class="fas fa-check-circle fa-3x text-primary mb-3"></i><h5>Finales</h5><p class="text-muted small">Protocolo de Salida.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-info hover-effect" onclick="nav('hist')"><i class="fas fa-history fa-3x text-info mb-3"></i><h5>Historial</h5><p class="text-muted small">Trazabilidad Completa.</p></div></div>
+          
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-dark hover-effect" onclick="nav('hv')">
+              <i class="fas fa-edit fa-3x text-dark mb-3"></i>
+              <h5>Hoja de Vida</h5>
+              <p class="text-muted small">Crear o Editar Entradas.</p>
+            </div>
+          </div>
+
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-success hover-effect" onclick="nav('insp')">
+              <i class="fas fa-clipboard-check fa-3x text-success mb-3"></i>
+              <h5>Inspección</h5>
+              <p class="text-muted small">Recepción y Checklist.</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-danger hover-effect" onclick="nav('curva')">
+              <i class="fas fa-temperature-high fa-3x text-danger mb-3"></i>
+              <h5>Secamiento</h5>
+              <p class="text-muted small">Curva de Horno.</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-warning hover-effect" onclick="nav('ini')">
+              <i class="fas fa-flask fa-3x text-warning mb-3"></i>
+              <h5>Iniciales</h5>
+              <p class="text-muted small">Diagnóstico de Entrada.</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-primary hover-effect" onclick="nav('fin')">
+              <i class="fas fa-check-circle fa-3x text-primary mb-3"></i>
+              <h5>Finales</h5>
+              <p class="text-muted small">Protocolo de Salida.</p>
+            </div>
+          </div>
+          
+          <div class="col-md-3 col-12">
+            <div class="card p-4 text-center h-100 border-start border-5 border-info hover-effect" onclick="nav('hist')">
+              <i class="fas fa-history fa-3x text-info mb-3"></i>
+              <h5>Historial</h5>
+              <p class="text-muted small">Base de Datos Local.</p>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -136,34 +171,8 @@
         </div>
     </div>
 
-    <div id="view-hist" class="view">
-        <h4 class="mb-3 fw-bold text-info"><i class="fas fa-history me-2"></i>Historial General</h4>
-        <div class="card p-3 mb-3">
-            <input type="text" id="filtroHistorial" class="form-control" placeholder="Buscar por Entrada o Cliente..." onkeyup="filtrarHistorial()">
-        </div>
-        <div class="card p-0 shadow-sm">
-            <div class="table-responsive">
-                <table class="table table-hover table-historial mb-0">
-                    <thead>
-                        <tr>
-                            <th>Entrada</th>
-                            <th>Cliente</th>
-                            <th>Insp</th>
-                            <th>Lab.Ini</th>
-                            <th>Curva</th>
-                            <th>Lab.Fin</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla_historial_body">
-                        <tr><td colspan="6" class="text-center py-4 text-muted">Cargando historial...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
     <div id="view-hv" class="view">
-        <h4 class="mb-3 fw-bold text-dark"><i class="fas fa-edit me-2"></i>Editar Hoja de Vida</h4>
+        <h4 class="mb-3 fw-bold text-dark"><i class="fas fa-edit me-2"></i>Hoja de Vida (Entradas)</h4>
         <div class="card p-3 mb-3"><div class="input-group"><input type="number" id="search_hv" class="form-control fw-bold" placeholder="Entrada..."><button class="btn btn-dark" onclick="buscar('hv')">Buscar</button></div></div>
         <div id="form_hv" class="d-none">
             <div class="card p-4">
@@ -176,6 +185,32 @@
                     <div class="col-6"><label class="label-mini">CELULAR</label><input id="edit_celular" class="form-control"></div><div class="col-6"><label class="label-mini">PROYECTO</label><input id="edit_proyecto" class="form-control"></div>
                 </div>
                 <div class="mt-4"><button class="btn btn-warning w-100 fw-bold" onclick="guardarEdicionHV()">GUARDAR CAMBIOS</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-hist" class="view">
+        <h4 class="mb-3 fw-bold text-info"><i class="fas fa-database me-2"></i>Historial (Base de Datos Local)</h4>
+        <div class="card p-3 mb-3">
+            <input type="text" id="filtroHistorial" class="form-control" placeholder="Buscar por Entrada o Cliente..." onkeyup="filtrarHistorial()">
+        </div>
+        <div class="card p-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover table-historial mb-0 text-center">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-start">Entrada</th>
+                            <th class="text-start">Cliente</th>
+                            <th>Inspección</th>
+                            <th>Lab. Ini</th>
+                            <th>Curva</th>
+                            <th>Lab. Fin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla_historial_body">
+                        <tr><td colspan="6" class="text-center py-4 text-muted">Cargando datos...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -291,12 +326,11 @@
       document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
       if(btnElement) btnElement.classList.add('active');
       else { 
-          const map = {'insp':1,'ini':2,'fin':3,'hv':4, 'curva':5, 'hist':6}; 
-          if(map[viewId]) document.querySelectorAll('.sidebar .nav-link')[map[viewId]].classList.add('active'); 
+          const map = {'hv':0, 'insp':1, 'curva':2, 'ini':3, 'fin':4, 'hist':5}; 
+          if(map[viewId] !== undefined) document.querySelectorAll('.sidebar .nav-link')[map[viewId]].classList.add('active'); 
       }
       if(window.innerWidth<=768) toggleMenu();
 
-      // Cargar historial si es la vista
       if(viewId === 'hist') cargarHistorial();
     }
 
@@ -319,7 +353,7 @@
         const tbody = document.getElementById('tabla_historial_body');
         tbody.innerHTML = '';
         if(lista.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay registros.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay registros en Base de Datos.</td></tr>';
             return;
         }
         
@@ -327,8 +361,8 @@
             const badge = (val) => val ? '<i class="fas fa-check-circle icon-check"></i>' : '<i class="fas fa-circle icon-cross"></i>';
             const html = `
             <tr>
-                <td class="fw-bold">${item.entrada}</td>
-                <td>${item.cliente}</td>
+                <td class="fw-bold text-start ps-3">${item.entrada}</td>
+                <td class="text-start">${item.cliente}</td>
                 <td class="text-center">${badge(item.tiene_insp)}</td>
                 <td class="text-center">${badge(item.tiene_ini)}</td>
                 <td class="text-center">${badge(item.tiene_curva)}</td>
@@ -468,7 +502,7 @@
         buscar('insp');
     }
 
-    // --- RESTO FUNCIONES (V8.2) ---
+    // --- RESTO FUNCIONES ---
     function buildLabViews() {
       const labs = [{id:'ini',title:'Pruebas Iniciales',color:'warning',icon:'flask'}, {id:'fin',title:'Pruebas Finales',color:'primary',icon:'check-circle'}];
       let html = '';
