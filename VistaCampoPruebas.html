@@ -54,6 +54,12 @@
     @keyframes blinker { 50% { opacity: 0.5; } }
     .hover-effect { transition: transform 0.2s; cursor: pointer; }
     .hover-effect:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    
+    /* HISTORIAL TABLE */
+    .table-historial th { background-color: #f8f9fa; font-size: 0.85rem; text-transform: uppercase; color: #6c757d; }
+    .table-historial td { font-size: 0.9rem; vertical-align: middle; }
+    .icon-check { color: #198754; }
+    .icon-cross { color: #dee2e6; }
   </style>
 </head>
 <body>
@@ -66,7 +72,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V8.4 | Fix Final</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V8.5 | Historial</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -74,6 +80,7 @@
       <div class="nav-link" onclick="nav('curva', this)"><i class="fas fa-temperature-high me-2"></i> Curva Secamiento</div>
       <div class="nav-link" onclick="nav('ini', this)"><i class="fas fa-flask me-2"></i> Pruebas Iniciales</div>
       <div class="nav-link" onclick="nav('fin', this)"><i class="fas fa-check-circle me-2"></i> Pruebas Finales</div>
+      <div class="nav-link" onclick="nav('hist', this)"><i class="fas fa-history me-2"></i> Historial General</div>
       <div class="nav-link" onclick="nav('hv', this)"><i class="fas fa-edit me-2"></i> Hoja de Vida</div>
     </div>
   </div>
@@ -94,7 +101,7 @@
           <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-danger hover-effect" onclick="nav('curva')"><i class="fas fa-temperature-high fa-3x text-danger mb-3"></i><h5>Secamiento</h5><p class="text-muted small">Control de Horno.</p></div></div>
           <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-warning hover-effect" onclick="nav('ini')"><i class="fas fa-flask fa-3x text-warning mb-3"></i><h5>Iniciales</h5><p class="text-muted small">Diagnóstico de Entrada.</p></div></div>
           <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-primary hover-effect" onclick="nav('fin')"><i class="fas fa-check-circle fa-3x text-primary mb-3"></i><h5>Finales</h5><p class="text-muted small">Protocolo de Salida.</p></div></div>
-          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-dark hover-effect" onclick="nav('hv')"><i class="fas fa-edit fa-3x text-dark mb-3"></i><h5>Editar Placa</h5><p class="text-muted small">Corregir Hoja de Vida.</p></div></div>
+          <div class="col-md-3 col-12"><div class="card p-4 text-center h-100 border-start border-5 border-info hover-effect" onclick="nav('hist')"><i class="fas fa-history fa-3x text-info mb-3"></i><h5>Historial</h5><p class="text-muted small">Trazabilidad Completa.</p></div></div>
         </div>
       </div>
     </div>
@@ -126,6 +133,32 @@
                 </div>
             </div>
             <div class="card p-0"><div class="card-header bg-light fw-bold small">HISTORIAL DE LECTURAS</div><div class="table-responsive" style="max-height: 250px;"><table class="table table-sm table-striped mb-0 small text-center"><thead class="table-dark"><tr><th>Hora</th><th>Temp (°C)</th><th>IR (MΩ)</th><th>Obs</th></tr></thead><tbody id="tabla_curva_body"></tbody></table></div></div>
+        </div>
+    </div>
+
+    <div id="view-hist" class="view">
+        <h4 class="mb-3 fw-bold text-info"><i class="fas fa-history me-2"></i>Historial General</h4>
+        <div class="card p-3 mb-3">
+            <input type="text" id="filtroHistorial" class="form-control" placeholder="Buscar por Entrada o Cliente..." onkeyup="filtrarHistorial()">
+        </div>
+        <div class="card p-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover table-historial mb-0">
+                    <thead>
+                        <tr>
+                            <th>Entrada</th>
+                            <th>Cliente</th>
+                            <th>Insp</th>
+                            <th>Lab.Ini</th>
+                            <th>Curva</th>
+                            <th>Lab.Fin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla_historial_body">
+                        <tr><td colspan="6" class="text-center py-4 text-muted">Cargando historial...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -162,11 +195,12 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <script>
-    // URL DEL BACKEND V8.4 (Asegurate que sea la correcta de tu deployment)
+    // URL DEL BACKEND V8.4 (Reemplazar con tu URL real)
     const URL_API_CAMPO = "https://script.google.com/macros/s/AKfycbwd4ckii8-VM9sCzrOHhijQ1-BImInqTZ5YfhVpS2wyQE6BE2PDRmPb-yHJgY0910csBQ/exec";
     
     let DATA = {};
     let AGENDA_CACHE = [];
+    let HISTORIAL_CACHE = [];
     let ITEM_SELECCIONADO = null;
     let chartInstance = null;
     const modalCrear = new bootstrap.Modal(document.getElementById('modalCrear'));
@@ -190,6 +224,7 @@
                 'obtenerListasAutocompletado': [],
                 'obtenerDatosCurva': ['entrada'], 
                 'registrarLecturaCurva': ['payload'], 
+                'obtenerHistorialGeneral': [], // Nuevo Historial
                 'default': ['payload'] 
             };
             return new Proxy(this, {
@@ -227,7 +262,6 @@
         }
     }
 
-    // --- INYECCIÓN SEGURA ---
     var google = window.google || {};
     if (!google.script || !google.script.run) {
         google = { script: { run: new GasRunner() } };
@@ -257,13 +291,62 @@
       document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
       if(btnElement) btnElement.classList.add('active');
       else { 
-          const map = {'insp':1,'ini':2,'fin':3,'hv':4, 'curva':5}; 
+          const map = {'insp':1,'ini':2,'fin':3,'hv':4, 'curva':5, 'hist':6}; 
           if(map[viewId]) document.querySelectorAll('.sidebar .nav-link')[map[viewId]].classList.add('active'); 
       }
       if(window.innerWidth<=768) toggleMenu();
+
+      // Cargar historial si es la vista
+      if(viewId === 'hist') cargarHistorial();
     }
 
-    // --- CURVA SECAMIENTO LÓGICA ---
+    // --- HISTORIAL ---
+    function cargarHistorial() {
+        const tbody = document.getElementById('tabla_historial_body');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-info"></div></td></tr>';
+        
+        google.script.run.withSuccessHandler(res => {
+            if(res.success) {
+                HISTORIAL_CACHE = res.data;
+                renderHistorial(HISTORIAL_CACHE);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error: ${res.error}</td></tr>`;
+            }
+        }).obtenerHistorialGeneral();
+    }
+
+    function renderHistorial(lista) {
+        const tbody = document.getElementById('tabla_historial_body');
+        tbody.innerHTML = '';
+        if(lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay registros.</td></tr>';
+            return;
+        }
+        
+        lista.forEach(item => {
+            const badge = (val) => val ? '<i class="fas fa-check-circle icon-check"></i>' : '<i class="fas fa-circle icon-cross"></i>';
+            const html = `
+            <tr>
+                <td class="fw-bold">${item.entrada}</td>
+                <td>${item.cliente}</td>
+                <td class="text-center">${badge(item.tiene_insp)}</td>
+                <td class="text-center">${badge(item.tiene_ini)}</td>
+                <td class="text-center">${badge(item.tiene_curva)}</td>
+                <td class="text-center">${badge(item.tiene_fin)}</td>
+            </tr>`;
+            tbody.insertAdjacentHTML('beforeend', html);
+        });
+    }
+
+    function filtrarHistorial() {
+        const q = document.getElementById('filtroHistorial').value.toLowerCase();
+        const filtrados = HISTORIAL_CACHE.filter(i => 
+            i.entrada.toString().includes(q) || i.cliente.toLowerCase().includes(q)
+        );
+        renderHistorial(filtrados);
+    }
+
+    // --- CURVA LÓGICA ---
     function buscarCurva() {
         const entrada = getVal('search_curva');
         if(!entrada) return Swal.fire('Error', 'Ingrese número de entrada', 'warning');
@@ -333,7 +416,7 @@
         });
     }
 
-    // --- AGENDA (CORREGIDA V8.4.1) ---
+    // --- AGENDA ---
     function abrirAgenda() { modalAgenda.show(); cargarAgenda(); }
     
     function cargarAgenda() {
@@ -341,26 +424,12 @@
        c.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Sincronizando con Producción...</p></div>';
        
        google.script.run.withSuccessHandler(res => {
-           // CORRECCIÓN CLAVE: Validar si 'res' es el objeto contenedor o el array directo
            let lista = res.data || res; 
-           
-           if(res.error) { 
-               c.innerHTML = `<div class="alert alert-danger">Error: ${res.error}</div>`; 
-               return; 
-           }
-           
-           // Asegurarse de que 'lista' es un Array antes de usar forEach
-           if(!Array.isArray(lista) || lista.length === 0) { 
-               c.innerHTML = `<div class="text-center py-5 text-muted"><i class="fas fa-check-circle fa-2x mb-2 text-success"></i><br>¡Todo al día! No hay pendientes.</div>`; 
-               return; 
-           }
-           
+           if(res.error) { c.innerHTML = `<div class="alert alert-danger">Error: ${res.error}</div>`; return; }
+           if(!Array.isArray(lista) || lista.length === 0) { c.innerHTML = `<div class="text-center py-5 text-muted"><i class="fas fa-check-circle fa-2x mb-2 text-success"></i><br>¡Todo al día! No hay pendientes.</div>`; return; }
            AGENDA_CACHE = lista;
            renderAgenda(lista);
-           
-       }).withFailureHandler(e => { 
-           c.innerHTML = `<div class="alert alert-danger">Error de Conexión: ${e}</div>`; 
-       }).obtenerDatosProgramacion(); // Llama a la función tolerante a fallos
+       }).withFailureHandler(e => { c.innerHTML = `<div class="alert alert-danger">Error de Conexión: ${e}</div>`; }).obtenerDatosProgramacion();
     }
 
     function renderAgenda(lista) {
@@ -369,7 +438,6 @@
            let badgeClass = item.empresa === 'JLB' ? 'badge-jlb' : 'badge-group';
            let estadoTecnico = item.estadoTecnico || "PENDIENTE";
            let colorTecnico = item.colorTecnico || "secondary";
-           // CORRECCIÓN CLAVE: Usar ${index} en el onclick, no ${idx}
            let html = `
            <div class="card agenda-card mb-3 p-3" onclick="seleccionarDeAgenda(${index})">
                <div class="d-flex justify-content-between align-items-start">
