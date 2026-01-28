@@ -85,6 +85,7 @@
                       <div id="view-alq" class="log-view">
                           <div class="flex flex-col md:flex-row justify-between items-end mb-4 gap-4">
                               <div class="flex gap-2 w-full md:w-auto">
+                                  
                                   <div class="w-full md:w-32">
                                      <label class="text-[10px] font-bold text-slate-500 uppercase">Estado</label>
                                      <select id="filtro-estado" onchange="filtrarAlquiler()" class="w-full border rounded p-2 text-sm bg-white font-bold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500">
@@ -95,6 +96,7 @@
                                          <option value="REPARACION">REPAR. 🔴</option>
                                      </select>
                                   </div>
+
                                   <div class="w-full md:w-32">
                                      <label class="text-[10px] font-bold text-slate-500 uppercase">KVA</label>
                                      <input id="filtro-kva" onkeyup="filtrarAlquiler()" class="w-full border rounded p-2 text-sm" placeholder="Ej: 75">
@@ -132,9 +134,14 @@
                             <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="camera" class="text-blue-600"></i> Registro Fotográfico</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                               <input type="text" id="foto-trafo" class="border border-slate-300 rounded-lg p-3 text-lg font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="ID Trafo (Ej: 13600)">
+                              
                               <select id="foto-etapa" class="border border-slate-300 rounded-lg p-3 bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="ENTRADA">ENTRADA</option><option value="DESARME">DESARME</option><option value="BOBINADO">BOBINADO</option><option value="ENSAMBLE">ENSAMBLE</option><option value="PRUEBAS">PRUEBAS</option><option value="LAB_INICIAL">LAB. INICIAL</option><option value="LAB_FINAL">LAB. FINAL</option><option value="INSPECCION">INSPECCION</option><option value="SALIDA">SALIDA</option><option value="OTROS">OTROS</option>
+                                <option value="ENTRADA">ENTRADA</option>
+                                <option value="PROCESO">PROCESO</option>
+                                <option value="SALIDA">SALIDA</option>
+                                <option value="OTROS">OTROS</option>
                               </select>
+
                             </div>
                             <div class="grid grid-cols-2 gap-4 mb-4">
                                 <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer active:bg-blue-50 transition-colors hover:border-blue-400" onclick="document.getElementById('input-camara').click()"><i data-lucide="camera" class="w-8 h-8 mx-auto mb-2 text-blue-600"></i><p class="font-bold text-sm text-slate-600">FOTO CÁMARA</p></div>
@@ -157,11 +164,9 @@
                                   <select id="filtro-foto-etapa" onchange="filtrarFotos()" class="w-full border rounded p-2 text-sm">
                                       <option value="TODAS">Todas Etapas</option>
                                       <option value="ENTRADA">Entrada</option>
-                                      <option value="DESARME">Desarme</option>
-                                      <option value="BOBINADO">Bobinado</option>
-                                      <option value="ENSAMBLE">Ensamble</option>
-                                      <option value="PRUEBAS">Pruebas</option>
+                                      <option value="PROCESO">Proceso</option>
                                       <option value="SALIDA">Salida</option>
+                                      <option value="OTROS">Otros</option>
                                   </select>
                               </div>
 
