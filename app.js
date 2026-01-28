@@ -88,12 +88,27 @@ function fechaParaInput(f){
 }
 
 // HACK: Convertir URL de Drive para ver directa
+// --- FIX VISUALIZACIÓN FOTOS (HACK THUMBNAIL) ---
 function convertirLinkDrive(url) {
+    if (!url) return "";
     try {
-        // Extrae el ID del archivo (ej: 1ABC...)
-        const match = url.match(/[-\w]{25,}/);
-        if (match && match[0]) {
-            return `https://drive.google.com/uc?export=view&id=${match[0]}`;
+        let id = "";
+        // Estrategia 1: Buscar ID entre /d/ y /view
+        const partes = url.split('/d/');
+        if (partes.length > 1) {
+            id = partes[1].split('/')[0];
+        } 
+        // Estrategia 2: Regex estándar si la URL es rara
+        else {
+            const match = url.match(/[-\w]{25,}/);
+            if (match) id = match[0];
+        }
+
+        if (id) {
+            // EL CAMBIO MÁGICO:
+            // Usamos el endpoint 'thumbnail' y pedimos tamaño 1000px (sz=w1000)
+            // Esto carga instantáneo y no muestra el error de imagen rota.
+            return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
         }
         return url;
     } catch (e) { return url; }
