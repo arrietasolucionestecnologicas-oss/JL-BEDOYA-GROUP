@@ -222,7 +222,6 @@
         }
 
         function procesarListas(data) {
-            // Lógica Anti-Fantasma: Si está en historial, no sale en pendientes
             const realizados = data.filter(i => i.status === 'REALIZADO');
             const idsListos = realizados.map(r => String(r.id));
             const pendientes = data.filter(i => i.status === 'PENDIENTE' && !idsListos.includes(String(i.id)));
@@ -244,15 +243,23 @@
             }
 
             lista.forEach((item) => {
+                // --- LÓGICA VISUAL V2.1: ETIQUETAS DINÁMICAS ---
                 let colorBadge = "bg-blue-100 text-blue-800";
-                let icon = "flask-conical";
                 
                 if (esHistorial) {
                     colorBadge = "bg-green-100 text-green-800";
-                    icon = "check-circle-2";
                 } else {
-                    if(item.accion.includes('PCB')) { colorBadge = "bg-red-100 text-red-800"; icon = "alert-triangle"; }
-                    else if(item.accion.includes('FINAL')) { colorBadge = "bg-purple-100 text-purple-800"; icon = "check-circle"; }
+                    const txt = item.textoBoton; // "REQUERIDO: PCB", "REQUERIDO: FQ", etc.
+                    
+                    if(txt.includes('PCB')) { 
+                        colorBadge = "bg-red-100 text-red-800 border border-red-200"; // ROJO = PCB
+                    }
+                    else if(txt.includes('FQ') || txt.includes('PARCIAL')) { 
+                        colorBadge = "bg-blue-600 text-white shadow-sm"; // AZUL = FQ
+                    }
+                    else if(txt.includes('COMPLETO') || txt.includes('FINAL')) {
+                        colorBadge = "bg-emerald-600 text-white shadow-sm"; // VERDE = FINAL
+                    }
                 }
 
                 // Detector de PDF para el historial
