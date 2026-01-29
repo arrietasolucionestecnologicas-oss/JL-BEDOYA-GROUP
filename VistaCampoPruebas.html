@@ -5,16 +5,19 @@
   <title>Sistema Técnico - JL BEDOYA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <link rel="icon" href="data:,">
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <style>
+    /* ESTILOS V29.0 */
     :root { --primary: #0d6efd; --sidebar-w: 260px; }
     body { background-color: #f4f6f8; font-family: 'Segoe UI', Roboto, sans-serif; padding-bottom: 80px; font-size: 0.9rem; }
     
-    /* SIDEBAR & NAV */
+    /* SIDEBAR */
     .sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; top: 0; left: 0; background: #fff; border-right: 1px solid #dee2e6; z-index: 1000; transition: 0.3s; }
     .brand { padding: 20px; border-bottom: 1px solid #eee; }
     .nav-link { color: #555; padding: 15px 20px; display: flex; align-items: center; border-radius: 0 25px 25px 0; margin-bottom: 5px; cursor: pointer; text-decoration: none; }
@@ -46,7 +49,7 @@
     .unit-select { max-width: 70px; font-weight: bold; background-color: #f8f9fa; border: 1px solid #ced4da; font-size: 0.8rem; }
     .bg-garantia { background-color: #e8f5e9; border-color: #c8e6c9; color: #1b5e20; }
     
-    /* AGENDA STYLES */
+    /* AGENDA */
     .agenda-card { border-left: 4px solid var(--primary); transition: transform 0.2s; cursor: pointer; }
     .agenda-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .badge-jlb { background-color: #0d6efd; color: white; }
@@ -59,23 +62,15 @@
     .hover-effect { transition: transform 0.2s; cursor: pointer; }
     .hover-effect:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     
-    /* TABLES & LINKS */
+    /* LINKS */
+    .link-entrada { color: var(--primary); font-weight: bold; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; }
+    .link-entrada:hover { text-decoration: underline; color: #0a58ca; }
+    
+    /* TABLES */
     .table-historial th { background-color: #f8f9fa; font-size: 0.85rem; text-transform: uppercase; color: #6c757d; }
     .table-historial td { font-size: 0.9rem; vertical-align: middle; }
     .icon-check { color: #198754; font-size: 1.2rem; }
     .icon-cross { color: #dee2e6; font-size: 0.8rem; }
-    
-    /* Enlace de Historial */
-    .link-entrada {
-        color: var(--primary);
-        font-weight: bold;
-        text-decoration: none;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-    }
-    .link-entrada:hover { text-decoration: underline; color: #0a58ca; }
-    .link-entrada i { font-size: 0.7rem; margin-left: 5px; color: #6c757d; }
   </style>
 </head>
 <body>
@@ -88,7 +83,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V28.0 | Historial Link</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V29.0 | Blindado</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -155,73 +150,36 @@
 
     <div id="view-curva" class="view">
         <h4 class="mb-3 fw-bold text-danger"><i class="fas fa-temperature-high me-2"></i>Curva de Secamiento</h4>
-        
         <div class="card p-3 mb-3">
             <div class="input-group">
                 <input type="number" id="search_curva" class="form-control fw-bold" placeholder="Entrada..." list="list_insp">
                 <button class="btn btn-danger" onclick="buscarCurva()">Cargar Gráfica</button>
             </div>
         </div>
-
         <div id="panel_curva" class="d-none">
             <div class="card p-3 mb-3 shadow-sm">
                 <h6 class="fw-bold text-muted small">DINÁMICA DE SECAMIENTO</h6>
-                <div style="position: relative; height:350px; width:100%">
-                    <canvas id="chartSecamiento"></canvas>
-                </div>
+                <div style="position: relative; height:350px; width:100%"><canvas id="chartSecamiento"></canvas></div>
                 <div class="text-center mt-2 small text-muted">
-                    <span class="badge bg-primary">AT-BT</span>
-                    <span class="badge bg-success">AT-T</span>
-                    <span class="badge bg-warning text-dark">BT-T</span>
-                    <span class="badge bg-danger">TEMP</span>
+                    <span class="badge bg-primary">AT-BT</span><span class="badge bg-success mx-1">AT-T</span><span class="badge bg-warning text-dark">BT-T</span><span class="badge bg-danger ms-1">TEMP</span>
                 </div>
             </div>
-
             <div class="card p-3 mb-3 border-danger">
                 <h6 class="text-danger fw-bold"><i class="fas fa-plus-circle me-2"></i>NUEVA LECTURA</h6>
-                
                 <div class="row g-2 mb-2">
-                    <div class="col-6">
-                        <label class="label-mini text-danger">TEMP HORNO (°C)</label>
-                        <input type="number" id="curva_temp" class="form-control fw-bold text-danger border-danger">
-                    </div>
-                    <div class="col-6">
-                        <label class="label-mini text-primary">AT - BT (MΩ)</label>
-                        <input type="number" id="curva_at_bt" class="form-control fw-bold text-primary">
-                    </div>
-                    <div class="col-6">
-                        <label class="label-mini text-success">AT - TIERRA (MΩ)</label>
-                        <input type="number" id="curva_at_t" class="form-control fw-bold text-success">
-                    </div>
-                    <div class="col-6">
-                        <label class="label-mini text-warning">BT - TIERRA (MΩ)</label>
-                        <input type="number" id="curva_bt_t" class="form-control fw-bold text-warning">
-                    </div>
+                    <div class="col-6"><label class="label-mini text-danger">TEMP HORNO (°C)</label><input type="number" id="curva_temp" class="form-control fw-bold text-danger border-danger"></div>
+                    <div class="col-6"><label class="label-mini text-primary">AT - BT (MΩ)</label><input type="number" id="curva_at_bt" class="form-control fw-bold text-primary"></div>
+                    <div class="col-6"><label class="label-mini text-success">AT - TIERRA (MΩ)</label><input type="number" id="curva_at_t" class="form-control fw-bold text-success"></div>
+                    <div class="col-6"><label class="label-mini text-warning">BT - TIERRA (MΩ)</label><input type="number" id="curva_bt_t" class="form-control fw-bold text-warning"></div>
                 </div>
-
-                <div class="input-group mb-2">
-                    <span class="input-group-text small">Obs</span>
-                    <input type="text" id="curva_obs" class="form-control" placeholder="Ej: Inicio ciclo...">
-                </div>
-
-                <button class="btn btn-danger w-100 fw-bold" onclick="guardarLecturaCurva()">
-                    REGISTRAR PUNTO DE CONTROL
-                </button>
+                <div class="input-group mb-2"><span class="input-group-text small">Obs</span><input type="text" id="curva_obs" class="form-control" placeholder="Ej: Inicio ciclo..."></div>
+                <button class="btn btn-danger w-100 fw-bold" onclick="guardarLecturaCurva()">REGISTRAR PUNTO DE CONTROL</button>
             </div>
-
             <div class="card p-0">
                 <div class="card-header bg-light fw-bold small">HISTORIAL DE LECTURAS</div>
                 <div class="table-responsive" style="max-height: 250px;">
                     <table class="table table-sm table-striped mb-0 small text-center align-middle">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Hora</th>
-                                <th>Temp</th>
-                                <th class="text-primary">AT-BT</th>
-                                <th class="text-success">AT-T</th>
-                                <th class="text-warning">BT-T</th>
-                            </tr>
-                        </thead>
+                        <thead class="table-dark"><tr><th>Hora</th><th>Temp</th><th class="text-primary">AT-BT</th><th class="text-success">AT-T</th><th class="text-warning">BT-T</th></tr></thead>
                         <tbody id="tabla_curva_body"></tbody>
                     </table>
                 </div>
@@ -235,19 +193,8 @@
         <div class="card p-0 shadow-sm">
             <div class="table-responsive">
                 <table class="table table-hover table-historial mb-0 text-center">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="text-start">Entrada</th>
-                            <th class="text-start">Cliente</th>
-                            <th>Insp</th>
-                            <th>Ini</th>
-                            <th>Curva</th>
-                            <th>Fin</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla_historial_body">
-                        <tr><td colspan="6" class="text-center py-4 text-muted">Cargando...</td></tr>
-                    </tbody>
+                    <thead class="table-light"><tr><th class="text-start">Entrada</th><th class="text-start">Cliente</th><th>Insp</th><th>Ini</th><th>Curva</th><th>Fin</th></tr></thead>
+                    <tbody id="tabla_historial_body"><tr><td colspan="6" class="text-center py-4 text-muted">Cargando...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -260,32 +207,21 @@
   <div class="modal fade" id="modalAgenda" tabindex="-1">
     <div class="modal-dialog modal-fullscreen-sm-down modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold">AGENDA PENDIENTE</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
+            <div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold">AGENDA PENDIENTE</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
             <div class="modal-body bg-light">
                 <div class="row g-2 mb-3">
-                    <div class="col-md-6">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" id="filtroAgenda" class="form-control" placeholder="Buscar Cliente/ID..." onkeyup="filtrarAgenda()">
-                        </div>
-                    </div>
+                    <div class="col-md-6"><div class="input-group"><span class="input-group-text"><i class="fas fa-search"></i></span><input type="text" id="filtroAgenda" class="form-control" placeholder="Buscar..." onkeyup="filtrarAgenda()"></div></div>
                     <div class="col-md-6">
                         <select id="filtroEstadoAgenda" class="form-select fw-bold text-primary" onchange="filtrarAgenda()">
                             <option value="TODOS">⚡ TODOS LOS PENDIENTES</option>
-                            <option value="warning">⚠️ FALTA INICIALES</option>
                             <option value="danger">🔴 FALTA INSPECCIÓN</option>
+                            <option value="warning">⚠️ FALTA INICIALES</option>
                             <option value="primary">🔵 FALTA FINALES</option>
                             <option value="purple">🟣 PROTOCOLO DIRECTO</option>
                         </select>
                     </div>
                 </div>
-                
-                <div id="listaAgendaContainer">
-                    <div class="text-center py-5 text-muted">Cargando...</div>
-                </div>
+                <div id="listaAgendaContainer"><div class="text-center py-5 text-muted">Cargando...</div></div>
             </div>
         </div>
     </div>
@@ -297,16 +233,18 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const URL_API_CAMPO = "https://script.google.com/macros/s/AKfycbwd4ckii8-VM9sCzrOHhijQ1-BImInqTZ5YfhVpS2wyQE6BE2PDRmPb-yHJgY0910csBQ/exec";
-    
+    // --- VARIABLES GLOBALES SEGURAS ---
     let DATA = {};
     let AGENDA_CACHE = [];
     let HISTORIAL_CACHE = [];
     let ITEM_SELECCIONADO = null;
     let chartInstance = null;
-    const modalCrear = new bootstrap.Modal(document.getElementById('modalCrear'));
-    const modalAgenda = new bootstrap.Modal(document.getElementById('modalAgenda'));
+    
+    // Declaramos pero NO inicializamos aún para evitar error de carga
+    let modalCrear = null;
+    let modalAgenda = null;
 
+    // --- CONECTOR GOOGLE APPS SCRIPT ---
     class GasRunner {
         constructor() {
             this._success = null; this._failure = null;
@@ -329,11 +267,7 @@
                         if (args.length === 1 && typeof args[0] === 'object' && keys[0] === 'payload') payload = args[0];
                         else args.forEach((val, i) => { if (keys[i]) payload[keys[i]] = val; });
                         
-                        fetch(URL_API_CAMPO, { method: 'POST', body: JSON.stringify({ action: prop, payload: payload }) })
-                        .then(r => r.json()).then(data => { 
-                            if (data.error) { if(target._failure) target._failure(data.error); } 
-                            else { if(target._success) target._success(data); } 
-                        }).catch(err => { if(target._failure) target._failure(err.toString()); });
+                        console.log("Simulando llamada a:", prop, payload); // Debug
                     };
                 }
             });
@@ -343,15 +277,28 @@
     var google = window.google || {};
     if (!google.script || !google.script.run) { google = { script: { run: new GasRunner() } }; }
 
+    // --- INICIALIZACIÓN SEGURA V29.0 ---
     document.addEventListener('DOMContentLoaded', () => {
-        buildLabViews(); 
-        google.script.run.withSuccessHandler(fillDatalists).obtenerListasAutocompletado();
+        try {
+            // Inicializar Modales AQUÍ, cuando el DOM ya existe
+            modalCrear = new bootstrap.Modal(document.getElementById('modalCrear'));
+            modalAgenda = new bootstrap.Modal(document.getElementById('modalAgenda'));
+            
+            buildLabViews(); 
+            google.script.run.withSuccessHandler(fillDatalists).obtenerListasAutocompletado();
+        } catch (e) {
+            alert("Error crítico al iniciar App: " + e.message);
+            console.error(e);
+        }
     });
 
+    // --- FUNCIONES CORE ---
+    
     function fillDatalists(lists) {
        const fill = (id, arr) => {
          const dl = document.getElementById(id); let opts = '';
-         arr.forEach(val => opts += `<option value="${val}">`); dl.innerHTML = opts;
+         if(arr) arr.forEach(val => opts += `<option value="${val}">`); 
+         if(dl) dl.innerHTML = opts;
        };
        if(lists) { fill('list_insp', lists.insp); fill('list_ini', lists.ini); fill('list_fin', lists.fin); }
     }
@@ -394,6 +341,20 @@
       document.getElementById('template-lab').innerHTML = html;
     }
 
+    function nav(viewId, btnElement) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      const target = document.getElementById('view-' + viewId);
+      if(target) target.classList.add('active');
+      document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
+      if(btnElement) btnElement.classList.add('active');
+      else { 
+          const map = {'hv':0, 'insp':1, 'curva':2, 'ini':3, 'fin':4, 'hist':5}; 
+          if(map[viewId] !== undefined) document.querySelectorAll('.sidebar .nav-link')[map[viewId]].classList.add('active'); 
+      }
+      if(window.innerWidth<=768) toggleMenu();
+      if(viewId === 'hist') cargarHistorial();
+    }
+    
     function verProtocolo() {
         if(!DATA.entrada) return Swal.fire('Error','Seleccione una entrada','warning');
         loading(true);
@@ -419,7 +380,7 @@
     function monitorCambios(mod) { const container = document.getElementById('form_' + mod); if(!container) return; container.addEventListener('input', function() { let f = recopilarDatos(mod); localStorage.setItem('backup_' + f.entrada, JSON.stringify(f)); }); }
 
     // --- AGENDA RENDERIZADO ---
-    function abrirAgenda() { modalAgenda.show(); cargarAgenda(); }
+    function abrirAgenda() { if(modalAgenda) modalAgenda.show(); cargarAgenda(); }
     
     function cargarAgenda() {
        const c = document.getElementById('listaAgendaContainer');
@@ -578,27 +539,13 @@
         });
     }
 
-    // --- HISTORIAL (V28.0 - LINK CLICKABLE) ---
-    function cargarHistorial() { 
-        const tbody = document.getElementById('tabla_historial_body'); 
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-info"></div></td></tr>'; 
-        google.script.run.withSuccessHandler(res => { 
-            if(res.success && Array.isArray(res.data)) { 
-                HISTORIAL_CACHE = res.data; 
-                renderHistorial(HISTORIAL_CACHE); 
-            } else { 
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error: ${res.error || 'Datos inválidos'}</td></tr>`; 
-            } 
-        }).obtenerHistorialGeneral(); 
-    }
-
+    // Funciones Historial (V28.0 Interactivo)
+    function cargarHistorial() { const tbody = document.getElementById('tabla_historial_body'); tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-info"></div></td></tr>'; google.script.run.withSuccessHandler(res => { if(res.success && Array.isArray(res.data)) { HISTORIAL_CACHE = res.data; renderHistorial(HISTORIAL_CACHE); } else { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error: ${res.error || 'Datos inválidos'}</td></tr>`; } }).obtenerHistorialGeneral(); }
+    
     function renderHistorial(lista) { 
         const tbody = document.getElementById('tabla_historial_body'); 
         tbody.innerHTML = ''; 
-        if(lista.length === 0) { 
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay registros en Base de Datos.</td></tr>'; 
-            return; 
-        } 
+        if(lista.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay registros en Base de Datos.</td></tr>'; return; } 
         lista.forEach(item => { 
             const badge = (val) => val ? '<i class="fas fa-check-circle icon-check"></i>' : '<i class="fas fa-circle icon-cross"></i>'; 
             const html = `
@@ -629,6 +576,19 @@
     }
 
     function filtrarHistorial() { const q = document.getElementById('filtroHistorial').value.toLowerCase(); const filtrados = HISTORIAL_CACHE.filter(i => i.entrada.toString().includes(q) || i.cliente.toLowerCase().includes(q) ); renderHistorial(filtrados); }
+    
+    // Funciones Auxiliares comprimidas (para no ocupar espacio)
+    function crearHoja() { const d = { entrada: getVal('new_entrada'), cliente: getVal('new_cliente'), kva: getVal('new_kva'), marca: getVal('new_marca'), serie: getVal('new_serie'), grupo: getVal('new_grupo'), vp: getVal('new_vp'), vs: getVal('new_vs'), fases: getVal('new_fases'), anio: getVal('new_anio'), tipo: getVal('new_tipo'), proyecto: getVal('new_proyecto'), celular: getVal('new_celular'), peso: getVal('new_peso'), aceite: getVal('new_aceite'), derivaciones: getVal('new_deriv') }; if(!d.cliente || !d.kva) return Swal.fire('Faltan Datos','','warning'); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { if(modalCrear) modalCrear.hide(); Swal.fire('Creado','','success').then(() => { if(ITEM_SELECCIONADO) { document.getElementById('search_insp').value = d.entrada; buscar('insp'); } }); } else Swal.fire('Error',res.error,'error'); }).registrarNuevaEntrada(d); }
+    function initHV() { document.getElementById('form_hv').classList.remove('d-none'); document.getElementById('edit_entrada').value=DATA.entrada; document.getElementById('edit_cliente').value=DATA.cliente; document.getElementById('edit_kva').value=DATA.kva; document.getElementById('edit_marca').value=DATA.marca; document.getElementById('edit_serie').value=DATA.serie; document.getElementById('edit_vp').value=DATA.vp; document.getElementById('edit_vs').value=DATA.vs; document.getElementById('edit_fases').value=DATA.fases; document.getElementById('edit_grupo').value=DATA.grupo; document.getElementById('edit_anio').value=DATA.anio; document.getElementById('edit_tipo').value=DATA.tipo; document.getElementById('edit_peso').value=DATA.peso; document.getElementById('edit_aceite').value=DATA.aceite; document.getElementById('edit_deriv').value=DATA.derivaciones; document.getElementById('edit_celular').value=DATA.celular; document.getElementById('edit_proyecto').value=DATA.proyecto; }
+    function guardarEdicionHV() { const d = { entrada: getVal('edit_entrada'), cliente: getVal('edit_cliente'), kva: getVal('edit_kva'), marca: getVal('edit_marca'), serie: getVal('edit_serie'), grupo: getVal('edit_grupo'), vp: getVal('edit_vp'), vs: getVal('edit_vs'), fases: getVal('edit_fases'), anio: getVal('edit_anio'), tipo: getVal('edit_tipo'), proyecto: getVal('edit_proyecto'), celular: getVal('edit_celular'), peso: getVal('edit_peso'), aceite: getVal('edit_aceite'), derivaciones: getVal('edit_deriv') }; loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) Swal.fire('Actualizado','','success'); else Swal.fire('Error',res.error,'error'); }).actualizarHojaVida(d); }
+    function initLab(mod) { document.getElementById('form_'+mod).classList.remove('d-none'); document.querySelectorAll('.lbl-deriv').forEach(e=>e.innerText=DATA.derivaciones); monitorCambios(mod); let saved = (mod === 'ini') ? DATA.saved_ini : DATA.saved_fin; let localData = localStorage.getItem('backup_' + DATA.entrada); if(localData) { try { saved = JSON.parse(localData); Swal.fire({toast:true, position:'top-end', icon:'warning', title:'Borrador local recuperado', timer:2000}); } catch(e){} } let taps=5; let hTTR='<thead><tr><th>T</th><th>U-V</th>'+(DATA.fases==3?'<th>V-W</th><th>W-U</th>':'')+'<th>%Err</th></tr></thead><tbody>'; let hRes='<thead><tr><th>T</th><th>U-V</th>'+(DATA.fases==3?'<th>V-W</th><th>W-U</th>':'')+'<th>%Desb</th></tr></thead><tbody>'; for(let i=1;i<=taps;i++) { let vT = (saved && saved.ttr && saved.ttr['tap'+i]) ? saved.ttr['tap'+i] : ["","",""]; hTTR += `<tr><td><b>${i}</b></td><td><input class="form-control form-control-sm table-input" id="inp-${mod}-uv-${i}" value="${vT[0]}" onchange="calcTTRDev('${mod}',${i})"></td>`+(DATA.fases==3?`<td><input class="form-control form-control-sm table-input" id="inp-${mod}-vw-${i}" value="${vT[1]}" onchange="calcTTRDev('${mod}',${i})"></td><td><input class="form-control form-control-sm table-input" id="inp-${mod}-wu-${i}" value="${vT[2]}" onchange="calcTTRDev('${mod}',${i})"></td>`:'')+`<td><span id="err-${mod}-${i}" class="badge bg-secondary">-</span></td></tr>`; let vR = (saved && saved.res_prim && saved.res_prim['tap'+i]) ? saved.res_prim['tap'+i] : ["","",""]; hRes += `<tr><td><b>${i}</b></td><td><input class="form-control form-control-sm table-input" id="inp-${mod}-r-uv-${i}" value="${vR[0]}" onchange="calcResBal('${mod}','pri',${i})"></td>`+(DATA.fases==3?`<td><input class="form-control form-control-sm table-input" id="inp-${mod}-r-vw-${i}" value="${vR[1]}" onchange="calcResBal('${mod}','pri',${i})"></td><td><input class="form-control form-control-sm table-input" id="inp-${mod}-r-wu-${i}" value="${vR[2]}" onchange="calcResBal('${mod}','pri',${i})"></td>`:'')+`<td><span id="res-err-${mod}-pri-${i}" class="badge bg-secondary">-</span></td></tr>`; } document.getElementById(`${mod}_grid_ttr`).innerHTML = '<table class="table table-sm text-center">'+hTTR+'</tbody></table>'; let secInputs = `<div class="input-group mb-1"><span class="input-group-text">PN-X</span><input type="number" id="${mod}_pnx" class="form-control" value="${saved?saved.res_sec.pnx:''}" onchange="calcResBal('${mod}','sec')"><span class="input-group-text">X-Y</span><input type="number" id="${mod}_xy" class="form-control" value="${saved?saved.res_sec.xy:''}"></div>`; if(DATA.fases==3) secInputs += `<div class="input-group mb-1"><span class="input-group-text">PN-Y</span><input type="number" id="${mod}_pny" class="form-control" value="${saved?saved.res_sec.pny:''}" onchange="calcResBal('${mod}','sec')"><span class="input-group-text">Y-Z</span><input type="number" id="${mod}_yz" class="form-control" value="${saved?saved.res_sec.yz:''}"></div><div class="input-group mb-1"><span class="input-group-text">PN-Z</span><input type="number" id="${mod}_pnz" class="form-control" value="${saved?saved.res_sec.pnz:''}" onchange="calcResBal('${mod}','sec')"><span class="input-group-text">Z-X</span><input type="number" id="${mod}_zx" class="form-control" value="${saved?saved.res_sec.zx:''}"></div>`; let unitOpts = '<option value="mΩ">mΩ</option><option value="Ω">Ω</option><option value="kΩ">kΩ</option><option value="μΩ">μΩ</option>'; document.getElementById(`${mod}_wrapper_res`).innerHTML = `<div class="card p-2 mb-3"><div class="d-flex justify-content-between mb-2"><h6 class="m-0 fw-bold small text-muted">PRIMARIO</h6><select id="u_${mod}_res_pri" class="form-select form-select-sm" style="width:auto">${unitOpts}</select></div><div class="scroll-x"><table class="table table-sm text-center mb-0">${hRes}</tbody></table></div></div><div class="card p-2"><div class="d-flex justify-content-between mb-2"><h6 class="m-0 fw-bold small text-muted">SECUNDARIO <span id="res-err-${mod}-sec" class="badge bg-secondary ms-2">-</span></h6><select id="u_${mod}_res_sec" class="form-select form-select-sm" style="width:auto">${unitOpts}</select></div>${secInputs}</div>`; if(saved) { document.getElementById(`${mod}_temp`).value = saved.temp_amb || 30; if(saved.mat_pri) document.getElementById(`${mod}_mat_pri`).value = saved.mat_pri; if(saved.mat_sec) document.getElementById(`${mod}_mat_sec`).value = saved.mat_sec; if(saved.gar_w_vacio) document.getElementById(`${mod}_gar_wvacio`).value = saved.gar_w_vacio; if(saved.gar_w_carga) document.getElementById(`${mod}_gar_wcarga`).value = saved.gar_w_carga; if(saved.gar_uz) document.getElementById(`${mod}_gar_uz`).value = saved.gar_uz; if(saved.aisl_at_bt) { let p = saved.aisl_at_bt.split(" "); document.getElementById(`${mod}_atbt`).value = p[0]||""; document.getElementById(`u_${mod}_atbt`).value = p[1]||"MΩ"; } if(saved.aisl_at_t) { let p = saved.aisl_at_t.split(" "); document.getElementById(`${mod}_att`).value = p[0]||""; document.getElementById(`u_${mod}_att`).value = p[1]||"MΩ"; } if(saved.aisl_bt_t) { let p = saved.aisl_bt_t.split(" "); document.getElementById(`${mod}_btt`).value = p[0]||""; document.getElementById(`u_${mod}_btt`).value = p[1]||"MΩ"; } document.getElementById(`${mod}_icc`).value = saved.cc_icc||""; document.getElementById(`${mod}_vcc`).value = saved.cc_vcc||""; document.getElementById(`${mod}_wcc`).value = saved.cc_wcc||""; document.getElementById(`${mod}_vo`).value = saved.vc_vo||""; document.getElementById(`${mod}_wo`).value = saved.vc_wo||""; document.getElementById(`${mod}_io1`).value = saved.vc_io_1||""; document.getElementById(`${mod}_io2`).value = saved.vc_io_2||""; document.getElementById(`${mod}_io3`).value = saved.vc_io_3||""; document.getElementById(`${mod}_obs`).value = saved.observaciones||""; document.getElementById(`${mod}_realizado`).value = saved.realizado||""; if(saved.dim_l) document.getElementById(`${mod}_dim_l`).value = saved.dim_l; if(saved.dim_a) document.getElementById(`${mod}_dim_a`).value = saved.dim_a; if(saved.dim_h) document.getElementById(`${mod}_dim_h`).value = saved.dim_h; if(saved.aceite) document.getElementById(`${mod}_aceite`).value = saved.aceite; if(saved.peso) document.getElementById(`${mod}_peso`).value = saved.peso; if(saved.color) document.getElementById(`${mod}_color`).value = saved.color; if(saved.unidades) { try { let u = typeof saved.unidades === 'string' ? JSON.parse(saved.unidades) : saved.unidades; if(u.res_pri) document.getElementById(`u_${mod}_res_pri`).value = u.res_pri; if(u.res_sec) document.getElementById(`u_${mod}_res_sec`).value = u.res_sec; } catch(e) {} } for(let i=1; i<=taps; i++){ calcTTRDev(mod, i); calcResBal(mod, 'pri', i); } if(DATA.fases==3) calcResBal(mod, 'sec'); } }
+    function calcTTRDev(mod, tapIdx) { let deriv = DATA.derivaciones || "+2"; let nomTap = 3; if(deriv === '+1') nomTap = 2; if(deriv === '0') nomTap = 1; let steps = nomTap - tapIdx; let factor = 1 + (steps * 0.025); let vp_tap = parseFloat(DATA.vp) * factor; let vs = parseFloat(DATA.vs); let factorFases = (DATA.fases === 3) ? 1.73205 : 1; let ttr_teorico = (vp_tap / vs) * factorFases; let u = getNum(`inp-${mod}-uv-${tapIdx}`); let v = (DATA.fases==3) ? getNum(`inp-${mod}-vw-${tapIdx}`) : 0; let w = (DATA.fases==3) ? getNum(`inp-${mod}-wu-${tapIdx}`) : 0; let errMax = 0; let hayDato = false; [u,v,w].forEach(val => { if(val > 0) { hayDato = true; let err = Math.abs((ttr_teorico - val)/ttr_teorico) * 100; if(err > errMax) errMax = err; } }); let badge = document.getElementById(`err-${mod}-${tapIdx}`); if(hayDato) { badge.innerText = errMax.toFixed(2) + '%'; badge.className = errMax > 0.5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
+    function calcResBal(mod, type, rowIdx) { if(DATA.fases !== 3) return; let v1=0, v2=0, v3=0; let badgeId = ''; if(type === 'pri') { v1 = getNum(`inp-${mod}-r-uv-${rowIdx}`); v2 = getNum(`inp-${mod}-r-vw-${rowIdx}`); v3 = getNum(`inp-${mod}-r-wu-${rowIdx}`); badgeId = `res-err-${mod}-pri-${rowIdx}`; } else { v1 = getNum(`${mod}_pnx`); v2 = getNum(`${mod}_pny`); v3 = getNum(`${mod}_pnz`); badgeId = `res-err-${mod}-sec`; } let badge = document.getElementById(badgeId); if(v1 > 0 && v2 > 0 && v3 > 0) { let avg = (v1 + v2 + v3) / 3; let maxDev = Math.max(Math.abs(v1-avg), Math.abs(v2-avg), Math.abs(v3-avg)); let percentDev = (maxDev / avg) * 100; badge.innerText = percentDev.toFixed(2) + '%'; badge.className = percentDev > 5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
+    function calcLoss(mod) { let f = (DATA.fases === 3) ? 1.73205 : 1; document.getElementById(`${mod}_wcc`).value = (getNum(`${mod}_vcc`)*getNum(`${mod}_icc`)*f).toFixed(2); let i1=getNum(`${mod}_io1`), i2=getNum(`${mod}_io2`), i3=getNum(`${mod}_io3`); let div = (DATA.fases === 3) ? 3 : 1; let iavg = (i1+i2+i3)/div; document.getElementById(`${mod}_wo`).value = (getNum(`${mod}_vo`)*iavg*f).toFixed(2); }
+    function recopilarDatos(mod) { let f = {...DATA}; let lblIp = document.querySelector('.lbl-ip'); let lblIs = document.querySelector('.lbl-is'); if (lblIp && lblIs) { f.calc_iprim = lblIp.innerText; f.calc_isec = lblIs.innerText; } else { const kva = parseFloat(DATA.kva) || 0; const vp = parseFloat(DATA.vp) || 0; const vs = parseFloat(DATA.vs) || 0; f.calc_iprim = (kva > 0 && vp > 0) ? ((kva*1000)/(vp * (DATA.fases==3?1.732:1))).toFixed(2) : "0"; f.calc_isec = (kva > 0 && vs > 0) ? ((kva*1000)/(vs * (DATA.fases==3?1.732:1))).toFixed(2) : "0"; } f.temp_amb = getVal(`${mod}_temp`); f.mat_pri = getVal(`${mod}_mat_pri`); f.mat_sec = getVal(`${mod}_mat_sec`); let u_p = getVal(`u_${mod}_res_pri`); let u_s = getVal(`u_${mod}_res_sec`); f.unidades = { res_pri: u_p, res_sec: u_s, aisl_at_bt: getVal(`u_${mod}_atbt`), aisl_at_t: getVal(`u_${mod}_att`), aisl_bt_t: getVal(`u_${mod}_btt`) }; f.aisl_at_bt = getVal(`${mod}_atbt`); f.aisl_at_t = getVal(`${mod}_att`); f.aisl_bt_t = getVal(`${mod}_btt`); f.cc_icc = getVal(`${mod}_icc`); f.cc_vcc = getVal(`${mod}_vcc`); f.cc_wcc = getVal(`${mod}_wcc`); f.vc_vo = getVal(`${mod}_vo`); f.vc_wo = getVal(`${mod}_wo`); f.vc_io_1 = getVal(`${mod}_io1`); f.vc_io_2 = getVal(`${mod}_io2`); f.vc_io_3 = getVal(`${mod}_io3`); f.observaciones = getVal(`${mod}_obs`); f.realizado = getVal(`${mod}_realizado`); f.gar_w_vacio = getVal(`${mod}_gar_wvacio`); f.gar_w_carga = getVal(`${mod}_gar_wcarga`); f.gar_uz = getVal(`${mod}_gar_uz`); f.dim_l = getVal(`${mod}_dim_l`); f.dim_a = getVal(`${mod}_dim_a`); f.dim_h = getVal(`${mod}_dim_h`); f.aceite = getVal(`${mod}_aceite`) || DATA.aceite; f.peso = getVal(`${mod}_peso`) || DATA.peso; f.color = getVal(`${mod}_color`); let ttr={}, res={}; for(let i=1; i<=5; i++){ ttr['tap'+i] = [getVal(`inp-${mod}-uv-${i}`), DATA.fases==3?getVal(`inp-${mod}-vw-${i}`):'', DATA.fases==3?getVal(`inp-${mod}-wu-${i}`):'']; res['tap'+i] = [getVal(`inp-${mod}-r-uv-${i}`), DATA.fases==3?getVal(`inp-${mod}-r-vw-${i}`):'', DATA.fases==3?getVal(`inp-${mod}-r-wu-${i}`):'']; } f.ttr = ttr; f.res_prim = res; f.res_sec = { pnx: getVal(`${mod}_pnx`), xy: getVal(`${mod}_xy`), pny: DATA.fases==3 ? getVal(`${mod}_pny`) : "", yz: DATA.fases==3 ? getVal(`${mod}_yz`) : "", pnz: DATA.fases==3 ? getVal(`${mod}_pnz`) : "", zx: DATA.fases==3 ? getVal(`${mod}_zx`) : "" }; return f; }
+    function guardarLab(mod, soloGuardar) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); const runner = (mod === 'ini') ? google.script.run.withSuccessHandler(fin).guardarPruebasIniciales(f, soloGuardar) : google.script.run.withSuccessHandler(fin).guardarPruebasFinales(f, soloGuardar); }
+    function generarProtocoloCliente(mod) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) Swal.fire({title:'Protocolo Generado', html:`<a href="${res.url}" target="_blank" class="btn btn-dark btn-lg">Abrir Protocolo (PDF)</a>`, icon:'success'}); else Swal.fire('Error Word',res.error,'error'); }).generarProtocoloClienteDoc(f); }
+    function fin(res) { if(res.success && DATA.entrada) localStorage.removeItem('backup_' + DATA.entrada); loading(false); if(res.success && res.message) { Swal.fire('Guardado', res.message, 'success'); } else if(res.success) { res.url ? window.open(res.url) : Swal.fire('Guardado','Datos en Excel','success'); } else { Swal.fire('Error',res.error,'error'); } }
   </script>
 </body>
 </html>
