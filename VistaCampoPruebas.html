@@ -46,13 +46,11 @@
     .unit-select { max-width: 70px; font-weight: bold; background-color: #f8f9fa; border: 1px solid #ced4da; font-size: 0.8rem; }
     .bg-garantia { background-color: #e8f5e9; border-color: #c8e6c9; color: #1b5e20; }
     
-    /* AGENDA STYLES & COLORS */
+    /* AGENDA STYLES */
     .agenda-card { border-left: 4px solid var(--primary); transition: transform 0.2s; cursor: pointer; }
     .agenda-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .badge-jlb { background-color: #0d6efd; color: white; }
     .badge-group { background-color: #fd7e14; color: white; }
-    
-    /* NUEVOS COLORES DE ESTADO */
     .bg-purple { background-color: #6f42c1 !important; color: white; }
     .text-purple { color: #6f42c1 !important; }
     
@@ -61,11 +59,23 @@
     .hover-effect { transition: transform 0.2s; cursor: pointer; }
     .hover-effect:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     
-    /* TABLES */
+    /* TABLES & LINKS */
     .table-historial th { background-color: #f8f9fa; font-size: 0.85rem; text-transform: uppercase; color: #6c757d; }
     .table-historial td { font-size: 0.9rem; vertical-align: middle; }
     .icon-check { color: #198754; font-size: 1.2rem; }
     .icon-cross { color: #dee2e6; font-size: 0.8rem; }
+    
+    /* Enlace de Historial */
+    .link-entrada {
+        color: var(--primary);
+        font-weight: bold;
+        text-decoration: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+    }
+    .link-entrada:hover { text-decoration: underline; color: #0a58ca; }
+    .link-entrada i { font-size: 0.7rem; margin-left: 5px; color: #6c757d; }
   </style>
 </head>
 <body>
@@ -78,7 +88,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V27.0 | Full</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V28.0 | Historial Link</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -222,7 +232,25 @@
     <div id="view-hist" class="view">
         <h4 class="mb-3 fw-bold text-info"><i class="fas fa-database me-2"></i>Historial (Local)</h4>
         <div class="card p-3 mb-3"><input type="text" id="filtroHistorial" class="form-control" placeholder="Buscar..." onkeyup="filtrarHistorial()"></div>
-        <div class="card p-0 shadow-sm"><div class="table-responsive"><table class="table table-hover table-historial mb-0 text-center"><thead class="table-light"><tr><th class="text-start">Entrada</th><th class="text-start">Cliente</th><th>Insp</th><th>Ini</th><th>Curva</th><th>Fin</th></tr></thead><tbody id="tabla_historial_body"><tr><td colspan="6" class="text-center py-4 text-muted">Cargando...</td></tr></tbody></table></div></div>
+        <div class="card p-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover table-historial mb-0 text-center">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-start">Entrada</th>
+                            <th class="text-start">Cliente</th>
+                            <th>Insp</th>
+                            <th>Ini</th>
+                            <th>Curva</th>
+                            <th>Fin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla_historial_body">
+                        <tr><td colspan="6" class="text-center py-4 text-muted">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div id="template-lab"></div>
@@ -247,8 +275,8 @@
                     <div class="col-md-6">
                         <select id="filtroEstadoAgenda" class="form-select fw-bold text-primary" onchange="filtrarAgenda()">
                             <option value="TODOS">⚡ TODOS LOS PENDIENTES</option>
-                            <option value="danger">🔴 FALTA INSPECCIÓN</option>
                             <option value="warning">⚠️ FALTA INICIALES</option>
+                            <option value="danger">🔴 FALTA INSPECCIÓN</option>
                             <option value="primary">🔵 FALTA FINALES</option>
                             <option value="purple">🟣 PROTOCOLO DIRECTO</option>
                         </select>
@@ -366,20 +394,6 @@
       document.getElementById('template-lab').innerHTML = html;
     }
 
-    function nav(viewId, btnElement) {
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      const target = document.getElementById('view-' + viewId);
-      if(target) target.classList.add('active');
-      document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
-      if(btnElement) btnElement.classList.add('active');
-      else { 
-          const map = {'hv':0, 'insp':1, 'curva':2, 'ini':3, 'fin':4, 'hist':5}; 
-          if(map[viewId] !== undefined) document.querySelectorAll('.sidebar .nav-link')[map[viewId]].classList.add('active'); 
-      }
-      if(window.innerWidth<=768) toggleMenu();
-      if(viewId === 'hist') cargarHistorial();
-    }
-    
     function verProtocolo() {
         if(!DATA.entrada) return Swal.fire('Error','Seleccione una entrada','warning');
         loading(true);
@@ -390,7 +404,7 @@
         }).withFailureHandler(e => { loading(false); Swal.fire('Error', e.toString(), 'error'); }).buscarProtocoloExistente({entrada: DATA.entrada});
     }
 
-    // Funciones del Checklist y otros (Mismo código de siempre para integridad)
+    // Funciones del Checklist y otros
     function initInsp() { document.getElementById('form_insp').classList.remove('d-none'); const list = [{c:'ESTRUCTURA', i:['Placa','Pintura','Cuba','Expansion','Gabinete','Radiadores','Borne']},{c:'ACCESORIOS', i:['Termómetro','Nivel','Silica','Valv.Drenaje','Valv.Presion','Buchholz']},{c:'BUJES', i:['Bujes AT','Bujes BT','Herrajes AT','Herrajes BT']},{c:'FUGAS', i:['Empaque Tapa-Tanque','Empaque Bujes AT','Empaque Bujes BT']},{c:'PRUEBAS PRELIMINARES', i:['TTR','Aislamiento','Resistencia', 'Vacio', 'Corto']}]; let h=''; list.forEach(g => { h+=`<tr class="bg-light fw-bold"><td colspan="2">${g.c}</td></tr>`; let options = '<option value="" selected></option>'; if(g.c === 'PRUEBAS PRELIMINARES') options += '<option>CONFORME</option><option>NO CONFORME</option><option>N/A</option>'; else if(g.c === 'FUGAS') options += '<option>BUENO</option><option>MALO</option><option>CAMBIAR</option><option>N/A</option>'; else options += '<option>BUENO</option><option>MALO</option><option>FALTANTE</option><option>CAMBIAR</option><option>PINTAR</option><option>LIMPIAR</option><option>N/A</option>'; g.i.forEach(it => { let id = 'chk_' + it.replace(/ /g,'').replace('.','').replace('-','').toLowerCase(); h+=`<tr><td>${it}</td><td><select id="${id}" class="form-select form-select-sm">${options}</select></td></tr>`; }); }); document.getElementById('insp_body').innerHTML = h; if(DATA.saved_insp) { const d = DATA.saved_insp; if(d.servicio) document.getElementById('insp_servicio').value = d.servicio; if(d.observaciones) document.getElementById('insp_obs').value = d.observaciones; if(d.realizado) document.getElementById('insp_realizado').value = d.realizado; const ids = ['placa','pintura','cuba','expansion','gabinete','radiadores','borne','termometro','nivel','silica','valvdrenaje','valvpresion','buchholz','bujesat','bujesbt','herrajesat','herrajesbt','ttr','aislamiento','resistencia']; ids.forEach(k => { const el = document.getElementById('chk_'+k); if(el && d[k]) el.value = d[k]; }); if(d.fugatapa) setVal('chk_empaquetapatanque', d.fugatapa); if(d.fugabujes_at) setVal('chk_empaquebujesat', d.fugabujes_at); if(d.fugabujes_bt) setVal('chk_empaquebujesbt', d.fugabujes_bt); if(d.vacio) setVal('chk_vacio', d.vacio); if(d.corto) setVal('chk_corto', d.corto); } }
     function recopilarDatosInspeccion() { let f = {...DATA}; f.servicio = getVal('insp_servicio'); f.observaciones = getVal('insp_obs'); f.realizado = getVal('insp_realizado'); const ids = ['placa','pintura','cuba','expansion','gabinete','radiadores','borne','termometro','nivel','silica','valvdrenaje','valvpresion','buchholz','bujesat','bujesbt','herrajesat','herrajesbt','ttr','aislamiento','resistencia']; ids.forEach(k => { f[k] = getVal('chk_'+k); }); f.fugatapa = getVal('chk_empaquetapatanque'); f.fugabujes_at = getVal('chk_empaquebujesat'); f.fugabujes_bt = getVal('chk_empaquebujesbt'); f.vacio = getVal('chk_vacio'); f.corto = getVal('chk_corto'); return f; }
     function guardarInsp(pdf) { if(!getVal('insp_realizado')) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatosInspeccion(); f.estado_cert = "PENDIENTE"; loading(true); const action = pdf ? 'procesarInspeccion' : 'guardarSoloBD_Inspeccion'; google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { if(res.url) window.open(res.url); else Swal.fire('Guardado','Estado: PENDIENTE','success'); } else Swal.fire('Error',res.error,'error'); })[action](f); }
@@ -404,7 +418,7 @@
     function openTab(mod, tabId, btn) { document.querySelectorAll(`.tab-content-${mod}`).forEach(e => e.classList.add('d-none')); document.getElementById(`tab_${mod}_${tabId}`).classList.remove('d-none'); btn.closest('.nav').querySelectorAll('.nav-link').forEach(e => e.classList.remove('active')); btn.classList.add('active'); }
     function monitorCambios(mod) { const container = document.getElementById('form_' + mod); if(!container) return; container.addEventListener('input', function() { let f = recopilarDatos(mod); localStorage.setItem('backup_' + f.entrada, JSON.stringify(f)); }); }
 
-    // --- AGENDA: RENDERIZADO CON SEMÁFORO NUEVO ---
+    // --- AGENDA RENDERIZADO ---
     function abrirAgenda() { modalAgenda.show(); cargarAgenda(); }
     
     function cargarAgenda() {
@@ -430,7 +444,6 @@
            let badgeClass = item.empresa === 'JLB' ? 'badge-jlb' : 'badge-group';
            let estadoTecnico = item.estadoTecnico || "PENDIENTE";
            
-           // Manejo de colores del semáforo, incluyendo el Púrpura
            let colorTecnico = item.colorTecnico || "secondary";
            let badgeColorClass = `bg-${colorTecnico}`;
            if (colorTecnico === 'purple') badgeColorClass = 'bg-purple';
@@ -474,7 +487,7 @@
         buscar('insp');
     }
 
-    // --- LÓGICA DE CURVA ACTUALIZADA V27.0 ---
+    // --- LÓGICA DE CURVA (V27.0) ---
     function buscarCurva() { 
         const entrada = getVal('search_curva'); 
         if(!entrada) return Swal.fire('Error', 'Ingrese número de entrada', 'warning'); 
@@ -565,9 +578,56 @@
         });
     }
 
-    // Funciones Historial (Mismo código)
-    function cargarHistorial() { const tbody = document.getElementById('tabla_historial_body'); tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-info"></div></td></tr>'; google.script.run.withSuccessHandler(res => { if(res.success && Array.isArray(res.data)) { HISTORIAL_CACHE = res.data; renderHistorial(HISTORIAL_CACHE); } else { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error: ${res.error || 'Datos inválidos'}</td></tr>`; } }).obtenerHistorialGeneral(); }
-    function renderHistorial(lista) { const tbody = document.getElementById('tabla_historial_body'); tbody.innerHTML = ''; if(lista.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay registros en Base de Datos.</td></tr>'; return; } lista.forEach(item => { const badge = (val) => val ? '<i class="fas fa-check-circle icon-check"></i>' : '<i class="fas fa-circle icon-cross"></i>'; const html = `<tr><td class="fw-bold text-start ps-3">${item.entrada}</td><td class="text-start">${item.cliente}</td><td class="text-center">${badge(item.tiene_insp)}</td><td class="text-center">${badge(item.tiene_ini)}</td><td class="text-center">${badge(item.tiene_curva)}</td><td class="text-center">${badge(item.tiene_fin)}</td></tr>`; tbody.insertAdjacentHTML('beforeend', html); }); }
+    // --- HISTORIAL (V28.0 - LINK CLICKABLE) ---
+    function cargarHistorial() { 
+        const tbody = document.getElementById('tabla_historial_body'); 
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-info"></div></td></tr>'; 
+        google.script.run.withSuccessHandler(res => { 
+            if(res.success && Array.isArray(res.data)) { 
+                HISTORIAL_CACHE = res.data; 
+                renderHistorial(HISTORIAL_CACHE); 
+            } else { 
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error: ${res.error || 'Datos inválidos'}</td></tr>`; 
+            } 
+        }).obtenerHistorialGeneral(); 
+    }
+
+    function renderHistorial(lista) { 
+        const tbody = document.getElementById('tabla_historial_body'); 
+        tbody.innerHTML = ''; 
+        if(lista.length === 0) { 
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay registros en Base de Datos.</td></tr>'; 
+            return; 
+        } 
+        lista.forEach(item => { 
+            const badge = (val) => val ? '<i class="fas fa-check-circle icon-check"></i>' : '<i class="fas fa-circle icon-cross"></i>'; 
+            const html = `
+            <tr>
+                <td class="text-start ps-3">
+                    <a onclick="verDocHistorial('${item.entrada}')" class="link-entrada">
+                        ${item.entrada} <i class="fas fa-external-link-alt"></i>
+                    </a>
+                </td>
+                <td class="text-start">${item.cliente}</td>
+                <td class="text-center">${badge(item.tiene_insp)}</td>
+                <td class="text-center">${badge(item.tiene_ini)}</td>
+                <td class="text-center">${badge(item.tiene_curva)}</td>
+                <td class="text-center">${badge(item.tiene_fin)}</td>
+            </tr>`; 
+            tbody.insertAdjacentHTML('beforeend', html); 
+        }); 
+    }
+
+    function verDocHistorial(entrada) {
+        if(!entrada) return;
+        loading(true);
+        google.script.run.withSuccessHandler(res => {
+            loading(false);
+            if(res.found) window.open(res.url, '_blank');
+            else Swal.fire('Sin Documento', 'No se ha generado el protocolo aún.', 'info');
+        }).buscarProtocoloExistente({entrada: entrada});
+    }
+
     function filtrarHistorial() { const q = document.getElementById('filtroHistorial').value.toLowerCase(); const filtrados = HISTORIAL_CACHE.filter(i => i.entrada.toString().includes(q) || i.cliente.toLowerCase().includes(q) ); renderHistorial(filtrados); }
   </script>
 </body>
