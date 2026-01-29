@@ -3,113 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab Aceites JLB</title>
+    <title>JLB Gestión de Calidad</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
-        .card-oil { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; transition: all 0.3s; cursor: pointer; position: relative; overflow: hidden; }
-        .card-oil:hover { transform: translateY(-4px); border-color: #ca8a04; box-shadow: 0 10px 15px -3px rgba(202, 138, 4, 0.2); }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .card-oil { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; transition: all 0.3s; cursor: pointer; position: relative; overflow: hidden; }
+        .card-oil:hover { transform: translateY(-4px); border-color: #ca8a04; box-shadow: 0 10px 20px -3px rgba(202, 138, 4, 0.15); }
         .badge-step { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px; }
         .tab-btn { padding: 12px 24px; font-weight: 800; color: #94a3b8; border-bottom: 3px solid transparent; transition: all 0.2s; text-transform: uppercase; font-size: 0.8rem; }
         .tab-btn.active { color: #ca8a04; border-bottom-color: #ca8a04; }
         
-        /* CORRECCIÓN CSS: !important para obligar a ocultar la pestaña inactiva */
+        /* Animaciones y Grid */
         .grid-view { display: none !important; }
         .grid-view.active { display: grid !important; animation: fadeIn 0.4s ease-out; }
-        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+        /* Estilos Inputs */
+        .input-tech { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; font-weight: 600; color: #334155; transition: border 0.2s; }
+        .input-tech:focus { outline: none; border-color: #ca8a04; ring: 2px solid rgba(202,138,4,0.1); }
+        .label-tech { display: block; font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
     </style>
 </head>
-<body class="p-4 md:p-8 text-slate-800">
+<body class="p-4 md:p-8 text-slate-800 bg-slate-50">
 
     <script>
-        // API URL
+        // API URL (Reemplaza con tu URL actualizada si cambió)
         const URL_API = "https://script.google.com/macros/s/AKfycbzVU2GRgkaYB6BBUyh5QWCmiCSjnbwS_tGwEGbd6o8u7hz6JwC98cTVhhOb4AmIQJXREQ/exec";
     </script>
 
-    <header class="max-w-6xl mx-auto bg-gradient-to-r from-yellow-600 to-yellow-500 text-white p-6 rounded-2xl shadow-xl flex justify-between items-center mb-8 sticky top-4 z-50">
-        <div>
-            <h1 class="font-black text-2xl tracking-tight flex items-center gap-2">
-                <i data-lucide="flask-conical" class="w-8 h-8"></i> LABORATORIO DE ACEITES
-            </h1>
-            <p class="text-xs opacity-90 font-medium uppercase tracking-widest mt-1 pl-10">Control de Calidad & PCB</p>
+    <header class="max-w-7xl mx-auto bg-slate-900 text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-center mb-8 sticky top-4 z-50 border-b-4 border-yellow-500">
+        <div class="flex items-center gap-4">
+            <div class="bg-yellow-500 p-3 rounded-xl text-slate-900 shadow-lg">
+                <i data-lucide="microscope" class="w-8 h-8"></i>
+            </div>
+            <div>
+                <h1 class="font-black text-2xl tracking-tight">GESTIÓN DE CALIDAD</h1>
+                <p class="text-xs text-slate-400 font-medium uppercase tracking-widest mt-1">Laboratorio de Aceites & PCB</p>
+            </div>
         </div>
-        <button onclick="cargarListaAceites()" class="bg-white/20 hover:bg-white/30 p-3 rounded-full transition-all shadow-sm backdrop-blur-sm active:scale-95">
-            <i data-lucide="refresh-cw" class="w-6 h-6 text-white"></i>
-        </button>
+        <div class="flex gap-4 mt-4 md:mt-0">
+            <div class="text-right hidden md:block px-4 border-r border-slate-700">
+                <p class="text-xs text-slate-500 uppercase font-bold">Total Pendientes</p>
+                <p class="text-2xl font-black text-yellow-500" id="stat-total">0</p>
+            </div>
+            <button onclick="cargarListaAceites()" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-full transition-all shadow-sm border border-slate-700 active:scale-95">
+                <i data-lucide="refresh-cw" class="w-6 h-6 text-yellow-500"></i>
+            </button>
+        </div>
     </header>
 
-    <main class="max-w-6xl mx-auto">
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
-                <span class="text-4xl font-black text-slate-700" id="stat-total">0</span>
-                <span class="text-[10px] uppercase font-bold text-slate-400 mt-1">Pendientes</span>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
-                <span class="text-4xl font-black text-green-600" id="stat-hist">0</span>
-                <span class="text-[10px] uppercase font-bold text-slate-400 mt-1">Analizados</span>
+    <main class="max-w-7xl mx-auto">
+        <div class="flex border-b border-slate-200 mb-6 bg-white rounded-t-xl shadow-sm px-4">
+            <button onclick="switchTab('pendientes')" id="btn-pendientes" class="tab-btn active flex-1 flex items-center justify-center gap-2 py-4">
+                <i data-lucide="list-todo" class="w-4 h-4"></i> PENDIENTES
+            </button>
+            <button onclick="switchTab('analizados')" id="btn-analizados" class="tab-btn flex-1 flex items-center justify-center gap-2 py-4">
+                <i data-lucide="history" class="w-4 h-4"></i> HISTORIAL
+            </button>
+        </div>
+
+        <div id="grid-pendientes" class="grid-view active grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div class="col-span-full py-20 text-center text-slate-400">
+                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-3 text-yellow-500"></i>
+                <p class="font-bold text-sm">Conectando con el Servidor...</p>
             </div>
         </div>
 
-        <div class="flex border-b border-slate-200 mb-6 sticky top-28 bg-[#f1f5f9] z-40">
-            <button onclick="switchTab('pendientes')" id="btn-pendientes" class="tab-btn active flex-1 flex items-center justify-center gap-2"><i data-lucide="list-todo" class="w-4 h-4"></i> PENDIENTES</button>
-            <button onclick="switchTab('analizados')" id="btn-analizados" class="tab-btn flex-1 flex items-center justify-center gap-2"><i data-lucide="history" class="w-4 h-4"></i> HISTORIAL</button>
-        </div>
-
-        <div id="grid-pendientes" class="grid-view active grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="col-span-full py-20 text-center text-slate-400"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-3"></i><p>Conectando...</p></div>
-        </div>
-        <div id="grid-analizados" class="grid-view grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <div id="grid-analizados" class="grid-view grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
     </main>
 
-    <div id="modal-ficha" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden transform transition-all scale-100 my-8 flex flex-col max-h-[90vh]">
-            <div class="bg-slate-50 border-b border-slate-100 p-6 flex justify-between items-start shrink-0">
+    <div id="modal-ficha" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-slate-700">
+            
+            <div class="bg-slate-900 p-6 flex justify-between items-start shrink-0 border-b-4 border-yellow-500">
                 <div>
-                    <h3 class="font-black text-2xl text-slate-800" id="m-id">#ID</h3>
-                    <p class="text-sm text-slate-500 font-medium mt-1 truncate max-w-[300px]" id="m-cliente">Cliente</p>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="bg-yellow-500 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded uppercase" id="m-tipo">ENSAYO</span>
+                        <span class="text-slate-400 text-xs font-mono" id="m-fecha">--/--/----</span>
+                    </div>
+                    <h3 class="font-black text-3xl text-white tracking-tight" id="m-id">#ID</h3>
+                    <p class="text-sm text-slate-300 font-medium truncate max-w-[300px]" id="m-cliente">Cliente</p>
                 </div>
-                <button onclick="cerrarFicha()" class="text-slate-400 hover:text-red-500 transition-colors p-2 hover:bg-slate-100 rounded-full"><i data-lucide="x" class="w-6 h-6"></i></button>
+                <button onclick="cerrarFicha()" class="text-slate-400 hover:text-white transition-colors bg-slate-800 hover:bg-red-600 p-2 rounded-full">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
             </div>
 
-            <div class="p-6 overflow-y-auto custom-scrollbar flex-1">
-                <div class="mb-6" id="m-alerta-accion"></div>
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50">
                 
                 <div class="mb-6">
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 border-b pb-2 flex items-center gap-2"><i data-lucide="info" class="w-3 h-3"></i> Hoja de Vida Completa</h4>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" id="m-datos-tecnicos"></div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i data-lucide="database" class="w-4 h-4 text-yellow-600"></i> Especificaciones del Equipo
+                    </h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs" id="m-datos-tecnicos"></div>
                 </div>
 
-                <div id="form-registro" class="bg-yellow-50 p-5 rounded-xl border border-yellow-200 shadow-inner">
-                    <h4 class="text-sm font-bold text-yellow-800 uppercase mb-4 flex items-center gap-2"><i data-lucide="edit-3" class="w-4 h-4"></i> Registrar Análisis</h4>
-                    <div class="space-y-4">
-                        <div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Responsable</label><input type="text" id="responsable" class="w-full border border-yellow-300 rounded-lg text-sm font-bold p-3 outline-none" placeholder="Ej: Juan Perez"></div>
-                        <div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Dictamen</label><select id="conclusion" class="w-full border border-yellow-300 rounded-lg text-sm p-3 font-bold outline-none bg-white"><option value="">-- Seleccione --</option><option value="APROBADO">✅ APROBADO</option><option value="RECHAZADO">❌ RECHAZADO</option><option value="OBSERVADO">⚠️ OBSERVADO</option></select></div>
+                <div id="form-registro" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h4 class="text-sm font-black text-slate-800 uppercase mb-4 flex items-center gap-2 border-b pb-2">
+                        <i data-lucide="flask-conical" class="w-5 h-5 text-blue-600"></i> Registro de Variables (ADFQ-26)
+                    </h4>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <label class="label-tech">Temp. Muestra (°C)</label>
+                            <input type="number" id="inp-temp" class="input-tech" placeholder="Ej: 24" value="24">
+                        </div>
+                        <div>
+                            <label class="label-tech">Humedad Rel. (%)</label>
+                            <input type="number" id="inp-hum" class="input-tech" placeholder="Ej: 52" value="50">
+                        </div>
+                        <div>
+                            <label class="label-tech">Color (0.5 - 8.0)</label>
+                            <input type="number" id="inp-color" class="input-tech" step="0.5" placeholder="Ej: 1.5">
+                        </div>
+                        <div>
+                            <label class="label-tech">Examen Visual</label>
+                            <select id="inp-visual" class="input-tech bg-white">
+                                <option value="CLARO Y BRILLANTE">CLARO Y BRILLANTE</option>
+                                <option value="TURBIO">TURBIO</option>
+                                <option value="LODOS">CON LODOS</option>
+                                <option value="OSCURO">OSCURO</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                        <div>
+                            <label class="label-tech text-blue-700">Rigidez (kV)</label>
+                            <input type="number" id="inp-rigidez" class="input-tech border-blue-200" placeholder="Min 30">
+                        </div>
+                        <div>
+                            <label class="label-tech text-blue-700">Agua (ppm)</label>
+                            <input type="number" id="inp-agua" class="input-tech border-blue-200" placeholder="Max 35">
+                        </div>
+                        <div>
+                            <label class="label-tech">Acidez (mgKOH/g)</label>
+                            <input type="number" id="inp-acidez" class="input-tech" step="0.01" placeholder="Ej: 0.01">
+                        </div>
+                        <div>
+                            <label class="label-tech">Tensión (dinas/cm)</label>
+                            <input type="number" id="inp-tension" class="input-tech" placeholder="Ej: 35">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="label-tech text-red-600">Contenido PCB (ppm)</label>
+                            <input type="number" id="inp-pcb" class="input-tech border-red-100" placeholder="< 50" value="0">
+                        </div>
+                        <div>
+                            <label class="label-tech">Responsable del Análisis</label>
+                            <input type="text" id="inp-responsable" class="input-tech" placeholder="Tu Nombre">
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center gap-3 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                        <input type="checkbox" id="chk-pdf" class="w-5 h-5 text-yellow-600 rounded focus:ring-yellow-500 border-gray-300" checked>
+                        <div>
+                            <label for="chk-pdf" class="text-sm font-bold text-slate-800 cursor-pointer">Generar Certificado Oficial (PDF)</label>
+                            <p class="text-xs text-slate-500">Crea documento en Drive y adjunta link al sistema.</p>
+                        </div>
                     </div>
                 </div>
 
-                <div id="info-historial" class="hidden bg-green-50 p-5 rounded-xl border border-green-200">
-                    <h4 class="text-sm font-bold text-green-800 uppercase mb-4 flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Análisis Completado</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><p class="text-xs text-green-600 font-bold uppercase">Analista</p><p class="font-bold text-slate-800 text-lg" id="hist-resp">--</p></div>
-                        <div class="text-right"><p class="text-xs text-green-600 font-bold uppercase">Resultado</p><p class="font-black text-lg" id="hist-concl">--</p></div>
+                <div id="info-historial" class="hidden bg-green-50 p-6 rounded-xl border border-green-200 text-center">
+                    <div class="inline-block p-4 bg-white rounded-full shadow-sm mb-3">
+                        <i data-lucide="check-circle-2" class="w-12 h-12 text-green-500"></i>
+                    </div>
+                    <h3 class="text-xl font-black text-green-800 uppercase mb-1">Análisis Finalizado</h3>
+                    <p class="text-sm text-green-700 mb-6" id="hist-msg">El equipo ha sido procesado correctamente.</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-left max-w-md mx-auto bg-white p-4 rounded-lg shadow-sm">
+                        <div><p class="text-xs text-slate-400 font-bold uppercase">Resultado</p><p class="font-black text-slate-800 text-lg" id="hist-concl">--</p></div>
+                        <div class="text-right"><p class="text-xs text-slate-400 font-bold uppercase">Responsable</p><p class="font-bold text-slate-800" id="hist-resp">--</p></div>
+                    </div>
+
+                    <div id="btn-ver-pdf-container" class="mt-6 hidden">
+                        <a id="link-pdf" href="#" target="_blank" class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all transform hover:scale-105">
+                            <i data-lucide="file-text" class="w-5 h-5"></i>
+                            VER CERTIFICADO PDF
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <div class="p-4 bg-slate-50 border-t border-slate-200 shrink-0" id="modal-footer">
-                <button onclick="guardarEnsayo()" id="btn-save" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"><i data-lucide="save" class="w-5 h-5"></i> <span>GUARDAR Y FINALIZAR</span></button>
+            <div class="p-4 bg-white border-t border-slate-200 shrink-0" id="modal-footer">
+                <button onclick="guardarEnsayo()" id="btn-save" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 text-sm tracking-wide">
+                    <i data-lucide="save" class="w-5 h-5"></i> <span>PROCESAR Y GENERAR REPORTE</span>
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        let rawData = []; let selItem = null;
+        let rawData = [];
+        let selItem = null;
 
         async function apiRequest(action, payload = {}) {
             const body = JSON.stringify({ action, payload });
@@ -118,48 +212,79 @@
         }
 
         async function cargarListaAceites() {
-            document.getElementById('grid-pendientes').innerHTML = '<div class="col-span-full py-20 text-center text-slate-400"><i data-lucide="loader" class="w-10 h-10 animate-spin mx-auto mb-3"></i><p>Sincronizando...</p></div>';
+            document.getElementById('grid-pendientes').innerHTML = '<div class="col-span-full py-20 text-center text-slate-400"><i data-lucide="loader" class="w-10 h-10 animate-spin mx-auto mb-3"></i><p>Sincronizando base de datos...</p></div>';
             lucide.createIcons();
             try {
                 const res = await apiRequest('Aceites_ObtenerPendientes');
-                rawData = res; procesarListas(res);
+                rawData = res;
+                procesarListas(res);
             } catch (e) { alert("Error de conexión: " + e.message); }
         }
 
         function procesarListas(data) {
-            // CORRECCIÓN LÓGICA: FILTRO ANTI-FANTASMA
-            // 1. Identificamos los IDs que ya están listos en historial
+            // Lógica Anti-Fantasma: Si está en historial, no sale en pendientes
             const realizados = data.filter(i => i.status === 'REALIZADO');
-            const idsListos = realizados.map(r => String(r.id)); // Lista negra
-
-            // 2. Filtramos pendientes EXCLUYENDO los que ya están en la lista negra
-            // Esto evita que salga el mismo trafo en ambas pestañas si hubo lag en backend
+            const idsListos = realizados.map(r => String(r.id));
             const pendientes = data.filter(i => i.status === 'PENDIENTE' && !idsListos.includes(String(i.id)));
 
             document.getElementById('stat-total').innerText = pendientes.length;
-            document.getElementById('stat-hist').innerText = realizados.length;
             
             renderGrid(pendientes, 'grid-pendientes', false);
             renderGrid(realizados, 'grid-analizados', true);
         }
 
         function renderGrid(lista, containerId, esHistorial) {
-            const grid = document.getElementById(containerId); grid.innerHTML = '';
-            if (lista.length === 0) { grid.innerHTML = `<div class="col-span-full py-16 text-center opacity-50"><i data-lucide="${esHistorial ? 'history' : 'check-circle'}" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i><p class="text-sm font-bold text-slate-400 italic">Sin registros.</p></div>`; lucide.createIcons(); return; }
+            const grid = document.getElementById(containerId);
+            grid.innerHTML = '';
+            
+            if (lista.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-16 text-center opacity-50"><i data-lucide="${esHistorial ? 'history' : 'check-circle'}" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i><p class="text-sm font-bold text-slate-400 italic">No hay registros.</p></div>`;
+                lucide.createIcons();
+                return;
+            }
+
             lista.forEach((item) => {
-                let color = "bg-blue-50 text-blue-700 border-blue-200", icon = "test-tube-2";
-                if (esHistorial) { color = "bg-green-50 text-green-700 border-green-200"; icon = "check-circle-2"; }
-                else { if(item.accion.includes('PCB')) { color = "bg-red-50 text-red-700 border-red-200"; icon = "alert-triangle"; } else if(item.accion.includes('FINAL')) { color = "bg-green-50 text-green-700 border-green-200"; icon = "check-circle"; } }
+                let colorBadge = "bg-blue-100 text-blue-800";
+                let icon = "flask-conical";
                 
-                const info = item.info || {};
+                if (esHistorial) {
+                    colorBadge = "bg-green-100 text-green-800";
+                    icon = "check-circle-2";
+                } else {
+                    if(item.accion.includes('PCB')) { colorBadge = "bg-red-100 text-red-800"; icon = "alert-triangle"; }
+                    else if(item.accion.includes('FINAL')) { colorBadge = "bg-purple-100 text-purple-800"; icon = "check-circle"; }
+                }
+
+                // Detector de PDF para el historial
+                const hasPDF = esHistorial && item.pdf && item.pdf.includes('http');
                 
                 const card = `
-                    <div class="card-oil p-6 relative group ${esHistorial ? 'opacity-90 hover:opacity-100' : ''}" onclick="abrirFicha('${encodeURIComponent(JSON.stringify(item))}')">
-                        <div class="absolute -top-2 -right-2 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="${icon}" class="w-32 h-32"></i></div>
-                        <div class="flex justify-between items-center mb-4 relative z-10"><span class="badge-step ${color} border shadow-sm">${item.textoBoton}</span><span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">${item.fechaIngreso}</span></div>
-                        <div class="mb-4 relative z-10"><h3 class="font-black text-slate-800 text-2xl tracking-tight">#${item.id}</h3><p class="text-xs font-bold text-slate-500 uppercase tracking-wide truncate">${item.cliente}</p></div>
-                        <div class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 relative z-10"><span>${info.kva || '?'} KVA</span><span class="text-slate-300">|</span><span>${info.serie || '?'}</span></div>
-                        ${esHistorial ? `<div class="mt-4 pt-3 border-t border-slate-100 text-xs flex justify-between items-center relative z-10"><span class="text-slate-400 font-bold uppercase">Resultado:</span><span class="font-black ${item.resultado==='APROBADO'?'text-green-600':'text-red-600'}">${item.resultado}</span></div>` : ''}
+                    <div class="card-oil p-5 group flex flex-col h-full" onclick="abrirFicha('${encodeURIComponent(JSON.stringify(item))}')">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="badge-step ${colorBadge}">${item.textoBoton}</span>
+                            <span class="text-[10px] font-mono font-bold text-slate-400">${item.fechaIngreso}</span>
+                        </div>
+                        
+                        <div class="mb-4 flex-1">
+                            <h3 class="font-black text-slate-800 text-2xl tracking-tight mb-1">#${item.id}</h3>
+                            <p class="text-xs font-bold text-slate-500 uppercase truncate leading-tight">${item.cliente}</p>
+                        </div>
+                        
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 text-xs font-semibold text-slate-600 mb-3">
+                            <div class="flex justify-between mb-1"><span>Potencia:</span> <span class="text-slate-900">${item.info.kva || '?'} KVA</span></div>
+                            <div class="flex justify-between"><span>Serie:</span> <span class="text-slate-900 truncate max-w-[100px]">${item.info.serie || '?'}</span></div>
+                        </div>
+
+                        ${esHistorial ? `
+                            <div class="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between">
+                                <span class="font-black text-sm ${item.resultado==='APROBADO'?'text-green-600':'text-red-600'}">${item.resultado || 'OK'}</span>
+                                ${hasPDF ? '<i data-lucide="file-text" class="w-4 h-4 text-red-500"></i>' : '<i data-lucide="check" class="w-4 h-4 text-green-300"></i>'}
+                            </div>
+                        ` : `
+                            <div class="mt-auto pt-3 border-t border-slate-100 text-center">
+                                <span class="text-xs font-bold text-yellow-600 group-hover:underline">GESTIONAR CALIDAD &rarr;</span>
+                            </div>
+                        `}
                     </div>`;
                 grid.insertAdjacentHTML('beforeend', card);
             });
@@ -171,62 +296,134 @@
             const esHistorial = selItem.status === 'REALIZADO';
             const i = selItem.info || {};
 
+            // Llenar Header Modal
             document.getElementById('m-id').innerText = "#" + selItem.id;
             document.getElementById('m-cliente').innerText = selItem.cliente;
-            document.getElementById('m-alerta-accion').innerHTML = `<div class="bg-slate-100 text-slate-600 p-3 rounded-xl text-xs font-bold border border-slate-200 text-center uppercase tracking-widest">ENSAYO: <span class="text-slate-900">${selItem.textoBoton}</span></div>`;
-            
-            // --- TODOS LOS DATOS (TAILWIND STYLE) ---
-            const fields = [
-                {l:"Potencia", v: i.kva},
-                {l:"Marca", v: i.marca},
-                {l:"Serie", v: i.serie},
-                {l:"Voltajes", v: `${i.vp || '-'}/${i.vs || '-'}`},
-                {l:"Aceite (L)", v: i.litros, hl:true},
-                {l:"Peso", v: i.peso},
-                {l:"Fases", v: i.fases},
-                {l:"Grupo", v: i.grupo},
-                {l:"Año", v: i.anio},
-                {l:"Taps", v: i.taps},
-                {l:"Tipo", v: i.tipo_trafo}
-            ];
+            document.getElementById('m-tipo').innerText = selItem.textoBoton;
+            document.getElementById('m-fecha').innerText = selItem.fechaIngreso;
 
+            // Llenar Datos Técnicos (Read-only)
+            const fields = [
+                {l:"Marca", v: i.marca}, {l:"Voltajes", v: `${i.vp}/${i.vs}`},
+                {l:"Aceite (L)", v: i.litros}, {l:"Año", v: i.anio}
+            ];
             document.getElementById('m-datos-tecnicos').innerHTML = fields.map(f=>`
-                <div class="bg-white p-2 rounded-lg border ${f.hl?'border-blue-300 bg-blue-50':'border-slate-200'}">
-                    <p class="text-[9px] text-slate-400 uppercase font-bold tracking-wider">${f.l}</p>
-                    <p class="text-sm font-black ${f.hl?'text-blue-700':'text-slate-700'} truncate" title="${f.v}">${f.v||'-'}</p>
+                <div class="bg-slate-100 p-2 rounded border border-slate-200">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold">${f.l}</p>
+                    <p class="text-xs font-black text-slate-800 truncate" title="${f.v}">${f.v||'-'}</p>
                 </div>`).join('');
             
+            // Lógica de Vistas (Pendiente vs Historial)
             if (esHistorial) {
                 document.getElementById('form-registro').classList.add('hidden');
                 document.getElementById('modal-footer').classList.add('hidden');
                 document.getElementById('info-historial').classList.remove('hidden');
-                document.getElementById('hist-resp').innerText = selItem.responsable || '-';
-                document.getElementById('hist-concl').innerText = selItem.resultado || '-';
+                
+                document.getElementById('hist-resp').innerText = selItem.responsable || 'Sistema';
+                document.getElementById('hist-concl').innerText = selItem.resultado || 'Completado';
+
+                // Mostrar botón PDF si existe link
+                const divPdf = document.getElementById('btn-ver-pdf-container');
+                const linkPdf = document.getElementById('link-pdf');
+                
+                if (selItem.pdf && selItem.pdf.startsWith('http')) {
+                    divPdf.classList.remove('hidden');
+                    linkPdf.href = selItem.pdf;
+                } else {
+                    divPdf.classList.add('hidden');
+                }
+
             } else {
                 document.getElementById('form-registro').classList.remove('hidden');
                 document.getElementById('modal-footer').classList.remove('hidden');
                 document.getElementById('info-historial').classList.add('hidden');
-                document.getElementById('responsable').value = ""; document.getElementById('conclusion').value = "";
-                document.getElementById('btn-save').disabled = false; document.getElementById('btn-save').innerHTML = '<i data-lucide="save"></i> <span>GUARDAR Y FINALIZAR</span>';
+                
+                // Reset Inputs
+                const inputs = document.querySelectorAll('.input-tech');
+                inputs.forEach(inp => { if(inp.type !== 'select-one') inp.value = ''; });
+                document.getElementById('inp-temp').value = "24";
+                document.getElementById('inp-hum').value = "50";
+                document.getElementById('inp-pcb').value = "0";
+                
+                // Botón Save Reset
+                const btn = document.getElementById('btn-save');
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="save" class="w-5 h-5"></i> <span>PROCESAR Y GENERAR REPORTE</span>';
+                btn.className = "w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 text-sm tracking-wide";
             }
-            document.getElementById('modal-ficha').classList.remove('hidden'); lucide.createIcons();
+            
+            document.getElementById('modal-ficha').classList.remove('hidden');
+            lucide.createIcons();
         }
 
         async function guardarEnsayo() {
-            const btn = document.getElementById('btn-save'); const resp = document.getElementById('responsable').value; const concl = document.getElementById('conclusion').value;
-            if(!resp || !concl) { alert("⚠️ Completa todos los campos"); return; }
-            btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> <span>GUARDANDO...</span>'; btn.disabled = true;
+            // Validar Inputs
+            const rigidez = document.getElementById('inp-rigidez').value;
+            const agua = document.getElementById('inp-agua').value;
+            const responsable = document.getElementById('inp-responsable').value;
+
+            if(!rigidez || !agua || !responsable) {
+                alert("⚠️ CAMPOS OBLIGATORIOS: Rigidez, Agua y Responsable son vitales.");
+                return;
+            }
+
+            // Preparar Payload (ESTRUCTURA EXACTA PARA TU BACKEND)
+            const payload = {
+                ID_TRAFO: selItem.id,
+                CLIENTE: selItem.cliente,
+                RESPONSABLE: responsable,
+                TIPO_ENSAYO: selItem.accion,
+                
+                // Datos Técnicos Nuevos
+                TEMP_MUESTRA: document.getElementById('inp-temp').value,
+                HUMEDAD_REL: document.getElementById('inp-hum').value,
+                COLOR: document.getElementById('inp-color').value,
+                VISUAL: document.getElementById('inp-visual').value,
+                RIGIDEZ_KV: rigidez,
+                AGUA_PPM: agua,
+                ACIDEZ_MGKOH: document.getElementById('inp-acidez').value,
+                TENSION_INTERFACIAL: document.getElementById('inp-tension').value,
+                PCB: document.getElementById('inp-pcb').value,
+                
+                // Config
+                generarDoc: document.getElementById('chk-pdf').checked
+            };
+
+            // UI Loading
+            const btn = document.getElementById('btn-save');
+            btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5"></i> <span>ANALIZANDO DATOS...</span>';
+            btn.disabled = true;
+            btn.classList.remove('bg-slate-900'); btn.classList.add('bg-slate-400');
+
             try {
-                await apiRequest('Aceites_GuardarInforme', { idTrafo: selItem.id, cliente: selItem.cliente, fecha: new Date().toISOString().split('T')[0], responsable: resp, conclusion: concl, tipoEnsayo: selItem.accion });
-                cerrarFicha(); cargarListaAceites();
-            } catch(e) { alert("Error: " + e.message); btn.innerHTML = '<i data-lucide="save"></i> <span>REINTENTAR</span>'; btn.disabled = false; }
+                const res = await apiRequest('Aceites_GuardarInforme', payload);
+                if (res.exito) {
+                    alert("✅ ANÁLISIS COMPLETADO\nVeredicto: " + res.veredicto);
+                    cerrarFicha();
+                    cargarListaAceites();
+                } else {
+                    throw new Error(res.error);
+                }
+            } catch(e) {
+                alert("❌ Error: " + e.message);
+                btn.innerHTML = '<i data-lucide="refresh-ccw" class="w-5 h-5"></i> <span>REINTENTAR</span>';
+                btn.disabled = false;
+                btn.classList.add('bg-slate-900'); btn.classList.remove('bg-slate-400');
+            }
         }
 
         function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.getElementById('btn-' + tab).classList.add('active');
-            document.querySelectorAll('.grid-view').forEach(g => g.classList.remove('active')); document.getElementById('grid-' + tab).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + tab).classList.add('active');
+            
+            document.querySelectorAll('.grid-view').forEach(g => g.classList.remove('active'));
+            document.getElementById('grid-' + tab).classList.add('active');
         }
-        function cerrarFicha() { document.getElementById('modal-ficha').classList.add('hidden'); }
+
+        function cerrarFicha() {
+            document.getElementById('modal-ficha').classList.add('hidden');
+        }
+
         window.onload = cargarListaAceites;
     </script>
 </body>
