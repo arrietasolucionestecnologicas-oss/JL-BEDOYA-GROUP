@@ -13,20 +13,15 @@
   <style>
     :root { --primary: #0d6efd; --sidebar-w: 260px; }
     body { background-color: #f4f6f8; font-family: 'Segoe UI', Roboto, sans-serif; padding-bottom: 80px; font-size: 0.9rem; }
-    
-    /* SIDEBAR */
     .sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; top: 0; left: 0; background: #fff; border-right: 1px solid #dee2e6; z-index: 1000; transition: 0.3s; }
     .brand { padding: 20px; border-bottom: 1px solid #eee; }
     .nav-link { color: #555; padding: 15px 20px; display: flex; align-items: center; border-radius: 0 25px 25px 0; margin-bottom: 5px; cursor: pointer; text-decoration: none; }
     .nav-link:hover { background: #f0f8ff; color: var(--primary); }
     .nav-link.active { background: #e3f2fd; color: var(--primary); font-weight: bold; border-right: 3px solid var(--primary); }
-    
     .main { margin-left: var(--sidebar-w); padding: 20px; transition: 0.3s; }
     .view { display: none; animation: fadeIn 0.3s; }
     .view.active { display: block; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-    /* MOBILE */
     .mobile-header { display: none; }
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); }
@@ -36,8 +31,6 @@
       .overlay { position: fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999; display:none; }
       .overlay.show { display:block; }
     }
-
-    /* CARDS & UTILS */
     .card { border:none; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.03); margin-bottom:15px; background: white; }
     .scroll-x { overflow-x: auto; white-space: nowrap; }
     .input-group-text { font-size: 0.8rem; font-weight: bold; width: 60px; justify-content: center; }
@@ -45,25 +38,18 @@
     .label-mini { font-size: 0.7rem; color: #6c757d; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
     .unit-select { max-width: 70px; font-weight: bold; background-color: #f8f9fa; border: 1px solid #ced4da; font-size: 0.8rem; }
     .bg-garantia { background-color: #e8f5e9; border-color: #c8e6c9; color: #1b5e20; }
-    
-    /* AGENDA */
     .agenda-card { border-left: 4px solid var(--primary); transition: transform 0.2s; cursor: pointer; }
     .agenda-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .badge-jlb { background-color: #0d6efd; color: white; }
     .badge-group { background-color: #fd7e14; color: white; }
     .bg-purple { background-color: #6f42c1 !important; color: white; }
     .text-purple { color: #6f42c1 !important; }
-    
     .blink { animation: blinker 1.5s linear infinite; }
     @keyframes blinker { 50% { opacity: 0.5; } }
     .hover-effect { transition: transform 0.2s; cursor: pointer; }
     .hover-effect:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-    
-    /* LINKS */
     .link-entrada { color: var(--primary); font-weight: bold; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; }
     .link-entrada:hover { text-decoration: underline; color: #0a58ca; }
-    
-    /* TABLES */
     .table-historial th { background-color: #f8f9fa; font-size: 0.85rem; text-transform: uppercase; color: #6c757d; }
     .table-historial td { font-size: 0.9rem; vertical-align: middle; }
     .icon-check { color: #198754; font-size: 1.2rem; }
@@ -80,7 +66,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V30.0 | Final</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V31.0 | Auto-Fill</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -94,7 +80,6 @@
   </div>
 
   <div class="main">
-
     <div id="view-home" class="view active">
       <div class="text-center py-5">
         <h3 class="fw-bold text-dark mb-4">Panel de Control</h3>
@@ -230,7 +215,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // --- VARIABLES GLOBALES SEGURAS ---
     const URL_API_CAMPO = "https://script.google.com/macros/s/AKfycbwd4ckii8-VM9sCzrOHhijQ1-BImInqTZ5YfhVpS2wyQE6BE2PDRmPb-yHJgY0910csBQ/exec";
     let DATA = {};
     let AGENDA_CACHE = [];
@@ -265,7 +249,6 @@
                         if (args.length === 1 && typeof args[0] === 'object' && keys[0] === 'payload') payload = args[0];
                         else args.forEach((val, i) => { if (keys[i]) payload[keys[i]] = val; });
                         
-                        // 🔥 CONEXIÓN RESTAURADA AQUÍ 🔥
                         fetch(URL_API_CAMPO, { 
                             method: 'POST', 
                             body: JSON.stringify({ action: prop, payload: payload }) 
@@ -357,11 +340,37 @@
         }).withFailureHandler(e => { loading(false); Swal.fire('Error', e.toString(), 'error'); }).buscarProtocoloExistente({entrada: DATA.entrada});
     }
 
+    // Funciones del Checklist y otros
     function initInsp() { document.getElementById('form_insp').classList.remove('d-none'); const list = [{c:'ESTRUCTURA', i:['Placa','Pintura','Cuba','Expansion','Gabinete','Radiadores','Borne']},{c:'ACCESORIOS', i:['Termómetro','Nivel','Silica','Valv.Drenaje','Valv.Presion','Buchholz']},{c:'BUJES', i:['Bujes AT','Bujes BT','Herrajes AT','Herrajes BT']},{c:'FUGAS', i:['Empaque Tapa-Tanque','Empaque Bujes AT','Empaque Bujes BT']},{c:'PRUEBAS PRELIMINARES', i:['TTR','Aislamiento','Resistencia', 'Vacio', 'Corto']}]; let h=''; list.forEach(g => { h+=`<tr class="bg-light fw-bold"><td colspan="2">${g.c}</td></tr>`; let options = '<option value="" selected></option>'; if(g.c === 'PRUEBAS PRELIMINARES') options += '<option>CONFORME</option><option>NO CONFORME</option><option>N/A</option>'; else if(g.c === 'FUGAS') options += '<option>BUENO</option><option>MALO</option><option>CAMBIAR</option><option>N/A</option>'; else options += '<option>BUENO</option><option>MALO</option><option>FALTANTE</option><option>CAMBIAR</option><option>PINTAR</option><option>LIMPIAR</option><option>N/A</option>'; g.i.forEach(it => { let id = 'chk_' + it.replace(/ /g,'').replace('.','').replace('-','').toLowerCase(); h+=`<tr><td>${it}</td><td><select id="${id}" class="form-select form-select-sm">${options}</select></td></tr>`; }); }); document.getElementById('insp_body').innerHTML = h; if(DATA.saved_insp) { const d = DATA.saved_insp; if(d.servicio) document.getElementById('insp_servicio').value = d.servicio; if(d.observaciones) document.getElementById('insp_obs').value = d.observaciones; if(d.realizado) document.getElementById('insp_realizado').value = d.realizado; const ids = ['placa','pintura','cuba','expansion','gabinete','radiadores','borne','termometro','nivel','silica','valvdrenaje','valvpresion','buchholz','bujesat','bujesbt','herrajesat','herrajesbt','ttr','aislamiento','resistencia']; ids.forEach(k => { const el = document.getElementById('chk_'+k); if(el && d[k]) el.value = d[k]; }); if(d.fugatapa) setVal('chk_empaquetapatanque', d.fugatapa); if(d.fugabujes_at) setVal('chk_empaquebujesat', d.fugabujes_at); if(d.fugabujes_bt) setVal('chk_empaquebujesbt', d.fugabujes_bt); if(d.vacio) setVal('chk_vacio', d.vacio); if(d.corto) setVal('chk_corto', d.corto); } }
     function recopilarDatosInspeccion() { let f = {...DATA}; f.servicio = getVal('insp_servicio'); f.observaciones = getVal('insp_obs'); f.realizado = getVal('insp_realizado'); const ids = ['placa','pintura','cuba','expansion','gabinete','radiadores','borne','termometro','nivel','silica','valvdrenaje','valvpresion','buchholz','bujesat','bujesbt','herrajesat','herrajesbt','ttr','aislamiento','resistencia']; ids.forEach(k => { f[k] = getVal('chk_'+k); }); f.fugatapa = getVal('chk_empaquetapatanque'); f.fugabujes_at = getVal('chk_empaquebujesat'); f.fugabujes_bt = getVal('chk_empaquebujesbt'); f.vacio = getVal('chk_vacio'); f.corto = getVal('chk_corto'); return f; }
     function guardarInsp(pdf) { if(!getVal('insp_realizado')) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatosInspeccion(); f.estado_cert = "PENDIENTE"; loading(true); const action = pdf ? 'procesarInspeccion' : 'guardarSoloBD_Inspeccion'; google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { if(res.url) window.open(res.url); else Swal.fire('Guardado','Estado: PENDIENTE','success'); } else Swal.fire('Error',res.error,'error'); })[action](f); }
     function certificarInspeccion() { if(!getVal('insp_realizado')) return Swal.fire('Firma Requerida', '', 'warning'); Swal.fire({ title: '¿Certificar?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, Certificar' }).then((result) => { if (result.isConfirmed) { loading(true); let f = recopilarDatosInspeccion(); f.estado_cert = "CERTIFICADO"; google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { Swal.fire('¡Certificado!', '', 'success'); if(res.url) window.open(res.url); } else Swal.fire('Error', res.error, 'error'); }).procesarInspeccion(f); } }); }
-    function buscar(mod) { const val = document.getElementById('search_'+mod).value; if(!val) return Swal.fire('Error','Ingrese Entrada','warning'); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.found) { DATA = res; DATA.fases = parseFloat(DATA.fases); document.querySelectorAll('.lbl-entrada').forEach(e=>e.innerText=res.entrada); document.querySelectorAll('.lbl-kva').forEach(e=>e.innerText=res.kva); document.querySelectorAll('.lbl-cliente').forEach(e=>e.innerText=res.cliente); calcCorrientes(); if(mod === 'insp') initInsp(); else if(mod === 'hv') initHV(); else if(mod === 'curva') buscarCurva(); else initLab(mod); } else { if(mod === 'hv') return Swal.fire('No Existe','Entrada no encontrada','error'); Swal.fire({ title:'No Existe', text:'¿Crear Hoja de Vida?', icon:'question', showCancelButton:true, confirmButtonText:'Sí, Crear' }).then(r => { if(r.isConfirmed) { document.getElementById('new_entrada').value = val; modalCrear.show(); } }); } }).withFailureHandler(e => { loading(false); Swal.fire('Error', e.toString(), 'error'); }).buscarInfoEntrada(val); }
+    function buscar(mod) { const val = document.getElementById('search_'+mod).value; if(!val) return Swal.fire('Error','Ingrese Entrada','warning'); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.found) { DATA = res; DATA.fases = parseFloat(DATA.fases); document.querySelectorAll('.lbl-entrada').forEach(e=>e.innerText=res.entrada); document.querySelectorAll('.lbl-kva').forEach(e=>e.innerText=res.kva); document.querySelectorAll('.lbl-cliente').forEach(e=>e.innerText=res.cliente); calcCorrientes(); if(mod === 'insp') initInsp(); else if(mod === 'hv') initHV(); else if(mod === 'curva') buscarCurva(); else initLab(mod); } else { 
+        // LÓGICA DE AUTO-LLENADO V31.0
+        Swal.fire({ title:'No Existe', text:'¿Crear Hoja de Vida?', icon:'question', showCancelButton:true, confirmButtonText:'Sí, Crear' }).then(r => { 
+            if(r.isConfirmed) { 
+                document.getElementById('new_entrada').value = val;
+                
+                // Si venimos de la Agenda, intentamos llenar los datos
+                if(ITEM_SELECCIONADO && String(ITEM_SELECCIONADO.id) === String(val)) {
+                    if(ITEM_SELECCIONADO.cliente) document.getElementById('new_cliente').value = ITEM_SELECCIONADO.cliente;
+                    if(ITEM_SELECCIONADO.serie) document.getElementById('new_serie').value = ITEM_SELECCIONADO.serie;
+                    
+                    // Intentamos sacar KVA de la descripción si no vino explícito
+                    // Ej: "75 KVA..." -> 75
+                    let kva = "";
+                    const desc = ITEM_SELECCIONADO.descripcion || "";
+                    const match = desc.match(/(\d+(\.\d+)?)\s*KVA/i);
+                    if(match) kva = match[1];
+                    
+                    if(kva) document.getElementById('new_kva').value = kva;
+                }
+                
+                if(modalCrear) modalCrear.show(); 
+            } 
+        }); 
+    } }).withFailureHandler(e => { loading(false); Swal.fire('Error', e.toString(), 'error'); }).buscarInfoEntrada(val); }
+    
     function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.querySelector('.overlay').classList.toggle('show'); }
     function loading(show) { const el=document.getElementById('loader'); show?el.classList.remove('d-none'):el.classList.add('d-none'); }
     function getVal(id) { const el=document.getElementById(id); return el?el.value:''; }
@@ -406,7 +415,7 @@
                        <span class="badge ${badgeColorClass} mb-1 ms-2 blink">${estadoTecnico}</span>
                        <h6 class="fw-bold text-dark mb-0">${item.cliente}</h6>
                        <small class="text-muted text-uppercase">${item.descripcion}</small>
-                       <div class="mt-1"><span class="badge bg-light text-dark border">${item.estado}</span><span class="text-xs text-muted ms-2"><i class="far fa-calendar-alt"></i> ${item.fecha}</span></div>
+                       <div class="mt-1"><span class="badge bg-light text-dark border">${item.estado || "PRODUCCION"}</span><span class="text-xs text-muted ms-2"><i class="far fa-calendar-alt"></i> ${item.fecha}</span></div>
                    </div>
                    <button class="btn btn-outline-primary btn-sm rounded-pill"><i class="fas fa-arrow-right"></i></button>
                </div>
@@ -533,12 +542,6 @@
     function guardarLab(mod, soloGuardar) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); const runner = (mod === 'ini') ? google.script.run.withSuccessHandler(fin).guardarPruebasIniciales(f, soloGuardar) : google.script.run.withSuccessHandler(fin).guardarPruebasFinales(f, soloGuardar); }
     function generarProtocoloCliente(mod) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) Swal.fire({title:'Protocolo Generado', html:`<a href="${res.url}" target="_blank" class="btn btn-dark btn-lg">Abrir Protocolo (PDF)</a>`, icon:'success'}); else Swal.fire('Error Word',res.error,'error'); }).generarProtocoloClienteDoc(f); }
     function fin(res) { if(res.success && DATA.entrada) localStorage.removeItem('backup_' + DATA.entrada); loading(false); if(res.success && res.message) { Swal.fire('Guardado', res.message, 'success'); } else if(res.success) { res.url ? window.open(res.url) : Swal.fire('Guardado','Datos en Excel','success'); } else { Swal.fire('Error',res.error,'error'); } }
-    function buscarCurva() { const entrada = getVal('search_curva'); if(!entrada) return Swal.fire('Error', 'Ingrese número de entrada', 'warning'); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(!res.success) return Swal.fire('Error', res.error, 'error'); document.getElementById('panel_curva').classList.remove('d-none'); renderizarCurva(res.data); DATA.entrada_curva = entrada; }).obtenerDatosCurva(entrada); }
-    function guardarLecturaCurva() { const temp = getVal('curva_temp'); const ir = getVal('curva_ir'); const obs = getVal('curva_obs'); if(!temp || !ir) return Swal.fire('Faltan Datos', '', 'warning'); Swal.fire({ title: 'Responsable', input: 'text', showCancelButton: true }).then((result) => { if (result.isConfirmed && result.value) { loading(true); const payload = { entrada: DATA.entrada_curva, temp: temp, ir: ir, obs: obs, realizado: result.value }; google.script.run.withSuccessHandler(res => { if(res.success) { document.getElementById('curva_temp').value = ''; document.getElementById('curva_ir').value = ''; document.getElementById('curva_obs').value = ''; buscarCurva(); Swal.fire({toast:true, position:'top-end', icon:'success', title:'Registrado', timer:2000}); } else { loading(false); Swal.fire('Error', res.error, 'error'); } }).registrarLecturaCurva(payload); } }); }
-    function renderizarCurva(datos) { const tbody = document.getElementById('tabla_curva_body'); tbody.innerHTML = ''; const labels = []; const temps = []; const irs = []; datos.forEach(d => { tbody.insertAdjacentHTML('beforeend', `<tr><td>${d.fecha}</td><td>${d.temp}</td><td>${d.ir}</td><td class="text-start">${d.obs}</td></tr>`); labels.push(d.fecha); temps.push(d.temp); irs.push(d.ir); }); const ctx = document.getElementById('chartSecamiento').getContext('2d'); if (chartInstance) chartInstance.destroy(); chartInstance = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [ { label: 'Temperatura (°C)', data: temps, borderColor: '#dc3545', backgroundColor: '#dc3545', yAxisID: 'y', tension: 0.3 }, { label: 'Aislamiento (MΩ)', data: irs, borderColor: '#0d6efd', backgroundColor: '#0d6efd', yAxisID: 'y1', tension: 0.3 } ] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Temperatura (°C)' } }, y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Resistencia (MΩ)' }, grid: { drawOnChartArea: false } } } } }); }
-    function cargarHistorial() { const tbody = document.getElementById('tabla_historial_body'); tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-info"></div></td></tr>'; google.script.run.withSuccessHandler(res => { if(res.success && Array.isArray(res.data)) { HISTORIAL_CACHE = res.data; renderHistorial(HISTORIAL_CACHE); } else { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error: ${res.error || 'Datos inválidos'}</td></tr>`; } }).obtenerHistorialGeneral(); }
-    function renderHistorial(lista) { const tbody = document.getElementById('tabla_historial_body'); tbody.innerHTML = ''; if(lista.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay registros en Base de Datos.</td></tr>'; return; } lista.forEach(item => { const badge = (val) => val ? '<i class="fas fa-check-circle icon-check"></i>' : '<i class="fas fa-circle icon-cross"></i>'; const html = `<tr><td class="fw-bold text-start ps-3">${item.entrada}</td><td class="text-start">${item.cliente}</td><td class="text-center">${badge(item.tiene_insp)}</td><td class="text-center">${badge(item.tiene_ini)}</td><td class="text-center">${badge(item.tiene_curva)}</td><td class="text-center">${badge(item.tiene_fin)}</td></tr>`; tbody.insertAdjacentHTML('beforeend', html); }); }
-    function filtrarHistorial() { const q = document.getElementById('filtroHistorial').value.toLowerCase(); const filtrados = HISTORIAL_CACHE.filter(i => i.entrada.toString().includes(q) || i.cliente.toLowerCase().includes(q) ); renderHistorial(filtrados); }
-  </script>
+  </script>
 </body>
 </html>
