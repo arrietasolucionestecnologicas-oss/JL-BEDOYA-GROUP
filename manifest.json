@@ -1,11 +1,11 @@
 {
-  "name": "JLB Group Portal",
+  "name": "Sistema Técnico JLB",
   "short_name": "JLB Group",
-  "description": "Portal Integrado de Gestión JLB Group S.A.S",
+  "description": "App de Campo y Aceites JLB Group",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0F172A",
-  "theme_color": "#0F172A",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
   "orientation": "portrait",
   "icons": [
     {
