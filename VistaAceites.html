@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JLB Gestión de Calidad</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ca8a04">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -28,6 +35,10 @@
         .input-tech { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; font-weight: 600; color: #334155; transition: border 0.2s; }
         .input-tech:focus { outline: none; border-color: #ca8a04; ring: 2px solid rgba(202,138,4,0.1); }
         .label-tech { display: block; font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+        
+        /* Botón Instalar */
+        .blink { animation: blinker 1.5s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.7; } }
     </style>
 </head>
 <body class="p-4 md:p-8 text-slate-800 bg-slate-50">
@@ -47,7 +58,12 @@
                 <p class="text-xs text-slate-400 font-medium uppercase tracking-widest mt-1">Laboratorio de Aceites & PCB</p>
             </div>
         </div>
-        <div class="flex gap-4 mt-4 md:mt-0">
+        <div class="flex gap-4 mt-4 md:mt-0 items-center">
+            
+            <button id="btn-install" onclick="instalarPWA()" class="hidden bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase shadow-lg blink transition-all active:scale-95 flex items-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i> Instalar App
+            </button>
+
             <div class="text-right hidden md:block px-4 border-r border-slate-700">
                 <p class="text-xs text-slate-500 uppercase font-bold">Total Pendientes</p>
                 <p class="text-2xl font-black text-yellow-500" id="stat-total">0</p>
@@ -429,6 +445,26 @@
 
         function cerrarFicha() {
             document.getElementById('modal-ficha').classList.add('hidden');
+        }
+
+        // --- PWA LOGIC ---
+        let deferredPrompt;
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(r=>console.log('SW OK')).catch(e=>console.log('SW Fail'));
+            });
+        }
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('btn-install').classList.remove('hidden');
+        });
+        async function instalarPWA() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            if(outcome === 'accepted') document.getElementById('btn-install').classList.add('hidden');
         }
 
         window.onload = cargarListaAceites;
