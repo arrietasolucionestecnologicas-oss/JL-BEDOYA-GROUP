@@ -4,14 +4,8 @@
   <base target="_top">
   <title>Sistema Técnico - JL BEDOYA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0d6efd">
-  <link rel="apple-touch-icon" href="icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
   <link rel="icon" href="data:,">
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,15 +14,20 @@
   <style>
     :root { --primary: #0d6efd; --sidebar-w: 260px; }
     body { background-color: #f4f6f8; font-family: 'Segoe UI', Roboto, sans-serif; padding-bottom: 80px; font-size: 0.9rem; }
+    
+    /* SIDEBAR */
     .sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; top: 0; left: 0; background: #fff; border-right: 1px solid #dee2e6; z-index: 1000; transition: 0.3s; }
     .brand { padding: 20px; border-bottom: 1px solid #eee; }
     .nav-link { color: #555; padding: 15px 20px; display: flex; align-items: center; border-radius: 0 25px 25px 0; margin-bottom: 5px; cursor: pointer; text-decoration: none; }
     .nav-link:hover { background: #f0f8ff; color: var(--primary); }
     .nav-link.active { background: #e3f2fd; color: var(--primary); font-weight: bold; border-right: 3px solid var(--primary); }
+    
     .main { margin-left: var(--sidebar-w); padding: 20px; transition: 0.3s; }
     .view { display: none; animation: fadeIn 0.3s; }
     .view.active { display: block; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* MOBILE */
     .mobile-header { display: none; }
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); }
@@ -38,6 +37,8 @@
       .overlay { position: fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999; display:none; }
       .overlay.show { display:block; }
     }
+
+    /* CARDS */
     .card { border:none; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.03); margin-bottom:15px; background: white; }
     .scroll-x { overflow-x: auto; white-space: nowrap; }
     .input-group-text { font-size: 0.8rem; font-weight: bold; width: 60px; justify-content: center; }
@@ -45,16 +46,21 @@
     .label-mini { font-size: 0.7rem; color: #6c757d; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
     .unit-select { max-width: 70px; font-weight: bold; background-color: #f8f9fa; border: 1px solid #ced4da; font-size: 0.8rem; }
     .bg-garantia { background-color: #e8f5e9; border-color: #c8e6c9; color: #1b5e20; }
+    
+    /* AGENDA */
     .agenda-card { border-left: 4px solid var(--primary); transition: transform 0.2s; cursor: pointer; }
     .agenda-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .badge-jlb { background-color: #0d6efd; color: white; }
     .badge-group { background-color: #fd7e14; color: white; }
     .bg-purple { background-color: #6f42c1 !important; color: white; }
     .text-purple { color: #6f42c1 !important; }
+    
     .blink { animation: blinker 1.5s linear infinite; }
     @keyframes blinker { 50% { opacity: 0.5; } }
     .hover-effect { transition: transform 0.2s; cursor: pointer; }
     .hover-effect:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    
+    /* LINKS & TABLES */
     .link-entrada { color: var(--primary); font-weight: bold; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; }
     .link-entrada:hover { text-decoration: underline; color: #0a58ca; }
     .table-historial th { background-color: #f8f9fa; font-size: 0.85rem; text-transform: uppercase; color: #6c757d; }
@@ -73,7 +79,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V31.0 | PWA Ready</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V32.0 | Integrity</small></div>
     <div class="mt-4">
       
       <div id="btn-install" class="nav-link bg-success text-white fw-bold d-none blink" style="cursor: pointer;" onclick="instalarPWA()">
@@ -92,6 +98,7 @@
   </div>
 
   <div class="main">
+
     <div id="view-home" class="view active">
       <div class="text-center py-5">
         <h3 class="fw-bold text-dark mb-4">Panel de Control</h3>
@@ -204,7 +211,7 @@
             <div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold">AGENDA PENDIENTE</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
             <div class="modal-body bg-light">
                 <div class="row g-2 mb-3">
-                    <div class="col-md-6"><div class="input-group"><span class="input-group-text"><i class="fas fa-search"></i></span><input type="text" id="filtroAgenda" class="form-control" placeholder="Buscar Cliente/ID..." onkeyup="filtrarAgenda()"></div></div>
+                    <div class="col-md-6"><div class="input-group"><span class="input-group-text"><i class="fas fa-search"></i></span><input type="text" id="filtroAgenda" class="form-control" placeholder="Buscar..." onkeyup="filtrarAgenda()"></div></div>
                     <div class="col-md-6">
                         <select id="filtroEstadoAgenda" class="form-select fw-bold text-primary" onchange="filtrarAgenda()">
                             <option value="TODOS">⚡ TODOS LOS PENDIENTES</option>
@@ -236,11 +243,9 @@
     let modalCrear = null;
     let modalAgenda = null;
 
-    // --- CONECTOR GOOGLE APPS SCRIPT (RESTAURADO) ---
     class GasRunner {
         constructor() {
-            this._success = null;
-            this._failure = null;
+            this._success = null; this._failure = null;
             this.argMap = { 
                 'buscarInfoEntrada': ['entrada'], 'guardarPruebasIniciales': ['form', 'soloGuardar'], 
                 'guardarPruebasFinales': ['form', 'soloGuardar'], 'registrarNuevaEntrada': ['payload'],
@@ -260,16 +265,9 @@
                         const keys = target.argMap[prop] || target.argMap['default'];
                         if (args.length === 1 && typeof args[0] === 'object' && keys[0] === 'payload') payload = args[0];
                         else args.forEach((val, i) => { if (keys[i]) payload[keys[i]] = val; });
-                        
-                        fetch(URL_API_CAMPO, { 
-                            method: 'POST', 
-                            body: JSON.stringify({ action: prop, payload: payload }) 
-                        })
+                        fetch(URL_API_CAMPO, { method: 'POST', body: JSON.stringify({ action: prop, payload: payload }) })
                         .then(r => r.json())
-                        .then(data => { 
-                            if (data.error) { if(target._failure) target._failure(data.error); } 
-                            else { if(target._success) target._success(data); } 
-                        })
+                        .then(data => { if (data.error) { if(target._failure) target._failure(data.error); } else { if(target._success) target._success(data); } })
                         .catch(err => { if(target._failure) target._failure(err.toString()); });
                     };
                 }
@@ -280,7 +278,6 @@
     var google = window.google || {};
     if (!google.script || !google.script.run) { google = { script: { run: new GasRunner() } }; }
 
-    // --- INICIALIZACIÓN SEGURA ---
     document.addEventListener('DOMContentLoaded', () => {
         try {
             if(typeof bootstrap !== 'undefined') {
@@ -289,27 +286,17 @@
             }
             buildLabViews(); 
             google.script.run.withSuccessHandler(fillDatalists).obtenerListasAutocompletado();
-        } catch (e) {
-            console.error("Error init:", e);
-        }
+        } catch (e) { console.error("Error init:", e); }
     });
 
-    // --- FUNCIONES CORE ---
     function fillDatalists(lists) {
-       const fill = (id, arr) => {
-         const dl = document.getElementById(id); let opts = '';
-         if(arr) arr.forEach(val => opts += `<option value="${val}">`); 
-         if(dl) dl.innerHTML = opts;
-       };
+       const fill = (id, arr) => { const dl = document.getElementById(id); let opts = ''; if(arr) arr.forEach(val => opts += `<option value="${val}">`); if(dl) dl.innerHTML = opts; };
        if(lists) { fill('list_insp', lists.insp); fill('list_ini', lists.ini); fill('list_fin', lists.fin); }
     }
     
     function calcCorrientes() {
         if(!DATA || !DATA.kva) return;
-        const kva = parseFloat(DATA.kva) || 0;
-        const vp = parseFloat(DATA.vp) || 0;
-        const vs = parseFloat(DATA.vs) || 0;
-        const fases = parseFloat(DATA.fases) || 3;
+        const kva = parseFloat(DATA.kva) || 0; const vp = parseFloat(DATA.vp) || 0; const vs = parseFloat(DATA.vs) || 0; const fases = parseFloat(DATA.fases) || 3;
         let ip = 0, is = 0;
         if(fases === 3 && vp > 0) ip = (kva * 1000) / (vp * 1.73205); else if(vp > 0) ip = (kva * 1000) / vp;
         if(fases === 3 && vs > 0) is = (kva * 1000) / (vs * 1.73205); else if(vs > 0) is = (kva * 1000) / vs;
@@ -352,13 +339,12 @@
         }).withFailureHandler(e => { loading(false); Swal.fire('Error', e.toString(), 'error'); }).buscarProtocoloExistente({entrada: DATA.entrada});
     }
 
-    // Funciones del Checklist y otros
     function initInsp() { document.getElementById('form_insp').classList.remove('d-none'); const list = [{c:'ESTRUCTURA', i:['Placa','Pintura','Cuba','Expansion','Gabinete','Radiadores','Borne']},{c:'ACCESORIOS', i:['Termómetro','Nivel','Silica','Valv.Drenaje','Valv.Presion','Buchholz']},{c:'BUJES', i:['Bujes AT','Bujes BT','Herrajes AT','Herrajes BT']},{c:'FUGAS', i:['Empaque Tapa-Tanque','Empaque Bujes AT','Empaque Bujes BT']},{c:'PRUEBAS PRELIMINARES', i:['TTR','Aislamiento','Resistencia', 'Vacio', 'Corto']}]; let h=''; list.forEach(g => { h+=`<tr class="bg-light fw-bold"><td colspan="2">${g.c}</td></tr>`; let options = '<option value="" selected></option>'; if(g.c === 'PRUEBAS PRELIMINARES') options += '<option>CONFORME</option><option>NO CONFORME</option><option>N/A</option>'; else if(g.c === 'FUGAS') options += '<option>BUENO</option><option>MALO</option><option>CAMBIAR</option><option>N/A</option>'; else options += '<option>BUENO</option><option>MALO</option><option>FALTANTE</option><option>CAMBIAR</option><option>PINTAR</option><option>LIMPIAR</option><option>N/A</option>'; g.i.forEach(it => { let id = 'chk_' + it.replace(/ /g,'').replace('.','').replace('-','').toLowerCase(); h+=`<tr><td>${it}</td><td><select id="${id}" class="form-select form-select-sm">${options}</select></td></tr>`; }); }); document.getElementById('insp_body').innerHTML = h; if(DATA.saved_insp) { const d = DATA.saved_insp; if(d.servicio) document.getElementById('insp_servicio').value = d.servicio; if(d.observaciones) document.getElementById('insp_obs').value = d.observaciones; if(d.realizado) document.getElementById('insp_realizado').value = d.realizado; const ids = ['placa','pintura','cuba','expansion','gabinete','radiadores','borne','termometro','nivel','silica','valvdrenaje','valvpresion','buchholz','bujesat','bujesbt','herrajesat','herrajesbt','ttr','aislamiento','resistencia']; ids.forEach(k => { const el = document.getElementById('chk_'+k); if(el && d[k]) el.value = d[k]; }); if(d.fugatapa) setVal('chk_empaquetapatanque', d.fugatapa); if(d.fugabujes_at) setVal('chk_empaquebujesat', d.fugabujes_at); if(d.fugabujes_bt) setVal('chk_empaquebujesbt', d.fugabujes_bt); if(d.vacio) setVal('chk_vacio', d.vacio); if(d.corto) setVal('chk_corto', d.corto); } }
     function recopilarDatosInspeccion() { let f = {...DATA}; f.servicio = getVal('insp_servicio'); f.observaciones = getVal('insp_obs'); f.realizado = getVal('insp_realizado'); const ids = ['placa','pintura','cuba','expansion','gabinete','radiadores','borne','termometro','nivel','silica','valvdrenaje','valvpresion','buchholz','bujesat','bujesbt','herrajesat','herrajesbt','ttr','aislamiento','resistencia']; ids.forEach(k => { f[k] = getVal('chk_'+k); }); f.fugatapa = getVal('chk_empaquetapatanque'); f.fugabujes_at = getVal('chk_empaquebujesat'); f.fugabujes_bt = getVal('chk_empaquebujesbt'); f.vacio = getVal('chk_vacio'); f.corto = getVal('chk_corto'); return f; }
     function guardarInsp(pdf) { if(!getVal('insp_realizado')) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatosInspeccion(); f.estado_cert = "PENDIENTE"; loading(true); const action = pdf ? 'procesarInspeccion' : 'guardarSoloBD_Inspeccion'; google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { if(res.url) window.open(res.url); else Swal.fire('Guardado','Estado: PENDIENTE','success'); } else Swal.fire('Error',res.error,'error'); })[action](f); }
     function certificarInspeccion() { if(!getVal('insp_realizado')) return Swal.fire('Firma Requerida', '', 'warning'); Swal.fire({ title: '¿Certificar?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, Certificar' }).then((result) => { if (result.isConfirmed) { loading(true); let f = recopilarDatosInspeccion(); f.estado_cert = "CERTIFICADO"; google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { Swal.fire('¡Certificado!', '', 'success'); if(res.url) window.open(res.url); } else Swal.fire('Error', res.error, 'error'); }).procesarInspeccion(f); } }); }
     function buscar(mod) { const val = document.getElementById('search_'+mod).value; if(!val) return Swal.fire('Error','Ingrese Entrada','warning'); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.found) { DATA = res; DATA.fases = parseFloat(DATA.fases); document.querySelectorAll('.lbl-entrada').forEach(e=>e.innerText=res.entrada); document.querySelectorAll('.lbl-kva').forEach(e=>e.innerText=res.kva); document.querySelectorAll('.lbl-cliente').forEach(e=>e.innerText=res.cliente); calcCorrientes(); if(mod === 'insp') initInsp(); else if(mod === 'hv') initHV(); else if(mod === 'curva') buscarCurva(); else initLab(mod); } else { 
-        // LÓGICA DE AUTO-LLENADO V31.0
+        // LÓGICA DE AUTO-LLENADO V32.0 (FIX ID)
         Swal.fire({ title:'No Existe', text:'¿Crear Hoja de Vida?', icon:'question', showCancelButton:true, confirmButtonText:'Sí, Crear' }).then(r => { 
             if(r.isConfirmed) { 
                 document.getElementById('new_entrada').value = val;
@@ -368,8 +354,6 @@
                     if(ITEM_SELECCIONADO.cliente) document.getElementById('new_cliente').value = ITEM_SELECCIONADO.cliente;
                     if(ITEM_SELECCIONADO.serie) document.getElementById('new_serie').value = ITEM_SELECCIONADO.serie;
                     
-                    // Intentamos sacar KVA de la descripción si no vino explícito
-                    // Ej: "75 KVA..." -> 75
                     let kva = "";
                     const desc = ITEM_SELECCIONADO.descripcion || "";
                     const match = desc.match(/(\d+(\.\d+)?)\s*KVA/i);
@@ -415,12 +399,14 @@
        lista.forEach((item, index) => {
            let badgeClass = item.empresa === 'JLB' ? 'badge-jlb' : 'badge-group';
            let estadoTecnico = item.estadoTecnico || "PENDIENTE";
+           
            let colorTecnico = item.colorTecnico || "secondary";
            let badgeColorClass = `bg-${colorTecnico}`;
            if (colorTecnico === 'purple') badgeColorClass = 'bg-purple';
 
+           // FIX: Pasamos el ID, no el índice
            let html = `
-           <div class="card agenda-card mb-3 p-3" onclick="seleccionarDeAgenda(${index})">
+           <div class="card agenda-card mb-3 p-3" onclick="seleccionarDeAgenda('${item.id}')">
                <div class="d-flex justify-content-between align-items-start">
                    <div>
                        <span class="badge ${badgeClass} mb-1">${item.empresa} #${item.id}</span>
@@ -439,6 +425,7 @@
     function filtrarAgenda() {
        const q = document.getElementById('filtroAgenda').value.toLowerCase();
        const estadoFiltro = document.getElementById('filtroEstadoAgenda').value; 
+       
        const filtrados = AGENDA_CACHE.filter(i => {
            const matchTexto = i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q);
            let matchEstado = true;
@@ -448,8 +435,11 @@
        renderAgenda(filtrados);
     }
     
-    function seleccionarDeAgenda(index) {
-        ITEM_SELECCIONADO = AGENDA_CACHE[index];
+    function seleccionarDeAgenda(id) {
+        // FIX: Buscamos por ID en lugar de índice
+        ITEM_SELECCIONADO = AGENDA_CACHE.find(i => String(i.id) === String(id));
+        if (!ITEM_SELECCIONADO) return; 
+        
         modalAgenda.hide();
         document.getElementById('search_insp').value = ITEM_SELECCIONADO.id;
         buscar('insp');
@@ -554,29 +544,6 @@
     function guardarLab(mod, soloGuardar) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); const runner = (mod === 'ini') ? google.script.run.withSuccessHandler(fin).guardarPruebasIniciales(f, soloGuardar) : google.script.run.withSuccessHandler(fin).guardarPruebasFinales(f, soloGuardar); }
     function generarProtocoloCliente(mod) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) Swal.fire({title:'Protocolo Generado', html:`<a href="${res.url}" target="_blank" class="btn btn-dark btn-lg">Abrir Protocolo (PDF)</a>`, icon:'success'}); else Swal.fire('Error Word',res.error,'error'); }).generarProtocoloClienteDoc(f); }
     function fin(res) { if(res.success && DATA.entrada) localStorage.removeItem('backup_' + DATA.entrada); loading(false); if(res.success && res.message) { Swal.fire('Guardado', res.message, 'success'); } else if(res.success) { res.url ? window.open(res.url) : Swal.fire('Guardado','Datos en Excel','success'); } else { Swal.fire('Error',res.error,'error'); } }
-    
-    // --- PWA LOGIC START ---
-    let deferredPrompt;
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').then(r=>console.log('SW OK')).catch(e=>console.log('SW Fail'));
-        });
-    }
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        const btn = document.getElementById('btn-install');
-        if(btn) btn.classList.remove('d-none');
-    });
-    async function instalarPWA() {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        deferredPrompt = null;
-        if(outcome === 'accepted') document.getElementById('btn-install').classList.add('d-none');
-    }
-    // --- PWA LOGIC END ---
-
   </script>
 </body>
 </html>
