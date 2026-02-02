@@ -4,6 +4,13 @@
   <base target="_top">
   <title>Sistema Técnico - JL BEDOYA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d6efd">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
   <link rel="icon" href="data:,">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -66,8 +73,13 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V31.0 | Auto-Fill</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V31.0 | PWA Ready</small></div>
     <div class="mt-4">
+      
+      <div id="btn-install" class="nav-link bg-success text-white fw-bold d-none blink" style="cursor: pointer;" onclick="instalarPWA()">
+        <i class="fas fa-download me-2"></i> INSTALAR APP
+      </div>
+
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
       <div class="nav-link" onclick="nav('hv', this)"><i class="fas fa-edit me-2"></i> Hoja de Vida</div>
@@ -542,6 +554,29 @@
     function guardarLab(mod, soloGuardar) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); const runner = (mod === 'ini') ? google.script.run.withSuccessHandler(fin).guardarPruebasIniciales(f, soloGuardar) : google.script.run.withSuccessHandler(fin).guardarPruebasFinales(f, soloGuardar); }
     function generarProtocoloCliente(mod) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) Swal.fire({title:'Protocolo Generado', html:`<a href="${res.url}" target="_blank" class="btn btn-dark btn-lg">Abrir Protocolo (PDF)</a>`, icon:'success'}); else Swal.fire('Error Word',res.error,'error'); }).generarProtocoloClienteDoc(f); }
     function fin(res) { if(res.success && DATA.entrada) localStorage.removeItem('backup_' + DATA.entrada); loading(false); if(res.success && res.message) { Swal.fire('Guardado', res.message, 'success'); } else if(res.success) { res.url ? window.open(res.url) : Swal.fire('Guardado','Datos en Excel','success'); } else { Swal.fire('Error',res.error,'error'); } }
-  </script>
+    
+    // --- PWA LOGIC START ---
+    let deferredPrompt;
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').then(r=>console.log('SW OK')).catch(e=>console.log('SW Fail'));
+        });
+    }
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const btn = document.getElementById('btn-install');
+        if(btn) btn.classList.remove('d-none');
+    });
+    async function instalarPWA() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        if(outcome === 'accepted') document.getElementById('btn-install').classList.add('d-none');
+    }
+    // --- PWA LOGIC END ---
+
+  </script>
 </body>
 </html>
