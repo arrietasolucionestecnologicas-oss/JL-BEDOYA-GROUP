@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JLB - Módulo Presupuestos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .card-header { background-color: #0d6efd; color: white; font-weight: bold; }
+    .autocomplete-items {
+      position: absolute; border: 1px solid #d4d4d4; border-bottom: none; border-top: none; z-index: 99;
+      top: 100%; left: 0; right: 0;
+    }
+    .autocomplete-items div { padding: 10px; cursor: pointer; background-color: #fff; border-bottom: 1px solid #d4d4d4; }
+    .autocomplete-items div:hover { background-color: #e9e9e9; }
+    .total-row { font-weight: bold; font-size: 1.1em; }
+    .input-sm { padding: 2px 5px; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+
+<div class="container py-3">
+  
+  <div class="card shadow mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>💰 COTIZADOR JLB</span>
+      <span class="badge bg-light text-dark" id="statusBadge">Modo Edición</span>
+    </div>
+    <div class="card-body">
+      <div class="input-group mb-3">
+        <span class="input-group-text">ID JLB</span>
+        <input type="text" class="form-control" id="txtIdJLB" placeholder="Ej: TR-500" onchange="buscarTrafo()">
+        <button class="btn btn-primary" type="button" onclick="buscarTrafo()">🔍</button>
+      </div>
+      
+      <div class="row g-2 small text-muted" id="infoCliente" style="display:none;">
+        <div class="col-6"><strong>Cliente:</strong> <span id="lblCliente">--</span></div>
+        <div class="col-6"><strong>Equipo:</strong> <span id="lblEquipo">--</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow mb-3">
+    <div class="card-body p-2">
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm align-middle" id="tablaItems">
+          <thead class="table-light">
+            <tr>
+              <th width="40%">Descripción</th>
+              <th width="15%">Und</th>
+              <th width="10%">Cant</th>
+              <th width="20%">Unitario</th>
+              <th width="5%">IVA?</th>
+              <th width="10%">X</th>
+            </tr>
+          </thead>
+          <tbody id="cuerpoTabla">
+            </tbody>
+        </table>
+      </div>
+      <button class="btn btn-outline-primary btn-sm w-100" onclick="agregarFila()">+ Agregar Ítem</button>
+    </div>
+  </div>
+
+  <div class="card shadow mb-3">
+    <div class="card-body">
+      <div class="row mb-2">
+        <div class="col-6 text-end">Subtotal:</div>
+        <div class="col-6 text-end" id="txtSubtotal">$0</div>
+      </div>
+      
+      <div class="row mb-2 align-items-center">
+        <div class="col-6 text-end">
+          <div class="form-check d-inline-block">
+            <input class="form-check-input" type="checkbox" id="chkImprevistos" onchange="calcularTotales()">
+            <label class="form-check-label small" for="chkImprevistos">Imprevistos (5%)</label>
+          </div>
+        </div>
+        <div class="col-6 text-end" id="txtImprevistos">$0</div>
+      </div>
+
+      <div class="row mb-2">
+        <div class="col-6 text-end">IVA (19%):</div>
+        <div class="col-6 text-end" id="txtIvaTotal">$0</div>
+      </div>
+
+      <div class="row total-row text-primary border-top pt-2">
+        <div class="col-6 text-end">TOTAL:</div>
+        <div class="col-6 text-end" id="txtGranTotal">$0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-grid gap-2">
+    <button class="btn btn-success btn-lg" onclick="guardarPresupuesto()" id="btnGuardar">💾 GUARDAR COTIZACIÓN</button>
+  </div>
+
+</div>
+
+<script>
+  // Variables globales
+  let rowCount = 0;
+
+  // Inicializar
+  window.onload = function() {
+    agregarFila(); // Agregar una fila vacía al inicio
+  };
+
+  // --- COMUNICACIÓN CON BACKEND ---
+  function buscarTrafo() {
+    const id = document.getElementById('txtIdJLB').value;
+    if(!id) return;
+    
+    document.getElementById('statusBadge').innerText = "Buscando...";
+    
+    google.script.run.withSuccessHandler(function(res){
+      if(res.encontrado){
+        document.getElementById('infoCliente').style.display = 'flex';
+        document.getElementById('lblCliente').innerText = res.cliente;
+        document.getElementById('lblEquipo').innerText = res.descripcion + " (" + res.servicio + ")";
+        document.getElementById('statusBadge').className = "badge bg-success";
+        document.getElementById('statusBadge').innerText = "Encontrado";
+      } else {
+        alert("ID JLB no encontrado en Programación");
+        document.getElementById('statusBadge').className = "badge bg-danger";
+        document.getElementById('statusBadge').innerText = "No existe";
+      }
+    }).buscarTrafoPorID(id);
+  }
+
+  function guardarPresupuesto() {
+    const idJlb = document.getElementById('txtIdJLB').value;
+    if(!idJlb) return alert("Falta el ID JLB");
+
+    document.getElementById('btnGuardar').disabled = true;
+    document.getElementById('btnGuardar').innerText = "Guardando...";
+
+    // Recopilar datos de la tabla
+    const items = [];
+    const filas = document.querySelectorAll('#cuerpoTabla tr');
+    
+    filas.forEach(fila => {
+      const inputs = fila.querySelectorAll('input');
+      const select = fila.querySelector('select'); // Unidad
+      const chk = fila.querySelector('.chk-iva');
+      
+      const desc = inputs[0].value;
+      const cant = parseFloat(inputs[1].value) || 0;
+      const precio = parseFloat(inputs[2].value) || 0;
+      
+      if(desc && cant > 0) {
+        const subtotal = cant * precio;
+        const aplicaIva = chk.checked;
+        const valorIva = aplicaIva ? (subtotal * 0.19) : 0;
+        
+        items.push({
+          descripcion: desc,
+          unidad: select.value,
+          cantidad: cant,
+          precio: precio,
+          subtotal: subtotal,
+          iva: valorIva,
+          total: subtotal + valorIva
+        });
+      }
+    });
+
+    // Agregar Imprevistos como un item si aplica
+    if(document.getElementById('chkImprevistos').checked) {
+      const valImprev = parseFloat(document.getElementById('txtImprevistos').innerText.replace(/[$,]/g,'')) || 0;
+      if(valImprev > 0) {
+        items.push({
+          descripcion: "IMPREVISTOS (5%)",
+          unidad: "GLOBAL",
+          cantidad: 1,
+          precio: valImprev,
+          subtotal: valImprev,
+          iva: 0, // Generalmente imprevistos no llevan IVA sobre sí mismos, o ya está calculado
+          total: valImprev
+        });
+      }
+    }
+
+    const payload = { idJlb: idJlb, items: items };
+
+    google.script.run.withSuccessHandler(function(res){
+      if(res.exito){
+        alert("✅ " + res.mensaje);
+        // Aquí podríamos disparar la descarga del PDF o Excel
+        location.reload(); 
+      } else {
+        alert("❌ Error: " + res.mensaje);
+        document.getElementById('btnGuardar').disabled = false;
+        document.getElementById('btnGuardar').innerText = "💾 GUARDAR COTIZACIÓN";
+      }
+    }).guardarPresupuestoBackend(payload);
+  }
+
+  // --- LÓGICA DE INTERFAZ ---
+  
+  function agregarFila() {
+    rowCount++;
+    const tbody = document.getElementById('cuerpoTabla');
+    const tr = document.createElement('tr');
+    tr.id = 'row-' + rowCount;
+    
+    tr.innerHTML = `
+      <td style="position:relative">
+        <input type="text" class="form-control form-control-sm" placeholder="Concepto..." oninput="sugerir(this)" required>
+        <div class="autocomplete-items" style="display:none"></div>
+      </td>
+      <td>
+        <select class="form-select form-select-sm">
+          <option>UND</option><option>GLB</option><option>GAL</option><option>DIA</option><option>MT</option>
+        </select>
+      </td>
+      <td><input type="number" class="form-control form-control-sm" value="1" oninput="calcularTotales()"></td>
+      <td><input type="number" class="form-control form-control-sm" placeholder="0" oninput="calcularTotales()"></td>
+      <td class="text-center"><input type="checkbox" class="form-check-input chk-iva" checked onchange="calcularTotales()"></td>
+      <td class="text-center"><button class="btn btn-outline-danger btn-sm" onclick="eliminarFila('${tr.id}')">×</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  function eliminarFila(id) {
+    document.getElementById(id).remove();
+    calcularTotales();
+  }
+
+  function calcularTotales() {
+    let subtotalGlobal = 0;
+    let ivaGlobal = 0;
+
+    const filas = document.querySelectorAll('#cuerpoTabla tr');
+    filas.forEach(fila => {
+      const inputs = fila.querySelectorAll('input');
+      const cant = parseFloat(inputs[1].value) || 0;
+      const precio = parseFloat(inputs[2].value) || 0;
+      const aplicaIva = fila.querySelector('.chk-iva').checked;
+
+      const subRow = cant * precio;
+      subtotalGlobal += subRow;
+      
+      if(aplicaIva) {
+        ivaGlobal += (subRow * 0.19);
+      }
+    });
+
+    // Calcular Imprevistos (5% del subtotal antes de IVA)
+    let imprevistos = 0;
+    if(document.getElementById('chkImprevistos').checked) {
+      imprevistos = subtotalGlobal * 0.05;
+    }
+
+    const granTotal = subtotalGlobal + imprevistos + ivaGlobal;
+
+    // Actualizar UI
+    document.getElementById('txtSubtotal').innerText = formatearDinero(subtotalGlobal);
+    document.getElementById('txtImprevistos').innerText = formatearDinero(imprevistos);
+    document.getElementById('txtIvaTotal').innerText = formatearDinero(ivaGlobal);
+    document.getElementById('txtGranTotal').innerText = formatearDinero(granTotal);
+  }
+
+  function formatearDinero(num) {
+    return '$' + num.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+  }
+
+  // --- AUTOCOMPLETADO (MEMORIA) ---
+  let timeout = null;
+  
+  function sugerir(input) {
+    const val = input.value;
+    const listaDiv = input.nextElementSibling;
+    listaDiv.innerHTML = '';
+    listaDiv.style.display = 'none';
+    
+    if(!val || val.length < 2) return;
+
+    // Debounce para no llamar al servidor en cada tecla
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      google.script.run.withSuccessHandler(function(sugerencias){
+        if(sugerencias.length > 0) {
+          listaDiv.style.display = 'block';
+          sugerencias.forEach(item => {
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>${item.nombre}</strong> <small class='text-muted'>$${item.precio}</small>`;
+            div.onclick = function() {
+              input.value = item.nombre;
+              // Rellenar precio y unidad automáticamente
+              const row = input.closest('tr');
+              row.querySelectorAll('input')[2].value = item.precio; // Precio
+              row.querySelector('select').value = item.unidad; // Unidad
+              listaDiv.innerHTML = '';
+              listaDiv.style.display = 'none';
+              calcularTotales();
+            };
+            listaDiv.appendChild(div);
+          });
+        }
+      }).obtenerSugerenciasItems(val);
+    }, 500);
+  }
+  
+  // Cerrar autocompletado si hago click fuera
+  document.addEventListener("click", function (e) {
+      var lists = document.getElementsByClassName("autocomplete-items");
+      for (var i = 0; i < lists.length; i++) {
+        if (e.target != lists[i] && e.target.parentNode != lists[i]) {
+          lists[i].style.display = "none";
+        }
+      }
+  });
+</script>
+
+</body>
+</html>
