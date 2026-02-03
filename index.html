@@ -412,9 +412,9 @@
     
     <script>
       function irAPresupuesto() {
-        // Redirige usando el sistema de Routing que definimos en Apps Script
-        var currentUrl = window.location.href.split('?')[0];
-        window.location.href = currentUrl + '?v=admin_presupuestos';
+        // Redirige directamente al link de Apps Script
+        var scriptUrl = "https://script.google.com/macros/s/AKfycbzVU2GRgkaYB6BBUyh5QWCmiCSjnbwS_tGwEGbd6o8u7hz6JwC98cTVhhOb4AmIQJXREQ/exec";
+        window.location.href = scriptUrl + '?v=admin_presupuestos';
       }
     </script>
 
