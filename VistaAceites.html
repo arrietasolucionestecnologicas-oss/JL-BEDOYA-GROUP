@@ -36,6 +36,9 @@
         
         .blink { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.7; } }
+        
+        /* Estilo para campos deshabilitados */
+        .input-tech:disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; border-color: #e2e8f0; }
     </style>
 </head>
 <body class="p-4 md:p-8 text-slate-800 bg-slate-50">
@@ -205,6 +208,14 @@
         let rawData = [];
         let selItem = null;
 
+        // --- MAPA DE CAMPOS POR TIPO DE ENSAYO (V2.4) ---
+        // Esto define qué inputs se bloquean o habilitan
+        const CONFIG_CAMPOS = {
+            'PCB': ['inp-temp', 'inp-hum', 'inp-pcb', 'inp-responsable', 'inp-dictamen'],
+            'PARCIAL': ['inp-temp', 'inp-hum', 'inp-color', 'inp-visual', 'inp-rigidez', 'inp-agua', 'inp-acidez', 'inp-tension', 'inp-responsable', 'inp-dictamen'],
+            'GENERAL': 'ALL' // Todos habilitados
+        };
+
         async function apiRequest(action, payload = {}) {
             const body = JSON.stringify({ action, payload });
             const res = await fetch(URL_API, { method: 'POST', body });
@@ -244,10 +255,10 @@
                 if (esHistorial) {
                     colorBadge = "bg-green-100 text-green-800";
                 } else {
-                    const txt = item.textoBoton;
+                    const txt = item.textoBoton || "";
                     if(txt.includes('PCB')) colorBadge = "bg-red-100 text-red-800 border border-red-200";
                     else if(txt.includes('FQ') || txt.includes('PARCIAL')) colorBadge = "bg-blue-600 text-white shadow-sm";
-                    else if(txt.includes('COMPLETO') || txt.includes('FINAL')) colorBadge = "bg-emerald-600 text-white shadow-sm";
+                    else colorBadge = "bg-emerald-600 text-white shadow-sm";
                 }
                 const hasPDF = esHistorial && item.pdf && item.pdf.includes('http');
                 
@@ -300,6 +311,7 @@
                 </div>`).join('');
             
             if (esHistorial) {
+                // MODO SOLO LECTURA
                 document.getElementById('form-registro').classList.add('hidden');
                 document.getElementById('modal-footer').classList.add('hidden');
                 document.getElementById('info-historial').classList.remove('hidden');
@@ -315,19 +327,29 @@
                     divPdf.classList.add('hidden');
                 }
             } else {
+                // MODO EDICIÓN
                 document.getElementById('form-registro').classList.remove('hidden');
                 document.getElementById('modal-footer').classList.remove('hidden');
                 document.getElementById('info-historial').classList.add('hidden');
                 
-                // Reset inputs
+                // 1. Resetear inputs
                 const inputs = document.querySelectorAll('.input-tech');
-                inputs.forEach(inp => { if(inp.type !== 'select-one') inp.value = ''; });
+                inputs.forEach(inp => { 
+                    if(inp.type !== 'select-one') inp.value = ''; 
+                    inp.disabled = false; // Rehabilitar todo primero
+                    inp.classList.remove('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+                });
+                
+                // Defaults
                 document.getElementById('inp-temp').value = "24";
                 document.getElementById('inp-hum').value = "50";
                 document.getElementById('inp-pcb').value = "0";
                 document.getElementById('inp-dictamen').value = "APROBADO";
 
-                // Habilitar Botones
+                // 2. APLICAR BLOQUEO INTELIGENTE SEGÚN TIPO (V2.4)
+                configurarCamposPorTipo(selItem.accion);
+
+                // 3. Reset Botones
                 const btn1 = document.getElementById('btn-save-simple');
                 const btn2 = document.getElementById('btn-save-full');
                 btn1.disabled = false; btn2.disabled = false;
@@ -342,15 +364,53 @@
             lucide.createIcons();
         }
 
+        // --- FUNCIÓN INTELIGENTE DE BLOQUEO UI ---
+        function configurarCamposPorTipo(tipoAccion) {
+            let camposPermitidos = CONFIG_CAMPOS['GENERAL'];
+            
+            if (tipoAccion.includes('PCB')) camposPermitidos = CONFIG_CAMPOS['PCB'];
+            else if (tipoAccion.includes('PARCIAL')) camposPermitidos = CONFIG_CAMPOS['PARCIAL'];
+
+            if (camposPermitidos === 'ALL') return; // Si es General, todo abierto
+
+            // Bloquear lo que no esté en la lista
+            const todosLosInputs = document.querySelectorAll('.input-tech, #inp-dictamen');
+            todosLosInputs.forEach(inp => {
+                if (!camposPermitidos.includes(inp.id)) {
+                    inp.disabled = true;
+                    inp.value = "N/A"; // Valor automático para el backend
+                    inp.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+                }
+            });
+        }
+
         async function guardarEnsayo(generarPDF) {
-            const rigidez = document.getElementById('inp-rigidez').value;
-            const agua = document.getElementById('inp-agua').value;
+            // Validar Inputs (VALIDACIÓN CONTEXTUAL V2.4)
             const responsable = document.getElementById('inp-responsable').value;
             const dictamen = document.getElementById('inp-dictamen').value;
+            const esPCB = selItem.accion.includes('PCB'); // Bandera clave
 
-            if(!rigidez || !agua || !responsable) {
-                alert("⚠️ CAMPOS OBLIGATORIOS: Rigidez, Agua y Responsable.");
+            // Siempre exigimos responsable y dictamen
+            if (!responsable || !dictamen) {
+                alert("⚠️ Falta el RESPONSABLE o el DICTAMEN.");
                 return;
+            }
+
+            // Si NO es solo PCB (es decir, es FQ o General), exigimos Rigidez y Agua
+            if (!esPCB) {
+                const rigidez = document.getElementById('inp-rigidez').value;
+                const agua = document.getElementById('inp-agua').value;
+                if (!rigidez || !agua || rigidez === "N/A") {
+                    alert("⚠️ Para este análisis, RIGIDEZ y AGUA son obligatorios.");
+                    return;
+                }
+            } else {
+                // Si es solo PCB, exigimos el dato de PCB
+                const pcb = document.getElementById('inp-pcb').value;
+                if (!pcb) {
+                    alert("⚠️ Ingresa el valor de PCB.");
+                    return;
+                }
             }
 
             // UI Loading
@@ -362,7 +422,7 @@
             btnUsado.classList.remove(generarPDF ? 'bg-slate-900' : 'bg-blue-600');
             btnUsado.classList.add('bg-gray-400');
 
-            // Payload
+            // Preparar Payload
             const payload = {
                 ID_TRAFO: selItem.id,
                 CLIENTE: selItem.cliente,
@@ -373,13 +433,12 @@
                 HUMEDAD_REL: document.getElementById('inp-hum').value,
                 COLOR: document.getElementById('inp-color').value,
                 VISUAL: document.getElementById('inp-visual').value,
-                RIGIDEZ_KV: rigidez,
-                AGUA_PPM: agua,
+                RIGIDEZ_KV: document.getElementById('inp-rigidez').value,
+                AGUA_PPM: document.getElementById('inp-agua').value,
                 ACIDEZ_MGKOH: document.getElementById('inp-acidez').value,
                 TENSION_INTERFACIAL: document.getElementById('inp-tension').value,
                 PCB: document.getElementById('inp-pcb').value,
                 
-                // AQUÍ LA CLAVE: Enviamos el dictamen manual
                 CONCLUSION_MANUAL: dictamen,
                 generarDoc: generarPDF
             };
@@ -411,7 +470,7 @@
             document.getElementById('modal-ficha').classList.add('hidden');
         }
 
-        // PWA Logic (Service Worker)
+        // PWA Logic
         let deferredPrompt;
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
