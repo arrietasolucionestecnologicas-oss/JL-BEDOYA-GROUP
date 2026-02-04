@@ -120,13 +120,7 @@
                 </section>
                 
                 <section id="control" class="view-section">
-                    <div class="cp-nav no-scrollbar">
-                        <button class="cp-btn active" onclick="subNav('act')" id="btn-cp-act">Actividades</button>
-                        <button class="cp-btn" onclick="subNav('fot')" id="btn-cp-fot">Fotos</button>
-                        <button class="cp-btn text-green-600" onclick="irAPresupuesto()" style="min-width: 50px; border-left: 1px solid #e2e8f0;" title="Ir a Presupuestos">
-                            <i data-lucide="circle-dollar-sign"></i>
-                        </button>
-                    </div>
+                    <div class="cp-nav no-scrollbar"><button class="cp-btn active" onclick="subNav('act')" id="btn-cp-act">Actividades</button><button class="cp-btn" onclick="subNav('fot')" id="btn-cp-fot">Fotos</button></div>
                       
                       <div id="view-act" class="cp-view active">
                          <div class="flex justify-end mb-4 gap-2">
@@ -409,13 +403,6 @@
     </div>
 
     <script src="app.js"></script>
-    
-    <script>
-      function irAPresupuesto() {
-    // Redirige al archivo HTML dentro de tu repositorio GitHub
-    window.location.href = "vista_presupuesto.html";
-}
-    </script>
 
     <style>
         .label-form { display: block; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
