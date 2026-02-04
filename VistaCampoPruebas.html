@@ -4,6 +4,7 @@
   <base target="_top">
   <title>Sistema Técnico - JL BEDOYA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="icon" href="data:,">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,7 +14,9 @@
     :root { --primary: #0d6efd; --sidebar-w: 260px; }
     body { background-color: #f4f6f8; font-family: 'Segoe UI', Roboto, sans-serif; padding-bottom: 80px; font-size: 0.9rem; }
     .sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; top: 0; left: 0; background: #fff; border-right: 1px solid #dee2e6; z-index: 1000; transition: 0.3s; }
+    .brand { padding: 20px; border-bottom: 1px solid #eee; }
     .nav-link { color: #555; padding: 15px 20px; display: flex; align-items: center; border-radius: 0 25px 25px 0; margin-bottom: 5px; cursor: pointer; text-decoration: none; }
+    .nav-link:hover { background: #f0f8ff; color: var(--primary); }
     .nav-link.active { background: #e3f2fd; color: var(--primary); font-weight: bold; border-right: 3px solid var(--primary); }
     .main { margin-left: var(--sidebar-w); padding: 20px; transition: 0.3s; }
     .view { display: none; animation: fadeIn 0.3s; }
@@ -29,13 +32,28 @@
       .overlay.show { display:block; }
     }
     .card { border:none; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.03); margin-bottom:15px; background: white; }
+    .scroll-x { overflow-x: auto; white-space: nowrap; }
+    .input-group-text { font-size: 0.8rem; font-weight: bold; width: 60px; justify-content: center; }
+    .table-input { min-width: 80px; text-align: center; }
+    .label-mini { font-size: 0.7rem; color: #6c757d; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+    .unit-select { max-width: 70px; font-weight: bold; background-color: #f8f9fa; border: 1px solid #ced4da; font-size: 0.8rem; }
+    .bg-garantia { background-color: #e8f5e9; border-color: #c8e6c9; color: #1b5e20; }
     .agenda-card { border-left: 4px solid var(--primary); transition: transform 0.2s; cursor: pointer; }
+    .agenda-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .badge-jlb { background-color: #0d6efd; color: white; }
     .badge-group { background-color: #fd7e14; color: white; }
     .bg-purple { background-color: #6f42c1 !important; color: white; }
+    .text-purple { color: #6f42c1 !important; }
     .blink { animation: blinker 1.5s linear infinite; }
     @keyframes blinker { 50% { opacity: 0.5; } }
-    .link-entrada { color: var(--primary); font-weight: bold; cursor: pointer; }
+    .hover-effect { transition: transform 0.2s; cursor: pointer; }
+    .hover-effect:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    .link-entrada { color: var(--primary); font-weight: bold; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; }
+    .link-entrada:hover { text-decoration: underline; color: #0a58ca; }
+    .table-historial th { background-color: #f8f9fa; font-size: 0.85rem; text-transform: uppercase; color: #6c757d; }
+    .table-historial td { font-size: 0.9rem; vertical-align: middle; }
+    .icon-check { color: #198754; font-size: 1.2rem; }
+    .icon-cross { color: #dee2e6; font-size: 0.8rem; }
   </style>
 </head>
 <body>
@@ -48,15 +66,15 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="p-3 border-bottom"><h5 class="text-primary fw-bold m-0">SISTEMA TÉCNICO</h5><small class="text-muted">V33.0 | Fix ID & Serie</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V31.0 | Auto-Fill</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
       <div class="nav-link" onclick="nav('hv', this)"><i class="fas fa-edit me-2"></i> Hoja de Vida</div>
-      <div class="nav-link" onclick="nav('insp', this)"><i class="fas fa-clipboard-check me-2"></i> Inspección</div>
-      <div class="nav-link" onclick="nav('curva', this)"><i class="fas fa-temperature-high me-2"></i> Secamiento</div>
-      <div class="nav-link" onclick="nav('ini', this)"><i class="fas fa-flask me-2"></i> P. Iniciales</div>
-      <div class="nav-link" onclick="nav('fin', this)"><i class="fas fa-check-circle me-2"></i> P. Finales</div>
+      <div class="nav-link" onclick="nav('insp', this)"><i class="fas fa-clipboard-check me-2"></i> Inspección Visual</div>
+      <div class="nav-link" onclick="nav('curva', this)"><i class="fas fa-temperature-high me-2"></i> Curva Secamiento</div>
+      <div class="nav-link" onclick="nav('ini', this)"><i class="fas fa-flask me-2"></i> Pruebas Iniciales</div>
+      <div class="nav-link" onclick="nav('fin', this)"><i class="fas fa-check-circle me-2"></i> Pruebas Finales</div>
       <div class="nav-link" onclick="nav('hist', this)"><i class="fas fa-history me-2"></i> Historial</div>
     </div>
   </div>
@@ -65,9 +83,20 @@
     <div id="view-home" class="view active">
       <div class="text-center py-5">
         <h3 class="fw-bold text-dark mb-4">Panel de Control</h3>
-        <button onclick="abrirAgenda()" class="btn btn-primary btn-lg fw-bold shadow-sm w-100 py-3 mb-4" style="max-width: 400px;">
-            <i class="fas fa-cloud-download-alt me-2"></i> SINCRONIZAR AGENDA
-        </button>
+        <div class="mb-4">
+            <button onclick="abrirAgenda()" class="btn btn-primary btn-lg fw-bold shadow-sm w-100 py-3" style="max-width: 400px;">
+                <i class="fas fa-cloud-download-alt me-2"></i> SINCRONIZAR AGENDA
+            </button>
+            <p class="text-muted small mt-2">Producción en tiempo real</p>
+        </div>
+        <div class="row g-3 justify-content-center">
+          <div class="col-md-3 col-6"><div class="card p-4 text-center h-100 border-start border-5 border-dark hover-effect" onclick="nav('hv')"><i class="fas fa-edit fa-3x text-dark mb-3"></i><h5>Hoja de Vida</h5></div></div>
+          <div class="col-md-3 col-6"><div class="card p-4 text-center h-100 border-start border-5 border-success hover-effect" onclick="nav('insp')"><i class="fas fa-clipboard-check fa-3x text-success mb-3"></i><h5>Inspección</h5></div></div>
+          <div class="col-md-3 col-6"><div class="card p-4 text-center h-100 border-start border-5 border-danger hover-effect" onclick="nav('curva')"><i class="fas fa-temperature-high fa-3x text-danger mb-3"></i><h5>Secamiento</h5></div></div>
+          <div class="col-md-3 col-6"><div class="card p-4 text-center h-100 border-start border-5 border-warning hover-effect" onclick="nav('ini')"><i class="fas fa-flask fa-3x text-warning mb-3"></i><h5>Iniciales</h5></div></div>
+          <div class="col-md-3 col-6"><div class="card p-4 text-center h-100 border-start border-5 border-primary hover-effect" onclick="nav('fin')"><i class="fas fa-check-circle fa-3x text-primary mb-3"></i><h5>Finales</h5></div></div>
+          <div class="col-md-3 col-6"><div class="card p-4 text-center h-100 border-start border-5 border-info hover-effect" onclick="nav('hist')"><i class="fas fa-history fa-3x text-info mb-3"></i><h5>Historial</h5></div></div>
+        </div>
       </div>
     </div>
 
@@ -75,13 +104,84 @@
         <h4 class="mb-3 fw-bold text-dark"><i class="fas fa-edit me-2"></i>Hoja de Vida</h4>
         <div class="card p-3 mb-3"><div class="input-group"><input type="number" id="search_hv" class="form-control fw-bold" placeholder="Entrada..."><button class="btn btn-dark" onclick="buscar('hv')">Buscar</button></div></div>
         <div id="form_hv" class="d-none">
-            <div class="card p-4"><h6 class="text-muted">DATOS CARGADOS...</h6></div>
+            <div class="card p-4">
+                <h6 class="text-muted fw-bold border-bottom pb-2 mb-3">DATOS GENERALES (Edición)</h6>
+                <div class="row g-3">
+                    <div class="col-md-4 col-6"><label class="label-mini">ENTRADA</label><input id="edit_entrada" class="form-control fw-bold bg-light" readonly></div><div class="col-md-4 col-6"><label class="label-mini">KVA</label><input id="edit_kva" type="number" class="form-control"></div><div class="col-md-4 col-12"><label class="label-mini">CLIENTE</label><input id="edit_cliente" class="form-control"></div>
+                    <div class="col-md-3 col-6"><label class="label-mini">MARCA</label><input id="edit_marca" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">SERIE</label><input id="edit_serie" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">V.PRIM</label><input id="edit_vp" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">V.SEC</label><input id="edit_vs" type="number" class="form-control"></div>
+                    <div class="col-md-3 col-6"><label class="label-mini">FASES</label><select id="edit_fases" class="form-select"><option value="3">3</option><option value="1">1</option></select></div><div class="col-md-3 col-6"><label class="label-mini">GRUPO</label><input id="edit_grupo" class="form-control" placeholder="Dyn5"></div><div class="col-md-3 col-6"><label class="label-mini">AÑO</label><input id="edit_anio" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">TIPO</label><select id="edit_tipo" class="form-select"><option>Sumergido</option><option>Seco</option></select></div>
+                    <div class="col-12 border-top mt-2 pt-2"><h6 class="small fw-bold text-muted">DETALLES FÍSICOS DE PLACA</h6></div><div class="col-md-4 col-6"><label class="label-mini">PESO (Kg)</label><input id="edit_peso" type="number" class="form-control"></div><div class="col-md-4 col-6"><label class="label-mini">ACEITE (L)</label><input id="edit_aceite" type="number" class="form-control"></div><div class="col-md-4 col-12"><label class="label-mini text-danger">DERIVACIONES</label><select id="edit_deriv" class="form-select fw-bold text-danger border-danger"><option value="+2">+2</option><option value="+1">+1</option><option value="0">0</option></select></div>
+                    <div class="col-6"><label class="label-mini">CELULAR</label><input id="edit_celular" class="form-control"></div><div class="col-6"><label class="label-mini">PROYECTO</label><input id="edit_proyecto" class="form-control"></div>
+                </div>
+                <div class="mt-4"><button class="btn btn-warning w-100 fw-bold" onclick="guardarEdicionHV()">GUARDAR CAMBIOS</button></div>
+            </div>
         </div>
     </div>
 
-    <div id="view-insp" class="view"><h4 class="text-success">Inspección</h4><div class="card p-3"><div class="input-group"><input type="number" id="search_insp" class="form-control" placeholder="Entrada..."><button class="btn btn-success" onclick="buscar('insp')">Validar</button></div></div><div id="form_insp" class="d-none"></div></div>
-    <div id="view-curva" class="view"><h4 class="text-danger">Secamiento</h4><div class="card p-3"><div class="input-group"><input type="number" id="search_curva" class="form-control" placeholder="Entrada..."><button class="btn btn-danger" onclick="buscar('curva')">Cargar</button></div></div><div id="panel_curva" class="d-none"></div></div>
-    <div id="view-hist" class="view"><h4 class="text-info">Historial</h4><div class="card p-3 mb-3"><input type="text" id="filtroHistorial" class="form-control" placeholder="Buscar..." onkeyup="filtrarHistorial()"></div><div class="card p-0"><table class="table table-hover mb-0 text-center"><tbody id="tabla_historial_body"></tbody></table></div></div>
+    <div id="view-insp" class="view">
+      <h4 class="mb-3 fw-bold text-success"><i class="fas fa-clipboard-check me-2"></i>Inspección Visual</h4>
+      <div class="card p-3"><div class="input-group"><input type="number" id="search_insp" class="form-control fw-bold" placeholder="Entrada..." list="list_insp"><button class="btn btn-success" onclick="buscar('insp')">Validar</button></div></div>
+      <div id="form_insp" class="d-none">
+        <div class="alert alert-success py-2 mb-3 text-center"><div class="row"><div class="col-4 border-end"><small>ENTRADA</small><div class="fw-bold lbl-entrada"></div></div><div class="col-4 border-end"><small>KVA</small><div class="fw-bold lbl-kva"></div></div><div class="col-4"><small>CLIENTE</small><div class="fw-bold lbl-cliente text-truncate"></div></div></div></div>
+        <div class="card p-3"><label class="label-mini">SERVICIO</label><select id="insp_servicio" class="form-select fw-bold border-success"><option>MANTENIMIENTO</option><option>PRUEBAS ELÉCTRICAS</option><option>REPARACIÓN</option><option>GARANTÍA</option><option>OTROS</option></select></div>
+        <div class="card mb-3"><div class="card-header bg-dark text-white fw-bold">CHECKLIST</div><div class="card-body p-0"><table class="table table-bordered mb-0 align-middle"><thead class="table-light"><tr><th width="50%">Item</th><th>Estado</th></tr></thead><tbody id="insp_body"></tbody></table></div></div>
+        <div class="card p-3 mb-3"><label class="label-mini">Observaciones</label><textarea id="insp_obs" class="form-control mb-3" rows="2"></textarea><label class="label-mini text-primary">Realizado Por</label><input id="insp_realizado" class="form-control fw-bold border-primary mb-3"><div class="row g-2"><div class="col-6"><button class="btn btn-secondary w-100" onclick="guardarInsp(false)">Solo Excel</button></div><div class="col-6"><button class="btn btn-success w-100" onclick="guardarInsp(true)">Ver PDF</button></div></div></div>
+        <div class="card p-3 bg-success-subtle border-success mt-3"><button id="btn-certificar-insp" class="btn btn-success w-100 fw-bold py-3 shadow" onclick="certificarInspeccion()">✅ CERTIFICAR INSPECCIÓN LISTA</button></div>
+      </div>
+    </div>
+
+    <div id="view-curva" class="view">
+        <h4 class="mb-3 fw-bold text-danger"><i class="fas fa-temperature-high me-2"></i>Curva de Secamiento</h4>
+        <div class="card p-3 mb-3">
+            <div class="input-group">
+                <input type="number" id="search_curva" class="form-control fw-bold" placeholder="Entrada..." list="list_insp">
+                <button class="btn btn-danger" onclick="buscarCurva()">Cargar Gráfica</button>
+            </div>
+        </div>
+        <div id="panel_curva" class="d-none">
+            <div class="card p-3 mb-3 shadow-sm">
+                <h6 class="fw-bold text-muted small">DINÁMICA DE SECAMIENTO</h6>
+                <div style="position: relative; height:350px; width:100%"><canvas id="chartSecamiento"></canvas></div>
+                <div class="text-center mt-2 small text-muted">
+                    <span class="badge bg-primary">AT-BT</span><span class="badge bg-success mx-1">AT-T</span><span class="badge bg-warning text-dark">BT-T</span><span class="badge bg-danger ms-1">TEMP</span>
+                </div>
+            </div>
+            <div class="card p-3 mb-3 border-danger">
+                <h6 class="text-danger fw-bold"><i class="fas fa-plus-circle me-2"></i>NUEVA LECTURA</h6>
+                <div class="row g-2 mb-2">
+                    <div class="col-6"><label class="label-mini text-danger">TEMP HORNO (°C)</label><input type="number" id="curva_temp" class="form-control fw-bold text-danger border-danger"></div>
+                    <div class="col-6"><label class="label-mini text-primary">AT - BT (MΩ)</label><input type="number" id="curva_at_bt" class="form-control fw-bold text-primary"></div>
+                    <div class="col-6"><label class="label-mini text-success">AT - TIERRA (MΩ)</label><input type="number" id="curva_at_t" class="form-control fw-bold text-success"></div>
+                    <div class="col-6"><label class="label-mini text-warning">BT - TIERRA (MΩ)</label><input type="number" id="curva_bt_t" class="form-control fw-bold text-warning"></div>
+                </div>
+                <div class="input-group mb-2"><span class="input-group-text small">Obs</span><input type="text" id="curva_obs" class="form-control" placeholder="Ej: Inicio ciclo..."></div>
+                <button class="btn btn-danger w-100 fw-bold" onclick="guardarLecturaCurva()">REGISTRAR PUNTO DE CONTROL</button>
+            </div>
+            <div class="card p-0">
+                <div class="card-header bg-light fw-bold small">HISTORIAL DE LECTURAS</div>
+                <div class="table-responsive" style="max-height: 250px;">
+                    <table class="table table-sm table-striped mb-0 small text-center align-middle">
+                        <thead class="table-dark"><tr><th>Hora</th><th>Temp</th><th class="text-primary">AT-BT</th><th class="text-success">AT-T</th><th class="text-warning">BT-T</th></tr></thead>
+                        <tbody id="tabla_curva_body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-hist" class="view">
+        <h4 class="mb-3 fw-bold text-info"><i class="fas fa-database me-2"></i>Historial (Local)</h4>
+        <div class="card p-3 mb-3"><input type="text" id="filtroHistorial" class="form-control" placeholder="Buscar..." onkeyup="filtrarHistorial()"></div>
+        <div class="card p-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover table-historial mb-0 text-center">
+                    <thead class="table-light"><tr><th class="text-start">Entrada</th><th class="text-start">Cliente</th><th>Insp</th><th>Ini</th><th>Curva</th><th>Fin</th></tr></thead>
+                    <tbody id="tabla_historial_body"><tr><td colspan="6" class="text-center py-4 text-muted">Cargando...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div id="template-lab"></div>
 
   </div> 
@@ -92,12 +192,14 @@
             <div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold">AGENDA PENDIENTE</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
             <div class="modal-body bg-light">
                 <div class="row g-2 mb-3">
-                    <div class="col-md-6"><input type="text" id="filtroAgenda" class="form-control" placeholder="Buscar..." onkeyup="filtrarAgenda()"></div>
+                    <div class="col-md-6"><div class="input-group"><span class="input-group-text"><i class="fas fa-search"></i></span><input type="text" id="filtroAgenda" class="form-control" placeholder="Buscar Cliente/ID..." onkeyup="filtrarAgenda()"></div></div>
                     <div class="col-md-6">
                         <select id="filtroEstadoAgenda" class="form-select fw-bold text-primary" onchange="filtrarAgenda()">
-                            <option value="TODOS">⚡ TODOS</option>
-                            <option value="warning">⚠️ INICIALES</option>
-                            <option value="primary">🔵 FINALES</option>
+                            <option value="TODOS">⚡ TODOS LOS PENDIENTES</option>
+                            <option value="danger">🔴 FALTA INSPECCIÓN</option>
+                            <option value="warning">⚠️ FALTA INICIALES</option>
+                            <option value="primary">🔵 FALTA FINALES</option>
+                            <option value="purple">🟣 PROTOCOLO DIRECTO</option>
                         </select>
                     </div>
                 </div>
@@ -107,197 +209,341 @@
     </div>
   </div>
 
-  <div class="modal fade" id="modalCrear" tabindex="-1">
-    <div class="modal-dialog modal-fullscreen-sm-down modal-lg">
-      <div class="modal-content">
-        <div class="modal-header bg-warning"><h5 class="modal-title fw-bold">CREAR HOJA DE VIDA</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <div class="modal-body bg-light">
-          <div class="row g-2">
-            <div class="col-md-4 col-6"><label class="small text-muted">ENTRADA</label><input id="new_entrada" class="form-control fw-bold" readonly></div>
-            <div class="col-md-4 col-6"><label class="small text-muted">KVA</label><input id="new_kva" type="number" class="form-control"></div>
-            <div class="col-md-4 col-12"><label class="small text-muted">CLIENTE</label><input id="new_cliente" class="form-control"></div>
-            <div class="col-md-6 col-12"><label class="small text-muted">SERIE</label><input id="new_serie" class="form-control"></div> <div class="col-md-6 col-12"><label class="small text-muted">MARCA</label><input id="new_marca" class="form-control"></div>
-            <div class="col-md-3 col-6"><label class="small text-muted">V.PRIM</label><input id="new_vp" type="number" class="form-control"></div>
-            <div class="col-md-3 col-6"><label class="small text-muted">V.SEC</label><input id="new_vs" type="number" class="form-control"></div>
-            <div class="col-md-3 col-6"><label class="small text-muted">FASES</label><select id="new_fases" class="form-select"><option value="3">3</option><option value="1">1</option></select></div>
-            <div class="col-md-3 col-6"><label class="small text-muted">GRUPO</label><input id="new_grupo" class="form-control"></div>
-          </div>
-        </div>
-        <div class="modal-footer"><button type="button" class="btn btn-warning fw-bold" onclick="crearHoja()">GUARDAR</button></div>
-      </div>
-    </div>
-  </div>
+  <div class="modal fade" id="modalCrear" tabindex="-1"><div class="modal-dialog modal-fullscreen-sm-down modal-lg"><div class="modal-content"><div class="modal-header bg-warning"><h5 class="modal-title fw-bold">CREAR HOJA DE VIDA</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body bg-light"><div class="container-fluid p-0"><div class="row g-2"><div class="col-md-4 col-6"><label class="label-mini">ENTRADA</label><input id="new_entrada" class="form-control fw-bold" readonly></div><div class="col-md-4 col-6"><label class="label-mini">KVA</label><input id="new_kva" type="number" class="form-control"></div><div class="col-md-4 col-12"><label class="label-mini">CLIENTE</label><input id="new_cliente" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">MARCA</label><input id="new_marca" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">SERIE</label><input id="new_serie" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">V.PRIM</label><input id="new_vp" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">V.SEC</label><input id="new_vs" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">FASES</label><select id="new_fases" class="form-select"><option value="3">3</option><option value="1">1</option></select></div><div class="col-md-3 col-6"><label class="label-mini">GRUPO</label><input id="new_grupo" class="form-control" placeholder="Dyn5"></div><div class="col-md-3 col-6"><label class="label-mini">AÑO</label><input id="new_anio" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">TIPO</label><select id="new_tipo" class="form-select"><option>Sumergido</option><option>Seco</option></select></div><div class="col-12 border-top mt-2 pt-2"><h6 class="small fw-bold text-muted">DETALLES FÍSICOS DE PLACA</h6></div><div class="col-md-4 col-6"><label class="label-mini">PESO (Kg)</label><input id="new_peso" type="number" class="form-control"></div><div class="col-md-4 col-6"><label class="label-mini">ACEITE (L)</label><input id="new_aceite" type="number" class="form-control"></div><div class="col-md-4 col-12"><label class="label-mini text-danger">DERIVACIONES</label><select id="new_deriv" class="form-select fw-bold text-danger border-danger"><option value="+2">+2</option><option value="+1">+1</option><option value="0">0</option></select></div><div class="col-6"><label class="label-mini">CELULAR</label><input id="new_celular" class="form-control"></div><div class="col-6"><label class="label-mini">PROYECTO</label><input id="new_proyecto" class="form-control"></div></div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-warning fw-bold" onclick="crearHoja()">GUARDAR</button></div></div></div></div>
+  <div id="loader" class="position-fixed top-50 start-50 translate-middle bg-white p-4 rounded shadow text-center d-none" style="z-index:2000"><div class="spinner-border text-primary"></div><p class="mt-2 fw-bold">Procesando...</p></div>
+  <datalist id="list_insp"></datalist><datalist id="list_ini"></datalist><datalist id="list_fin"></datalist>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // --- ESTA ES LA URL NUEVA (YA ACTUALIZADA) ---
     const URL_API_CAMPO = "https://script.google.com/macros/s/AKfycbzdW332Skk5Po7SHLzOddgzLe2Am3WyPpQ6B9bYJI08Nz9sk8kAmWAX28HvAv3BFk-15A/exec";
     
-    // --- VARIABLES GLOBALES ---
+    let DATA = {};
     let AGENDA_CACHE = [];
-    let ITEM_SELECCIONADO = null; // Guardará el objeto completo del equipo seleccionado
-    let modalCrear, modalAgenda;
+    let HISTORIAL_CACHE = [];
+    let ITEM_SELECCIONADO = null;
+    let chartInstance = null;
+    let modalCrear = null;
+    let modalAgenda = null;
 
-    // --- CONECTOR GOOGLE ---
-    const runGoogle = (func, payload = {}) => {
-        return new Promise((resolve, reject) => {
-            fetch(URL_API_CAMPO, { method: 'POST', body: JSON.stringify({ action: func, payload: payload }) })
-            .then(r => r.json())
-            .then(data => data.error ? reject(data.error) : resolve(data))
-            .catch(err => reject(err));
-        });
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-        try {
-            modalCrear = new bootstrap.Modal(document.getElementById('modalCrear'));
-            modalAgenda = new bootstrap.Modal(document.getElementById('modalAgenda'));
-            // Cargar vistas dinámicas (Lab) si es necesario...
-        } catch(e) { console.error("Init error", e); }
-    });
-
-    // --- AGENDA & SELECCIÓN (FIX CRÍTICO) ---
-    function abrirAgenda() {
-        modalAgenda.show();
-        document.getElementById('listaAgendaContainer').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
-        
-        runGoogle('obtenerDatosProgramacion').then(res => {
-            AGENDA_CACHE = res.data || [];
-            renderAgenda(AGENDA_CACHE);
-        }).catch(err => {
-            document.getElementById('listaAgendaContainer').innerHTML = `<div class="alert alert-danger">${err}</div>`;
-        });
-    }
-
-    function renderAgenda(lista) {
-        const c = document.getElementById('listaAgendaContainer'); c.innerHTML = '';
-        if(lista.length === 0) { c.innerHTML = '<div class="text-center text-muted">Sin pendientes.</div>'; return; }
-        
-        lista.forEach(item => {
-            // USAMOS EL ID COMO CLAVE ÚNICA EN EL ONCLICK
-            let html = `
-            <div class="card agenda-card mb-3 p-3" onclick="seleccionarEquipo('${item.id}')">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <span class="badge bg-primary mb-1">#${item.id}</span>
-                        <span class="badge bg-${item.colorTecnico} mb-1 ms-2 blink">${item.estadoTecnico}</span>
-                        <h6 class="fw-bold mb-0">${item.cliente}</h6>
-                        <small class="text-muted">${item.descripcion}</small>
-                    </div>
-                    <button class="btn btn-outline-primary btn-sm rounded-pill"><i class="fas fa-arrow-right"></i></button>
-                </div>
-            </div>`;
-            c.insertAdjacentHTML('beforeend', html);
-        });
-    }
-
-    function filtrarAgenda() {
-        const q = document.getElementById('filtroAgenda').value.toLowerCase();
-        const filtrados = AGENDA_CACHE.filter(i => 
-            i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q)
-        );
-        renderAgenda(filtrados);
-    }
-
-    // --- FUNCIÓN CLAVE: SELECCIONAR Y BUSCAR ---
-    function seleccionarEquipo(id) {
-        // 1. Buscamos el objeto completo en la caché usando el ID único
-        ITEM_SELECCIONADO = AGENDA_CACHE.find(i => String(i.id) === String(id));
-        
-        if (ITEM_SELECCIONADO) {
-            modalAgenda.hide();
-            // Llenamos el buscador de Inspección (o cualquier otro)
-            const inputInsp = document.getElementById('search_insp');
-            if(inputInsp) {
-                inputInsp.value = ITEM_SELECCIONADO.id;
-                buscar('insp'); // Ejecutamos la búsqueda automáticamente
-            }
+    // --- CONECTOR GOOGLE APPS SCRIPT (RESTAURADO) ---
+    class GasRunner {
+        constructor() {
+            this._success = null;
+            this._failure = null;
+            this.argMap = { 
+                'buscarInfoEntrada': ['entrada'], 'guardarPruebasIniciales': ['form', 'soloGuardar'], 
+                'guardarPruebasFinales': ['form', 'soloGuardar'], 'registrarNuevaEntrada': ['payload'],
+                'actualizarHojaVida': ['payload'], 'procesarInspeccion': ['payload'],
+                'guardarSoloBD_Inspeccion': ['payload'], 'generarProtocoloClienteDoc': ['payload'],
+                'buscarProtocoloExistente': ['payload'], 'obtenerDatosProgramacion': [],
+                'importarAgendaProduccion': [], 'obtenerListasAutocompletado': [],
+                'obtenerDatosCurva': ['entrada'], 'registrarLecturaCurva': ['payload'], 
+                'obtenerHistorialGeneral': [], 'default': ['payload'] 
+            };
+            return new Proxy(this, {
+                get: (target, prop, receiver) => {
+                    if (prop === 'withSuccessHandler') return (cb) => { target._success = cb; return receiver; };
+                    if (prop === 'withFailureHandler') return (cb) => { target._failure = cb; return receiver; };
+                    return (...args) => {
+                        let payload = {}; 
+                        const keys = target.argMap[prop] || target.argMap['default'];
+                        if (args.length === 1 && typeof args[0] === 'object' && keys[0] === 'payload') payload = args[0];
+                        else args.forEach((val, i) => { if (keys[i]) payload[keys[i]] = val; });
+                        
+                        fetch(URL_API_CAMPO, { 
+                            method: 'POST', 
+                            body: JSON.stringify({ action: prop, payload: payload }) 
+                        })
+                        .then(r => r.json())
+                        .then(data => { 
+                            if (data.error) { if(target._failure) target._failure(data.error); } 
+                            else { if(target._success) target._success(data); } 
+                        })
+                        .catch(err => { if(target._failure) target._failure(err.toString()); });
+                    };
+                }
+            });
         }
     }
 
-    // --- FUNCIÓN BUSCAR CON AUTO-LLENADO ---
-    function buscar(mod) {
-        const inputId = 'search_' + mod;
-        const val = document.getElementById(inputId).value;
-        if(!val) return Swal.fire('Error', 'Ingrese Entrada', 'warning');
+    var google = window.google || {};
+    if (!google.script || !google.script.run) { google = { script: { run: new GasRunner() } }; }
 
-        // Mostrar loading...
-        runGoogle('buscarInfoEntrada', {entrada: val}).then(res => {
-            if (res.found) {
-                // Si existe, mostramos los datos (Lógica normal)
-                document.getElementById('form_' + mod).classList.remove('d-none');
-                // ... (Llenar campos existentes) ...
-            } else {
-                // SI NO EXISTE -> OFRECER CREAR CON AUTO-LLENADO
-                Swal.fire({
-                    title: 'No existe',
-                    text: `La entrada ${val} no tiene Hoja de Vida. ¿Crearla ahora?`,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Sí, Crear'
-                }).then(r => {
-                    if (r.isConfirmed) {
-                        document.getElementById('new_entrada').value = val;
-                        
-                        // AQUÍ OCURRE LA MAGIA DEL PRE-LLENADO
-                        // Si venimos de la agenda y el ID coincide, usamos esos datos
-                        if (ITEM_SELECCIONADO && String(ITEM_SELECCIONADO.id) === String(val)) {
-                            document.getElementById('new_cliente').value = ITEM_SELECCIONADO.cliente || "";
-                            document.getElementById('new_serie').value = ITEM_SELECCIONADO.serie || ""; // ¡AHORA SÍ LLEGARÁ!
-                            
-                            // Extraer KVA de la descripción si es posible
-                            const desc = ITEM_SELECCIONADO.descripcion || "";
-                            const match = desc.match(/(\d+(\.\d+)?)\s*KVA/i);
-                            if (match) document.getElementById('new_kva').value = match[1];
-                        }
-                        
-                        modalCrear.show();
-                    }
-                });
+    // --- INICIALIZACIÓN SEGURA ---
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            if(typeof bootstrap !== 'undefined') {
+                modalCrear = new bootstrap.Modal(document.getElementById('modalCrear'));
+                modalAgenda = new bootstrap.Modal(document.getElementById('modalAgenda'));
             }
-        }).catch(err => Swal.fire('Error', err, 'error'));
-    }
+            buildLabViews(); 
+            google.script.run.withSuccessHandler(fillDatalists).obtenerListasAutocompletado();
+        } catch (e) {
+            console.error("Error init:", e);
+        }
+    });
 
-    // --- CREAR HOJA (Backend Call) ---
-    function crearHoja() {
-        const d = {
-            entrada: document.getElementById('new_entrada').value,
-            cliente: document.getElementById('new_cliente').value,
-            kva: document.getElementById('new_kva').value,
-            serie: document.getElementById('new_serie').value,
-            marca: document.getElementById('new_marca').value,
-            // ... resto de campos ...
-        };
-        
-        if(!d.cliente || !d.kva) return Swal.fire('Faltan Datos', 'Cliente y KVA son obligatorios', 'warning');
-        
-        runGoogle('registrarNuevaEntrada', d).then(res => {
-            if(res.success) {
-                modalCrear.hide();
-                Swal.fire('Creado', 'Hoja de vida registrada', 'success');
-                // Recargar búsqueda
-                buscar('insp'); 
-            } else {
-                Swal.fire('Error', res.error, 'error');
-            }
-        });
-    }
-
-    // Funciones de navegación y toggle (Standard)
-    function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.querySelector('.overlay').classList.toggle('show'); }
-    function nav(viewId, btn) {
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        document.getElementById('view-' + viewId).classList.add('active');
-        // ... (resto de lógica de navegación)
-        if(viewId === 'hist') cargarHistorial();
+    // --- FUNCIONES CORE ---
+    function fillDatalists(lists) {
+       const fill = (id, arr) => {
+         const dl = document.getElementById(id); let opts = '';
+         if(arr) arr.forEach(val => opts += `<option value="${val}">`); 
+         if(dl) dl.innerHTML = opts;
+       };
+       if(lists) { fill('list_insp', lists.insp); fill('list_ini', lists.ini); fill('list_fin', lists.fin); }
     }
     
-    // Historial Logic (Simplificado para el ejemplo)
-    function cargarHistorial() {
-        runGoogle('obtenerHistorialGeneral').then(res => {
-            // Render table...
+    function calcCorrientes() {
+        if(!DATA || !DATA.kva) return;
+        const kva = parseFloat(DATA.kva) || 0;
+        const vp = parseFloat(DATA.vp) || 0;
+        const vs = parseFloat(DATA.vs) || 0;
+        const fases = parseFloat(DATA.fases) || 3;
+        let ip = 0, is = 0;
+        if(fases === 3 && vp > 0) ip = (kva * 1000) / (vp * 1.73205); else if(vp > 0) ip = (kva * 1000) / vp;
+        if(fases === 3 && vs > 0) is = (kva * 1000) / (vs * 1.73205); else if(vs > 0) is = (kva * 1000) / vs;
+        document.querySelectorAll('.lbl-ip').forEach(e => e.innerText = ip.toFixed(2));
+        document.querySelectorAll('.lbl-is').forEach(e => e.innerText = is.toFixed(2));
+    }
+
+    function buildLabViews() {
+      const botonesFin = `<div class="row g-2"><div class="col-4"><button class="btn btn-success w-100 fw-bold small-text p-1" onclick="guardarLab('fin',true)"><i class="fas fa-save d-block mb-1"></i>GUARDAR</button></div><div class="col-4"><button class="btn btn-primary w-100 fw-bold small-text p-1" onclick="verProtocolo()"><i class="fas fa-eye d-block mb-1"></i>VER DOC</button></div><div class="col-4"><button class="btn btn-dark w-100 fw-bold small-text p-1" onclick="generarProtocoloCliente('fin')"><i class="fas fa-sync d-block mb-1"></i>REGENERAR</button></div></div>`;
+      const botonesIni = `<div class="row g-2"><div class="col-6"><button class="btn btn-success w-100 fw-bold small-text p-1" onclick="guardarLab('ini',true)"><i class="fas fa-save d-block mb-1"></i>GUARDAR</button></div><div class="col-6"><button class="btn btn-warning w-100 fw-bold small-text p-1" onclick="guardarLab('ini',false)"><i class="fas fa-file-pdf d-block mb-1"></i>REPORTE</button></div></div>`;
+      const labs = [{id:'ini',title:'Pruebas Iniciales',color:'warning',icon:'flask', btns: botonesIni}, {id:'fin',title:'Pruebas Finales',color:'primary',icon:'check-circle', btns: botonesFin}];
+      let html = '';
+      labs.forEach(l => {
+        html += `<div id="view-${l.id}" class="view"><h4 class="mb-3 fw-bold text-${l.color}"><i class="fas ${l.icon} me-2"></i>${l.title}</h4><div class="card p-3"><div class="input-group"><input type="number" id="search_${l.id}" class="form-control fw-bold" placeholder="Entrada..." list="list_${l.id}"><button class="btn btn-${l.color}" onclick="buscar('${l.id}')">Validar</button></div></div><div id="form_${l.id}" class="d-none"><div class="alert alert-${l.color} ${l.id==='ini'?'text-dark':'text-white'} py-2 mb-3 text-center"><div class="row"><div class="col-4 border-end"><small>ENTRADA</small><div class="fw-bold lbl-entrada"></div></div><div class="col-4 border-end"><small>KVA</small><div class="fw-bold lbl-kva"></div></div><div class="col-4"><small>DERIV.</small><div class="fw-bold lbl-deriv"></div></div></div><hr class="my-1"><div class="d-flex justify-content-between px-2 small"><span>I.Prim: <strong class="lbl-ip"></strong> A</span><span>I.Sec: <strong class="lbl-is"></strong> A</span></div></div><div class="card p-3 mb-3 border-${l.color}"><h6 class="text-${l.color} fw-bold small"><i class="fas fa-brain me-1"></i>NORMAS Y GARANTÍAS</h6><div class="row g-2"><div class="col-4"><label class="label-mini">W Vacío</label><input type="number" id="${l.id}_gar_wvacio" class="form-control form-control-sm bg-garantia fw-bold"></div><div class="col-4"><label class="label-mini">W Carga</label><input type="number" id="${l.id}_gar_wcarga" class="form-control form-control-sm bg-garantia fw-bold"></div><div class="col-4"><label class="label-mini">% Uz</label><input type="number" id="${l.id}_gar_uz" class="form-control form-control-sm bg-garantia fw-bold"></div></div></div><div class="card p-2 mb-3 border-${l.color}"><div class="row g-2 align-items-center"><div class="col-4"><label class="label-mini">Temp. Amb</label><input type="number" id="${l.id}_temp" class="form-control form-control-sm fw-bold text-center" value="30"></div><div class="col-4"><label class="label-mini">Mat. Prim</label><select id="${l.id}_mat_pri" class="form-select form-select-sm"><option value="Cu">Cobre</option><option value="Al">Aluminio</option></select></div><div class="col-4"><label class="label-mini">Mat. Sec</label><select id="${l.id}_mat_sec" class="form-select form-select-sm"><option value="Cu">Cobre</option><option value="Al">Aluminio</option></select></div></div></div><ul class="nav nav-tabs nav-fill mb-3"><li class="nav-item"><button class="nav-link active" onclick="openTab('${l.id}','aisl',this)">AISL</button></li><li class="nav-item"><button class="nav-link" onclick="openTab('${l.id}','ttr',this)">TTR</button></li><li class="nav-item"><button class="nav-link" onclick="openTab('${l.id}','res',this)">RES</button></li><li class="nav-item"><button class="nav-link" onclick="openTab('${l.id}','loss',this)">LOSS</button></li></ul><div id="tab_${l.id}_aisl" class="tab-content-${l.id}"><div class="card p-3"><label class="fw-bold mb-2">Aislamiento</label><div class="input-group mb-2"><span class="input-group-text">AT-BT</span><input type="number" id="${l.id}_atbt" class="form-control"><select class="form-select unit-select" id="u_${l.id}_atbt"><option>MΩ</option><option>GΩ</option></select></div><div class="input-group mb-2"><span class="input-group-text">AT-T</span><input type="number" id="${l.id}_att" class="form-control"><select class="form-select unit-select" id="u_${l.id}_att"><option>MΩ</option><option>GΩ</option></select></div><div class="input-group mb-2"><span class="input-group-text">BT-T</span><input type="number" id="${l.id}_btt" class="form-control"><select class="form-select unit-select" id="u_${l.id}_btt"><option>MΩ</option><option>GΩ</option></select></div></div></div><div id="tab_${l.id}_ttr" class="tab-content-${l.id} d-none"><div class="alert alert-info py-1 mb-2 small">Error TTR < 0.5%</div><div class="card p-2 scroll-x" id="${l.id}_grid_ttr"></div></div><div id="tab_${l.id}_res" class="tab-content-${l.id} d-none"><div class="alert alert-warning py-1 mb-2 small">Desbalance < 5%</div><div id="${l.id}_wrapper_res"></div></div><div id="tab_${l.id}_loss" class="tab-content-${l.id} d-none"><div class="card p-3 mb-3 border-danger"><h6 class="text-danger fw-bold">CORTO</h6><div class="row g-2"><div class="col-6"><small>Icc</small><input type="number" id="${l.id}_icc" class="form-control" onchange="calcLoss('${l.id}')"></div><div class="col-6"><small>Vcc</small><input type="number" id="${l.id}_vcc" class="form-control" onchange="calcLoss('${l.id}')"></div><div class="col-12"><small>Wcc</small><input type="number" id="${l.id}_wcc" class="form-control bg-light" readonly></div></div></div><div class="card p-3 border-warning"><h6 class="text-warning text-dark fw-bold">VACÍO</h6><div class="row g-2 mb-2"><div class="col-6"><small>Vo</small><input type="number" id="${l.id}_vo" class="form-control" onchange="calcLoss('${l.id}')"></div><div class="col-6"><small>Wo</small><input type="number" id="${l.id}_wo" class="form-control bg-light" readonly></div></div><div class="input-group"><input id="${l.id}_io1" class="form-control" placeholder="Io1" onchange="calcLoss('${l.id}')"><input id="${l.id}_io2" class="form-control" placeholder="Io2" onchange="calcLoss('${l.id}')"><input id="${l.id}_io3" class="form-control" placeholder="Io3" onchange="calcLoss('${l.id}')"></div></div></div><div class="card p-3 mt-3"><h6 class="text-primary fw-bold">DATOS FÍSICOS</h6><div class="row g-2 mb-3"><div class="col-4"><small>Largo</small><input type="number" id="${l.id}_dim_l" class="form-control form-control-sm"></div><div class="col-4"><small>Ancho</small><input type="number" id="${l.id}_dim_a" class="form-control form-control-sm"></div><div class="col-4"><small>Alto</small><input type="number" id="${l.id}_dim_h" class="form-control form-control-sm"></div><div class="col-4"><small>Aceite</small><input type="number" id="${l.id}_aceite" class="form-control form-control-sm"></div><div class="col-4"><small>Peso</small><input type="number" id="${l.id}_peso" class="form-control form-control-sm"></div><div class="col-4"><small>Color</small><input id="${l.id}_color" class="form-control form-control-sm"></div></div><label class="label-mini">Observaciones</label><textarea id="${l.id}_obs" class="form-control mb-3" rows="2"></textarea><label class="label-mini text-primary">Realizado Por</label><input id="${l.id}_realizado" class="form-control fw-bold border-primary mb-3">${l.btns}</div></div></div>`;
+      });
+      document.getElementById('template-lab').innerHTML = html;
+    }
+
+    function nav(viewId, btnElement) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      const target = document.getElementById('view-' + viewId);
+      if(target) target.classList.add('active');
+      document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
+      if(btnElement) btnElement.classList.add('active');
+      else { 
+          const map = {'hv':0, 'insp':1, 'curva':2, 'ini':3, 'fin':4, 'hist':5}; 
+          if(map[viewId] !== undefined) document.querySelectorAll('.sidebar .nav-link')[map[viewId]].classList.add('active'); 
+      }
+      if(window.innerWidth<=768) toggleMenu();
+      if(viewId === 'hist') cargarHistorial();
+    }
+    
+    function verProtocolo() {
+        if(!DATA.entrada) return Swal.fire('Error','Seleccione una entrada','warning');
+        loading(true);
+        google.script.run.withSuccessHandler(res => {
+            loading(false);
+            if(res.found) window.open(res.url, '_blank');
+            else Swal.fire({title: 'No encontrado', text: '¿Deseas generarlo?', icon: 'info', showCancelButton: true, confirmButtonText: 'Sí'}).then((r) => { if(r.isConfirmed) generarProtocoloCliente('fin'); });
+        }).withFailureHandler(e => { loading(false); Swal.fire('Error', e.toString(), 'error'); }).buscarProtocoloExistente({entrada: DATA.entrada});
+    }
+
+    // Funciones del Checklist y otros
+    function initInsp() { document.getElementById('form_insp').classList.remove('d-none'); const list = [{c:'ESTRUCTURA', i:['Placa','Pintura','Cuba','Expansion','Gabinete','Radiadores','Borne']},{c:'ACCESORIOS', i:['Termómetro','Nivel','Silica','Valv.Drenaje','Valv.Presion','Buchholz']},{c:'BUJES', i:['Bujes AT','Bujes BT','Herrajes AT','Herrajes BT']},{c:'FUGAS', i:['Empaque Tapa-Tanque','Empaque Bujes AT','Empaque Bujes BT']},{c:'PRUEBAS PRELIMINARES', i:['TTR','Aislamiento','Resistencia', 'Vacio', 'Corto']}]; let h=''; list.forEach(g => { h+=`<tr class="bg-light fw-bold"><td colspan="2">${g.c}</td></tr>`; let options = '<option value="" selected></option>'; if(g.c === 'PRUEBAS PRELIMINARES') options += '<option>CONFORME</option><option>NO CONFORME</option><option>N/A</option>'; else if(g.c === 'FUGAS') options += '<option>BUENO</option><option>MALO</option><option>CAMBIAR</option><option>N/A</option>'; else options += '<option>BUENO</option><option>MALO</option><option>FALTANTE</option><option>CAMBIAR</option><option>PINTAR</option><option>LIMPIAR</option><option>N/A</option>'; g.i.forEach(it => { let id = 'chk_' + it.replace(/ /g,'').replace('.','').replace('-','').toLowerCase(); h+=`<tr><td>${it}</td><td><select id="${id}" class="form-select form-select-sm">${options}</select></td></tr>`; }); }); document.getElementById('insp_body').innerHTML = h; if(DATA.saved_insp) { const d = DATA.saved_insp; if(d.servicio) document.getElementById('insp_servicio').value = d.servicio; if(d.observaciones) document.getElementById('insp_obs').value = d.observaciones; if(d.realizado) document.getElementById('insp_realizado').value = d.realizado; const ids = ['placa','pintura','cuba','expansion','gabinete','radiadores','borne','termometro','nivel','silica','valvdrenaje','valvpresion','buchholz','bujesat','bujesbt','herrajesat','herrajesbt','ttr','aislamiento','resistencia']; ids.forEach(k => { const el = document.getElementById('chk_'+k); if(el && d[k]) el.value = d[k]; }); if(d.fugatapa) setVal('chk_empaquetapatanque', d.fugatapa); if(d.fugabujes_at) setVal('chk_empaquebujesat', d.fugabujes_at); if(d.fugabujes_bt) setVal('chk_empaquebujesbt', d.fugabujes_bt); if(d.vacio) setVal('chk_vacio', d.vacio); if(d.corto) setVal('chk_corto', d.corto); } }
+    function recopilarDatosInspeccion() { let f = {...DATA}; f.servicio = getVal('insp_servicio'); f.observaciones = getVal('insp_obs'); f.realizado = getVal('insp_realizado'); const ids = ['placa','pintura','cuba','expansion','gabinete','radiadores','borne','termometro','nivel','silica','valvdrenaje','valvpresion','buchholz','bujesat','bujesbt','herrajesat','herrajesbt','ttr','aislamiento','resistencia']; ids.forEach(k => { f[k] = getVal('chk_'+k); }); f.fugatapa = getVal('chk_empaquetapatanque'); f.fugabujes_at = getVal('chk_empaquebujesat'); f.fugabujes_bt = getVal('chk_empaquebujesbt'); f.vacio = getVal('chk_vacio'); f.corto = getVal('chk_corto'); return f; }
+    function guardarInsp(pdf) { if(!getVal('insp_realizado')) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatosInspeccion(); f.estado_cert = "PENDIENTE"; loading(true); const action = pdf ? 'procesarInspeccion' : 'guardarSoloBD_Inspeccion'; google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { if(res.url) window.open(res.url); else Swal.fire('Guardado','Estado: PENDIENTE','success'); } else Swal.fire('Error',res.error,'error'); })[action](f); }
+    function certificarInspeccion() { if(!getVal('insp_realizado')) return Swal.fire('Firma Requerida', '', 'warning'); Swal.fire({ title: '¿Certificar?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, Certificar' }).then((result) => { if (result.isConfirmed) { loading(true); let f = recopilarDatosInspeccion(); f.estado_cert = "CERTIFICADO"; google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { Swal.fire('¡Certificado!', '', 'success'); if(res.url) window.open(res.url); } else Swal.fire('Error', res.error, 'error'); }).procesarInspeccion(f); } }); }
+    function buscar(mod) { const val = document.getElementById('search_'+mod).value; if(!val) return Swal.fire('Error','Ingrese Entrada','warning'); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.found) { DATA = res; DATA.fases = parseFloat(DATA.fases); document.querySelectorAll('.lbl-entrada').forEach(e=>e.innerText=res.entrada); document.querySelectorAll('.lbl-kva').forEach(e=>e.innerText=res.kva); document.querySelectorAll('.lbl-cliente').forEach(e=>e.innerText=res.cliente); calcCorrientes(); if(mod === 'insp') initInsp(); else if(mod === 'hv') initHV(); else if(mod === 'curva') buscarCurva(); else initLab(mod); } else { 
+        // LÓGICA DE AUTO-LLENADO V31.0
+        Swal.fire({ title:'No Existe', text:'¿Crear Hoja de Vida?', icon:'question', showCancelButton:true, confirmButtonText:'Sí, Crear' }).then(r => { 
+            if(r.isConfirmed) { 
+                document.getElementById('new_entrada').value = val;
+                
+                // Si venimos de la Agenda, intentamos llenar los datos
+                if(ITEM_SELECCIONADO && String(ITEM_SELECCIONADO.id) === String(val)) {
+                    if(ITEM_SELECCIONADO.cliente) document.getElementById('new_cliente').value = ITEM_SELECCIONADO.cliente;
+                    if(ITEM_SELECCIONADO.serie) document.getElementById('new_serie').value = ITEM_SELECCIONADO.serie;
+                    
+                    // Intentamos sacar KVA de la descripción si no vino explícito
+                    // Ej: "75 KVA..." -> 75
+                    let kva = "";
+                    const desc = ITEM_SELECCIONADO.descripcion || "";
+                    const match = desc.match(/(\d+(\.\d+)?)\s*KVA/i);
+                    if(match) kva = match[1];
+                    
+                    if(kva) document.getElementById('new_kva').value = kva;
+                }
+                
+                if(modalCrear) modalCrear.show(); 
+            } 
+        }); 
+    } }).withFailureHandler(e => { loading(false); Swal.fire('Error', e.toString(), 'error'); }).buscarInfoEntrada(val); }
+    
+    function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.querySelector('.overlay').classList.toggle('show'); }
+    function loading(show) { const el=document.getElementById('loader'); show?el.classList.remove('d-none'):el.classList.add('d-none'); }
+    function getVal(id) { const el=document.getElementById(id); return el?el.value:''; }
+    function getNum(id) { const v=parseFloat(document.getElementById(id).value); return isNaN(v)?0:v; }
+    function setVal(id, val) { const el=document.getElementById(id); if(el) el.value = val; }
+    function openTab(mod, tabId, btn) { document.querySelectorAll(`.tab-content-${mod}`).forEach(e => e.classList.add('d-none')); document.getElementById(`tab_${mod}_${tabId}`).classList.remove('d-none'); btn.closest('.nav').querySelectorAll('.nav-link').forEach(e => e.classList.remove('active')); btn.classList.add('active'); }
+    function monitorCambios(mod) { const container = document.getElementById('form_' + mod); if(!container) return; container.addEventListener('input', function() { let f = recopilarDatos(mod); localStorage.setItem('backup_' + f.entrada, JSON.stringify(f)); }); }
+
+    function abrirAgenda() { if(modalAgenda) modalAgenda.show(); cargarAgenda(); }
+    
+    function cargarAgenda() {
+       const c = document.getElementById('listaAgendaContainer');
+       c.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Sincronizando con Producción...</p></div>';
+       
+       google.script.run.withSuccessHandler(res => {
+           let lista = res.data || res; 
+           if(res.error) { c.innerHTML = `<div class="alert alert-danger">Error: ${res.error}</div>`; return; }
+           if(!Array.isArray(lista) || lista.length === 0) { c.innerHTML = `<div class="text-center py-5 text-muted"><i class="fas fa-check-circle fa-2x mb-2 text-success"></i><br>¡Todo al día! No hay pendientes.</div>`; return; }
+           AGENDA_CACHE = lista;
+           renderAgenda(lista);
+       }).withFailureHandler(e => { c.innerHTML = `<div class="alert alert-danger">Error de Conexión: ${e}</div>`; }).obtenerDatosProgramacion();
+    }
+
+    function renderAgenda(lista) {
+       const c = document.getElementById('listaAgendaContainer'); c.innerHTML = '';
+       if(lista.length === 0) {
+           c.innerHTML = '<div class="text-center py-5 text-muted">No se encontraron resultados con ese filtro.</div>';
+           return;
+       }
+       lista.forEach((item, index) => {
+           let badgeClass = item.empresa === 'JLB' ? 'badge-jlb' : 'badge-group';
+           let estadoTecnico = item.estadoTecnico || "PENDIENTE";
+           let colorTecnico = item.colorTecnico || "secondary";
+           let badgeColorClass = `bg-${colorTecnico}`;
+           if (colorTecnico === 'purple') badgeColorClass = 'bg-purple';
+
+           let html = `
+           <div class="card agenda-card mb-3 p-3" onclick="seleccionarDeAgenda(${index})">
+               <div class="d-flex justify-content-between align-items-start">
+                   <div>
+                       <span class="badge ${badgeClass} mb-1">${item.empresa} #${item.id}</span>
+                       <span class="badge ${badgeColorClass} mb-1 ms-2 blink">${estadoTecnico}</span>
+                       <h6 class="fw-bold text-dark mb-0">${item.cliente}</h6>
+                       <small class="text-muted text-uppercase">${item.descripcion}</small>
+                       <div class="mt-1"><span class="badge bg-light text-dark border">${item.estado || "PRODUCCION"}</span><span class="text-xs text-muted ms-2"><i class="far fa-calendar-alt"></i> ${item.fecha}</span></div>
+                   </div>
+                   <button class="btn btn-outline-primary btn-sm rounded-pill"><i class="fas fa-arrow-right"></i></button>
+               </div>
+           </div>`;
+           c.insertAdjacentHTML('beforeend', html);
+       });
+    }
+
+    function filtrarAgenda() {
+       const q = document.getElementById('filtroAgenda').value.toLowerCase();
+       const estadoFiltro = document.getElementById('filtroEstadoAgenda').value; 
+       const filtrados = AGENDA_CACHE.filter(i => {
+           const matchTexto = i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q);
+           let matchEstado = true;
+           if (estadoFiltro !== 'TODOS') { matchEstado = i.colorTecnico === estadoFiltro; }
+           return matchTexto && matchEstado;
+       });
+       renderAgenda(filtrados);
+    }
+    
+    function seleccionarDeAgenda(index) {
+        ITEM_SELECCIONADO = AGENDA_CACHE[index];
+        modalAgenda.hide();
+        document.getElementById('search_insp').value = ITEM_SELECCIONADO.id;
+        buscar('insp');
+    }
+
+    function buscarCurva() { 
+        const entrada = getVal('search_curva'); 
+        if(!entrada) return Swal.fire('Error', 'Ingrese número de entrada', 'warning'); 
+        loading(true); 
+        google.script.run.withSuccessHandler(res => { 
+            loading(false); 
+            if(!res.success) return Swal.fire('Error', res.error, 'error'); 
+            document.getElementById('panel_curva').classList.remove('d-none'); 
+            renderizarCurva(res.data); 
+            DATA.entrada_curva = entrada; 
+        }).obtenerDatosCurva(entrada); 
+    }
+
+    function guardarLecturaCurva() {
+        const temp = getVal('curva_temp');
+        const at_bt = getVal('curva_at_bt');
+        const at_t = getVal('curva_at_t');
+        const bt_t = getVal('curva_bt_t');
+        if(!temp || !at_bt || !at_t || !bt_t) return Swal.fire('Incompleto', 'Registre Temp y las 3 Resistencias', 'warning');
+        Swal.fire({
+            title: 'Responsable', input: 'text', showCancelButton: true
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                loading(true);
+                const payload = { 
+                    entrada: DATA.entrada_curva, 
+                    temp: temp, 
+                    at_bt: at_bt, at_t: at_t, bt_t: bt_t, 
+                    obs: getVal('curva_obs'), 
+                    realizado: result.value 
+                };
+                google.script.run.withSuccessHandler(res => {
+                    if(res.success) {
+                        ['curva_temp','curva_at_bt','curva_at_t','curva_bt_t','curva_obs'].forEach(id => document.getElementById(id).value = '');
+                        buscarCurva();
+                        Swal.fire({toast:true, position:'top-end', icon:'success', title:'Registrado', timer:2000});
+                    } else {
+                        loading(false); Swal.fire('Error', res.error, 'error');
+                    }
+                }).registrarLecturaCurva(payload);
+            }
         });
     }
 
+    function renderizarCurva(datos) {
+        const tbody = document.getElementById('tabla_curva_body');
+        tbody.innerHTML = '';
+        const labels = [], d_temp = [], d_at_bt = [], d_at_t = [], d_bt_t = [];
+        datos.forEach(d => {
+            tbody.insertAdjacentHTML('beforeend', `<tr><td>${d.fecha}</td><td class="fw-bold">${d.temp}°</td><td class="text-primary">${d.at_bt}</td><td class="text-success">${d.at_t}</td><td class="text-warning">${d.bt_t}</td></tr>`);
+            labels.push(d.fecha); d_temp.push(d.temp); d_at_bt.push(d.at_bt); d_at_t.push(d.at_t); d_bt_t.push(d.bt_t);
+        });
+        const ctx = document.getElementById('chartSecamiento').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Temp', data: d_temp, borderColor: '#dc3545', backgroundColor: '#dc3545', yAxisID: 'y', tension: 0.3, pointRadius: 2 },
+                    { label: 'AT-BT', data: d_at_bt, borderColor: '#0d6efd', backgroundColor: '#0d6efd', yAxisID: 'y1', tension: 0.3, pointRadius: 3 },
+                    { label: 'AT-T', data: d_at_t, borderColor: '#198754', backgroundColor: '#198754', yAxisID: 'y1', tension: 0.3, pointRadius: 3 },
+                    { label: 'BT-T', data: d_bt_t, borderColor: '#ffc107', backgroundColor: '#ffc107', yAxisID: 'y1', tension: 0.3, pointRadius: 3 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Temperatura (°C)', color: '#dc3545' } },
+                    y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Resistencia (MΩ)', color: '#0d6efd' }, grid: { drawOnChartArea: false }, min: 0 }
+                }
+            }
+        });
+    }
+
+    function cargarHistorial() { const tbody = document.getElementById('tabla_historial_body'); tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-info"></div></td></tr>'; google.script.run.withSuccessHandler(res => { if(res.success && Array.isArray(res.data)) { HISTORIAL_CACHE = res.data; renderHistorial(HISTORIAL_CACHE); } else { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error: ${res.error || 'Datos inválidos'}</td></tr>`; } }).obtenerHistorialGeneral(); }
+    function renderHistorial(lista) { 
+        const tbody = document.getElementById('tabla_historial_body'); 
+        tbody.innerHTML = ''; 
+        if(lista.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay registros en Base de Datos.</td></tr>'; return; } 
+        lista.forEach(item => { 
+            const badge = (val) => val ? '<i class="fas fa-check-circle icon-check"></i>' : '<i class="fas fa-circle icon-cross"></i>'; 
+            const html = `<tr><td class="text-start ps-3"><a onclick="verDocHistorial('${item.entrada}')" class="link-entrada">${item.entrada} <i class="fas fa-external-link-alt"></i></a></td><td class="text-start">${item.cliente}</td><td class="text-center">${badge(item.tiene_insp)}</td><td class="text-center">${badge(item.tiene_ini)}</td><td class="text-center">${badge(item.tiene_curva)}</td><td class="text-center">${badge(item.tiene_fin)}</td></tr>`; 
+            tbody.insertAdjacentHTML('beforeend', html); 
+        }); 
+    }
+    function verDocHistorial(entrada) { if(!entrada) return; loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.found) window.open(res.url, '_blank'); else Swal.fire('Sin Documento', 'No se ha generado el protocolo aún.', 'info'); }).buscarProtocoloExistente({entrada: entrada}); }
+    function filtrarHistorial() { const q = document.getElementById('filtroHistorial').value.toLowerCase(); const filtrados = HISTORIAL_CACHE.filter(i => i.entrada.toString().includes(q) || i.cliente.toLowerCase().includes(q) ); renderHistorial(filtrados); }
+    function crearHoja() { const d = { entrada: getVal('new_entrada'), cliente: getVal('new_cliente'), kva: getVal('new_kva'), marca: getVal('new_marca'), serie: getVal('new_serie'), grupo: getVal('new_grupo'), vp: getVal('new_vp'), vs: getVal('new_vs'), fases: getVal('new_fases'), anio: getVal('new_anio'), tipo: getVal('new_tipo'), proyecto: getVal('new_proyecto'), celular: getVal('new_celular'), peso: getVal('new_peso'), aceite: getVal('new_aceite'), derivaciones: getVal('new_deriv') }; if(!d.cliente || !d.kva) return Swal.fire('Faltan Datos','','warning'); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { if(modalCrear) modalCrear.hide(); Swal.fire('Creado','','success').then(() => { if(ITEM_SELECCIONADO) { document.getElementById('search_insp').value = d.entrada; buscar('insp'); } }); } else Swal.fire('Error',res.error,'error'); }).registrarNuevaEntrada(d); }
+    function initHV() { document.getElementById('form_hv').classList.remove('d-none'); document.getElementById('edit_entrada').value=DATA.entrada; document.getElementById('edit_cliente').value=DATA.cliente; document.getElementById('edit_kva').value=DATA.kva; document.getElementById('edit_marca').value=DATA.marca; document.getElementById('edit_serie').value=DATA.serie; document.getElementById('edit_vp').value=DATA.vp; document.getElementById('edit_vs').value=DATA.vs; document.getElementById('edit_fases').value=DATA.fases; document.getElementById('edit_grupo').value=DATA.grupo; document.getElementById('edit_anio').value=DATA.anio; document.getElementById('edit_tipo').value=DATA.tipo; document.getElementById('edit_peso').value=DATA.peso; document.getElementById('edit_aceite').value=DATA.aceite; document.getElementById('edit_deriv').value=DATA.derivaciones; document.getElementById('edit_celular').value=DATA.celular; document.getElementById('edit_proyecto').value=DATA.proyecto; }
+    function guardarEdicionHV() { const d = { entrada: getVal('edit_entrada'), cliente: getVal('edit_cliente'), kva: getVal('edit_kva'), marca: getVal('edit_marca'), serie: getVal('edit_serie'), grupo: getVal('edit_grupo'), vp: getVal('edit_vp'), vs: getVal('edit_vs'), fases: getVal('edit_fases'), anio: getVal('edit_anio'), tipo: getVal('edit_tipo'), proyecto: getVal('edit_proyecto'), celular: getVal('edit_celular'), peso: getVal('edit_peso'), aceite: getVal('edit_aceite'), derivaciones: getVal('edit_deriv') }; loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) Swal.fire('Actualizado','','success'); else Swal.fire('Error',res.error,'error'); }).actualizarHojaVida(d); }
+    function initLab(mod) { document.getElementById('form_'+mod).classList.remove('d-none'); document.querySelectorAll('.lbl-deriv').forEach(e=>e.innerText=DATA.derivaciones); monitorCambios(mod); let saved = (mod === 'ini') ? DATA.saved_ini : DATA.saved_fin; let localData = localStorage.getItem('backup_' + DATA.entrada); if(localData) { try { saved = JSON.parse(localData); Swal.fire({toast:true, position:'top-end', icon:'warning', title:'Borrador local recuperado', timer:2000}); } catch(e){} } let taps=5; let hTTR='<thead><tr><th>T</th><th>U-V</th>'+(DATA.fases==3?'<th>V-W</th><th>W-U</th>':'')+'<th>%Err</th></tr></thead><tbody>'; let hRes='<thead><tr><th>T</th><th>U-V</th>'+(DATA.fases==3?'<th>V-W</th><th>W-U</th>':'')+'<th>%Desb</th></tr></thead><tbody>'; for(let i=1;i<=taps;i++) { let vT = (saved && saved.ttr && saved.ttr['tap'+i]) ? saved.ttr['tap'+i] : ["","",""]; hTTR += `<tr><td><b>${i}</b></td><td><input class="form-control form-control-sm table-input" id="inp-${mod}-uv-${i}" value="${vT[0]}" onchange="calcTTRDev('${mod}',${i})"></td>`+(DATA.fases==3?`<td><input class="form-control form-control-sm table-input" id="inp-${mod}-vw-${i}" value="${vT[1]}" onchange="calcTTRDev('${mod}',${i})"></td><td><input class="form-control form-control-sm table-input" id="inp-${mod}-wu-${i}" value="${vT[2]}" onchange="calcTTRDev('${mod}',${i})"></td>`:'')+`<td><span id="err-${mod}-${i}" class="badge bg-secondary">-</span></td></tr>`; let vR = (saved && saved.res_prim && saved.res_prim['tap'+i]) ? saved.res_prim['tap'+i] : ["","",""]; hRes += `<tr><td><b>${i}</b></td><td><input class="form-control form-control-sm table-input" id="inp-${mod}-r-uv-${i}" value="${vR[0]}" onchange="calcResBal('${mod}','pri',${i})"></td>`+(DATA.fases==3?`<td><input class="form-control form-control-sm table-input" id="inp-${mod}-r-vw-${i}" value="${vR[1]}" onchange="calcResBal('${mod}','pri',${i})"></td><td><input class="form-control form-control-sm table-input" id="inp-${mod}-r-wu-${i}" value="${vR[2]}" onchange="calcResBal('${mod}','pri',${i})"></td>`:'')+`<td><span id="res-err-${mod}-pri-${i}" class="badge bg-secondary">-</span></td></tr>`; } document.getElementById(`${mod}_grid_ttr`).innerHTML = '<table class="table table-sm text-center">'+hTTR+'</tbody></table>'; let secInputs = `<div class="input-group mb-1"><span class="input-group-text">PN-X</span><input type="number" id="${mod}_pnx" class="form-control" value="${saved?saved.res_sec.pnx:''}" onchange="calcResBal('${mod}','sec')"><span class="input-group-text">X-Y</span><input type="number" id="${mod}_xy" class="form-control" value="${saved?saved.res_sec.xy:''}"></div>`; if(DATA.fases==3) secInputs += `<div class="input-group mb-1"><span class="input-group-text">PN-Y</span><input type="number" id="${mod}_pny" class="form-control" value="${saved?saved.res_sec.pny:''}" onchange="calcResBal('${mod}','sec')"><span class="input-group-text">Y-Z</span><input type="number" id="${mod}_yz" class="form-control" value="${saved?saved.res_sec.yz:''}"></div><div class="input-group mb-1"><span class="input-group-text">PN-Z</span><input type="number" id="${mod}_pnz" class="form-control" value="${saved?saved.res_sec.pnz:''}" onchange="calcResBal('${mod}','sec')"><span class="input-group-text">Z-X</span><input type="number" id="${mod}_zx" class="form-control" value="${saved?saved.res_sec.zx:''}"></div>`; let unitOpts = '<option value="mΩ">mΩ</option><option value="Ω">Ω</option><option value="kΩ">kΩ</option><option value="μΩ">μΩ</option>'; document.getElementById(`${mod}_wrapper_res`).innerHTML = `<div class="card p-2 mb-3"><div class="d-flex justify-content-between mb-2"><h6 class="m-0 fw-bold small text-muted">PRIMARIO</h6><select id="u_${mod}_res_pri" class="form-select form-select-sm" style="width:auto">${unitOpts}</select></div><div class="scroll-x"><table class="table table-sm text-center mb-0">${hRes}</tbody></table></div></div><div class="card p-2"><div class="d-flex justify-content-between mb-2"><h6 class="m-0 fw-bold small text-muted">SECUNDARIO <span id="res-err-${mod}-sec" class="badge bg-secondary ms-2">-</span></h6><select id="u_${mod}_res_sec" class="form-select form-select-sm" style="width:auto">${unitOpts}</select></div>${secInputs}</div>`; if(saved) { document.getElementById(`${mod}_temp`).value = saved.temp_amb || 30; if(saved.mat_pri) document.getElementById(`${mod}_mat_pri`).value = saved.mat_pri; if(saved.mat_sec) document.getElementById(`${mod}_mat_sec`).value = saved.mat_sec; if(saved.gar_w_vacio) document.getElementById(`${mod}_gar_wvacio`).value = saved.gar_w_vacio; if(saved.gar_w_carga) document.getElementById(`${mod}_gar_wcarga`).value = saved.gar_w_carga; if(saved.gar_uz) document.getElementById(`${mod}_gar_uz`).value = saved.gar_uz; if(saved.aisl_at_bt) { let p = saved.aisl_at_bt.split(" "); document.getElementById(`${mod}_atbt`).value = p[0]||""; document.getElementById(`u_${mod}_atbt`).value = p[1]||"MΩ"; } if(saved.aisl_at_t) { let p = saved.aisl_at_t.split(" "); document.getElementById(`${mod}_att`).value = p[0]||""; document.getElementById(`u_${mod}_att`).value = p[1]||"MΩ"; } if(saved.aisl_bt_t) { let p = saved.aisl_bt_t.split(" "); document.getElementById(`${mod}_btt`).value = p[0]||""; document.getElementById(`u_${mod}_btt`).value = p[1]||"MΩ"; } document.getElementById(`${mod}_icc`).value = saved.cc_icc||""; document.getElementById(`${mod}_vcc`).value = saved.cc_vcc||""; document.getElementById(`${mod}_wcc`).value = saved.cc_wcc||""; document.getElementById(`${mod}_vo`).value = saved.vc_vo||""; document.getElementById(`${mod}_wo`).value = saved.vc_wo||""; document.getElementById(`${mod}_io1`).value = saved.vc_io_1||""; document.getElementById(`${mod}_io2`).value = saved.vc_io_2||""; document.getElementById(`${mod}_io3`).value = saved.vc_io_3||""; document.getElementById(`${mod}_obs`).value = saved.observaciones||""; document.getElementById(`${mod}_realizado`).value = saved.realizado||""; if(saved.dim_l) document.getElementById(`${mod}_dim_l`).value = saved.dim_l; if(saved.dim_a) document.getElementById(`${mod}_dim_a`).value = saved.dim_a; if(saved.dim_h) document.getElementById(`${mod}_dim_h`).value = saved.dim_h; if(saved.aceite) document.getElementById(`${mod}_aceite`).value = saved.aceite; if(saved.peso) document.getElementById(`${mod}_peso`).value = saved.peso; if(saved.color) document.getElementById(`${mod}_color`).value = saved.color; if(saved.unidades) { try { let u = typeof saved.unidades === 'string' ? JSON.parse(saved.unidades) : saved.unidades; if(u.res_pri) document.getElementById(`u_${mod}_res_pri`).value = u.res_pri; if(u.res_sec) document.getElementById(`u_${mod}_res_sec`).value = u.res_sec; } catch(e) {} } for(let i=1; i<=taps; i++){ calcTTRDev(mod, i); calcResBal(mod, 'pri', i); } if(DATA.fases==3) calcResBal(mod, 'sec'); } }
+    function calcTTRDev(mod, tapIdx) { let deriv = DATA.derivaciones || "+2"; let nomTap = 3; if(deriv === '+1') nomTap = 2; if(deriv === '0') nomTap = 1; let steps = nomTap - tapIdx; let factor = 1 + (steps * 0.025); let vp_tap = parseFloat(DATA.vp) * factor; let vs = parseFloat(DATA.vs); let factorFases = (DATA.fases === 3) ? 1.73205 : 1; let ttr_teorico = (vp_tap / vs) * factorFases; let u = getNum(`inp-${mod}-uv-${tapIdx}`); let v = (DATA.fases==3) ? getNum(`inp-${mod}-vw-${tapIdx}`) : 0; let w = (DATA.fases==3) ? getNum(`inp-${mod}-wu-${tapIdx}`) : 0; let errMax = 0; let hayDato = false; [u,v,w].forEach(val => { if(val > 0) { hayDato = true; let err = Math.abs((ttr_teorico - val)/ttr_teorico) * 100; if(err > errMax) errMax = err; } }); let badge = document.getElementById(`err-${mod}-${tapIdx}`); if(hayDato) { badge.innerText = errMax.toFixed(2) + '%'; badge.className = errMax > 0.5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
+    function calcResBal(mod, type, rowIdx) { if(DATA.fases !== 3) return; let v1=0, v2=0, v3=0; let badgeId = ''; if(type === 'pri') { v1 = getNum(`inp-${mod}-r-uv-${rowIdx}`); v2 = getNum(`inp-${mod}-r-vw-${rowIdx}`); v3 = getNum(`inp-${mod}-r-wu-${rowIdx}`); badgeId = `res-err-${mod}-pri-${rowIdx}`; } else { v1 = getNum(`${mod}_pnx`); v2 = getNum(`${mod}_pny`); v3 = getNum(`${mod}_pnz`); badgeId = `res-err-${mod}-sec`; } let badge = document.getElementById(badgeId); if(v1 > 0 && v2 > 0 && v3 > 0) { let avg = (v1 + v2 + v3) / 3; let maxDev = Math.max(Math.abs(v1-avg), Math.abs(v2-avg), Math.abs(v3-avg)); let percentDev = (maxDev / avg) * 100; badge.innerText = percentDev.toFixed(2) + '%'; badge.className = percentDev > 5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
+    function calcLoss(mod) { let f = (DATA.fases === 3) ? 1.73205 : 1; document.getElementById(`${mod}_wcc`).value = (getNum(`${mod}_vcc`)*getNum(`${mod}_icc`)*f).toFixed(2); let i1=getNum(`${mod}_io1`), i2=getNum(`${mod}_io2`), i3=getNum(`${mod}_io3`); let div = (DATA.fases === 3) ? 3 : 1; let iavg = (i1+i2+i3)/div; document.getElementById(`${mod}_wo`).value = (getNum(`${mod}_vo`)*iavg*f).toFixed(2); }
+    function recopilarDatos(mod) { let f = {...DATA}; let lblIp = document.querySelector('.lbl-ip'); let lblIs = document.querySelector('.lbl-is'); if (lblIp && lblIs) { f.calc_iprim = lblIp.innerText; f.calc_isec = lblIs.innerText; } else { const kva = parseFloat(DATA.kva) || 0; const vp = parseFloat(DATA.vp) || 0; const vs = parseFloat(DATA.vs) || 0; f.calc_iprim = (kva > 0 && vp > 0) ? ((kva*1000)/(vp * (DATA.fases==3?1.732:1))).toFixed(2) : "0"; f.calc_isec = (kva > 0 && vs > 0) ? ((kva*1000)/(vs * (DATA.fases==3?1.732:1))).toFixed(2) : "0"; } f.temp_amb = getVal(`${mod}_temp`); f.mat_pri = getVal(`${mod}_mat_pri`); f.mat_sec = getVal(`${mod}_mat_sec`); let u_p = getVal(`u_${mod}_res_pri`); let u_s = getVal(`u_${mod}_res_sec`); f.unidades = { res_pri: u_p, res_sec: u_s, aisl_at_bt: getVal(`u_${mod}_atbt`), aisl_at_t: getVal(`u_${mod}_att`), aisl_bt_t: getVal(`u_${mod}_btt`) }; f.aisl_at_bt = getVal(`${mod}_atbt`); f.aisl_at_t = getVal(`${mod}_att`); f.aisl_bt_t = getVal(`${mod}_btt`); f.cc_icc = getVal(`${mod}_icc`); f.cc_vcc = getVal(`${mod}_vcc`); f.cc_wcc = getVal(`${mod}_wcc`); f.vc_vo = getVal(`${mod}_vo`); f.vc_wo = getVal(`${mod}_wo`); f.vc_io_1 = getVal(`${mod}_io1`); f.vc_io_2 = getVal(`${mod}_io2`); f.vc_io_3 = getVal(`${mod}_io3`); f.observaciones = getVal(`${mod}_obs`); f.realizado = getVal(`${mod}_realizado`); f.gar_w_vacio = getVal(`${mod}_gar_wvacio`); f.gar_w_carga = getVal(`${mod}_gar_wcarga`); f.gar_uz = getVal(`${mod}_gar_uz`); f.dim_l = getVal(`${mod}_dim_l`); f.dim_a = getVal(`${mod}_dim_a`); f.dim_h = getVal(`${mod}_dim_h`); f.aceite = getVal(`${mod}_aceite`) || DATA.aceite; f.peso = getVal(`${mod}_peso`) || DATA.peso; f.color = getVal(`${mod}_color`); let ttr={}, res={}; for(let i=1; i<=5; i++){ ttr['tap'+i] = [getVal(`inp-${mod}-uv-${i}`), DATA.fases==3?getVal(`inp-${mod}-vw-${i}`):'', DATA.fases==3?getVal(`inp-${mod}-wu-${i}`):'']; res['tap'+i] = [getVal(`inp-${mod}-r-uv-${i}`), DATA.fases==3?getVal(`inp-${mod}-r-vw-${i}`):'', DATA.fases==3?getVal(`inp-${mod}-r-wu-${i}`):'']; } f.ttr = ttr; f.res_prim = res; f.res_sec = { pnx: getVal(`${mod}_pnx`), xy: getVal(`${mod}_xy`), pny: DATA.fases==3 ? getVal(`${mod}_pny`) : "", yz: DATA.fases==3 ? getVal(`${mod}_yz`) : "", pnz: DATA.fases==3 ? getVal(`${mod}_pnz`) : "", zx: DATA.fases==3 ? getVal(`${mod}_zx`) : "" }; return f; }
+    function guardarLab(mod, soloGuardar) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); const runner = (mod === 'ini') ? google.script.run.withSuccessHandler(fin).guardarPruebasIniciales(f, soloGuardar) : google.script.run.withSuccessHandler(fin).guardarPruebasFinales(f, soloGuardar); }
+    function generarProtocoloCliente(mod) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) Swal.fire({title:'Protocolo Generado', html:`<a href="${res.url}" target="_blank" class="btn btn-dark btn-lg">Abrir Protocolo (PDF)</a>`, icon:'success'}); else Swal.fire('Error Word',res.error,'error'); }).generarProtocoloClienteDoc(f); }
+    function fin(res) { if(res.success && DATA.entrada) localStorage.removeItem('backup_' + DATA.entrada); loading(false); if(res.success && res.message) { Swal.fire('Guardado', res.message, 'success'); } else if(res.success) { res.url ? window.open(res.url) : Swal.fire('Guardado','Datos en Excel','success'); } else { Swal.fire('Error',res.error,'error'); } }
   </script>
 </body>
 </html>
