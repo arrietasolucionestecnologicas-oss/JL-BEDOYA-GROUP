@@ -99,9 +99,9 @@
   </a>
 
   <script>
-    // --- CONFIGURACIÓN ---
-    // ¡¡PEGA AQUÍ TU URL DE APPS SCRIPT!!
-    const URL_API_PRESUPUESTO = "PEGA_AQUI_LA_URL_DE_TU_SCRIPT_EXEC";
+    // --- CONFIGURACIÓN CRÍTICA ---
+    // ¡PEGA AQUÍ LA URL QUE OBTENGAS DEL DESPLIEGUE EN APPS SCRIPT!
+    const URL_API_PRESUPUESTO = "TU_URL_DE_APPS_SCRIPT_AQUI"; 
 
     let ITEMS_CARRITO = [];
 
@@ -120,7 +120,7 @@
       }
     }
 
-    // --- FUNCIONES ---
+    // --- LÓGICA DE PRESUPUESTO ---
 
     function buscarTrafo() {
       const id = document.getElementById('txtIdJlb').value;
@@ -138,7 +138,7 @@
           document.getElementById('infoCliente').classList.add('d-none');
           Swal.fire('No encontrado', 'El ID no existe en Programación', 'error');
         }
-      });
+      }).catch(err => Swal.fire('Error', 'Fallo de conexión', 'error'));
     }
 
     let timeoutSugerencia;
@@ -153,7 +153,7 @@
       clearTimeout(timeoutSugerencia);
       timeoutSugerencia = setTimeout(() => {
         runApi('sugerirItems', { query: query }).then(items => {
-          if(items.length > 0) {
+          if(items && items.length > 0) {
             lista.classList.remove('d-none');
             items.forEach(item => {
               const div = document.createElement('div');
@@ -181,7 +181,6 @@
       if(!desc || cant <= 0 || precio <= 0) return Swal.fire('Datos incompletos', 'Verifica cantidad y precio', 'warning');
 
       const subtotal = cant * precio;
-      // Asumimos IVA 19% por defecto para simplificar, o podrías poner un checkbox
       const iva = subtotal * 0.19; 
       const total = subtotal + iva;
 
@@ -246,7 +245,6 @@
 
       Swal.fire({title: 'Guardando...', didOpen: () => Swal.showLoading()});
 
-      // Si hay imprevistos, lo agregamos como un item "virtual" al payload
       const itemsFinales = [...ITEMS_CARRITO];
       if(document.getElementById('chkImprevistos').checked) {
         const subtotalBase = ITEMS_CARRITO.reduce((sum, i) => sum + i.subtotal, 0);
@@ -271,12 +269,11 @@
             location.reload();
           });
         } else {
-          Swal.fire('Error', res.error, 'error');
+          Swal.fire('Error', res.error || 'Error desconocido', 'error');
         }
-      });
+      }).catch(err => Swal.fire('Error', 'Fallo de conexión', 'error'));
     }
 
-    // Cerrar sugerencias al hacer click fuera
     document.addEventListener('click', function(e) {
       if(e.target.id !== 'txtDesc') {
         document.getElementById('listaSugerencias').classList.add('d-none');
