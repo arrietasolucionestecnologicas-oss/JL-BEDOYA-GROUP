@@ -34,7 +34,12 @@
         .input-tech:focus { outline: none; border-color: #ca8a04; ring: 2px solid rgba(202,138,4,0.1); }
         .label-tech { display: block; font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
         
-        .input-tech:disabled { background-color: #f1f5f9; color: #475569; border-color: #e2e8f0; cursor: default; }
+        /* Estilos Bloqueados */
+        .input-tech:disabled { background-color: #f1f5f9; color: #334155; border-color: #cbd5e1; cursor: default; font-weight: 700; }
+        .select-disabled { -webkit-appearance: none; pointer-events: none; background-color: #f1f5f9; }
+        
+        .blink { animation: blinker 1.5s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.7; } }
     </style>
 </head>
 <body class="p-4 md:p-8 text-slate-800 bg-slate-50">
@@ -52,7 +57,7 @@
             </div>
         </div>
         <div class="flex gap-4 mt-4 md:mt-0 items-center">
-            <button id="btn-install" onclick="instalarPWA()" class="hidden bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase shadow-lg flex items-center gap-2">
+            <button id="btn-install" onclick="instalarPWA()" class="hidden bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase shadow-lg blink transition-all active:scale-95 flex items-center gap-2">
                 <i data-lucide="download" class="w-4 h-4"></i> Instalar App
             </button>
             <div class="text-right hidden md:block px-4 border-r border-slate-700">
@@ -78,6 +83,7 @@
 
     <div id="modal-ficha" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-slate-700">
+            
             <div class="bg-slate-900 p-6 flex justify-between items-start shrink-0 border-b-4 border-yellow-500">
                 <div>
                     <div class="flex items-center gap-2 mb-1">
@@ -91,6 +97,7 @@
             </div>
 
             <div class="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50">
+                
                 <div class="mb-6">
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                         <i data-lucide="database" class="w-4 h-4 text-yellow-600"></i> Especificaciones del Equipo
@@ -98,9 +105,14 @@
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs" id="m-datos-tecnicos"></div>
                 </div>
 
-                <div id="form-registro" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <div id="form-registro" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative">
+                    
+                    <div id="badge-readonly" class="hidden absolute top-4 right-4 bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border border-gray-300">
+                        <i data-lucide="lock" class="w-3 h-3 inline mr-1"></i> Modo Histórico
+                    </div>
+
                     <h4 class="text-sm font-black text-slate-800 uppercase mb-4 flex items-center gap-2 border-b pb-2">
-                        <i data-lucide="flask-conical" class="w-5 h-5 text-blue-600"></i> Registro de Variables
+                        <i data-lucide="flask-conical" class="w-5 h-5 text-blue-600"></i> Registro de Resultados
                     </h4>
                     
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -132,7 +144,7 @@
                     <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
                         <div class="flex flex-col md:flex-row gap-4 items-end">
                             <div class="flex-1 w-full">
-                                <label class="label-tech text-yellow-800 text-sm mb-2"><i data-lucide="gavel" class="w-3 h-3 inline"></i> DICTAMEN DEL ANALISTA</label>
+                                <label class="label-tech text-yellow-800 text-sm mb-2"><i data-lucide="gavel" class="w-3 h-3 inline"></i> CONCLUSIÓN FINAL</label>
                                 <select id="inp-dictamen" class="w-full p-3 rounded-lg font-bold border-2 border-yellow-400 text-slate-800 bg-white focus:outline-none">
                                     <option value="APROBADO">✅ APROBADO (LISTO)</option>
                                     <option value="RECHAZADO">❌ RECHAZADO (NO APTO)</option>
@@ -143,22 +155,21 @@
                     </div>
                 </div>
 
-                <div id="info-historial" class="hidden mt-6 bg-green-50 p-6 rounded-xl border border-green-200 text-center">
-                    <h3 class="text-xl font-black text-green-800 uppercase mb-3">Registro Histórico</h3>
-                    <div id="btn-ver-pdf-container" class="hidden">
-                        <a id="link-pdf" href="#" target="_blank" class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all transform hover:scale-105">
-                            <i data-lucide="file-text" class="w-5 h-5"></i> VER CERTIFICADO PDF
-                        </a>
-                    </div>
+                <div id="zone-pdf" class="hidden mt-4 p-4 bg-slate-100 rounded-xl text-center border-2 border-dashed border-slate-300">
+                    <a id="link-pdf" href="#" target="_blank" class="inline-flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all transform hover:scale-105">
+                        <i data-lucide="file-text" class="w-5 h-5"></i> <span>VER CERTIFICADO ORIGINAL (PDF)</span>
+                    </a>
+                    <p class="text-xs text-slate-400 mt-2">Documento generado y firmado digitalmente.</p>
                 </div>
+
             </div>
 
             <div class="p-4 bg-white border-t border-slate-200 shrink-0 grid grid-cols-1 md:grid-cols-2 gap-3" id="modal-footer">
                 <button onclick="guardarEnsayo(false)" id="btn-save-simple" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-md flex items-center justify-center gap-2 active:scale-95 text-xs md:text-sm tracking-wide">
-                    <i data-lucide="bell-ring" class="w-5 h-5"></i> <div class="text-left"><span class="block leading-none">SOLO NOTIFICAR (LISTO)</span><span class="text-[9px] opacity-80 font-normal">Sin PDF.</span></div>
+                    <i data-lucide="bell-ring" class="w-5 h-5"></i> <div class="text-left"><span class="block leading-none">SOLO NOTIFICAR (LISTO)</span><span class="text-[9px] opacity-80 font-normal">Informa a Producción, sin PDF.</span></div>
                 </button>
                 <button onclick="guardarEnsayo(true)" id="btn-save-full" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 text-xs md:text-sm tracking-wide">
-                    <i data-lucide="file-check" class="w-5 h-5"></i> <div class="text-left"><span class="block leading-none">GENERAR CERTIFICADO OFICIAL</span><span class="text-[9px] opacity-80 font-normal">Crea PDF.</span></div>
+                    <i data-lucide="file-check" class="w-5 h-5"></i> <div class="text-left"><span class="block leading-none">GENERAR CERTIFICADO OFICIAL</span><span class="text-[9px] opacity-80 font-normal">Crea PDF, sube a Drive y notifica.</span></div>
                 </button>
             </div>
         </div>
@@ -167,6 +178,8 @@
     <script>
         let rawData = [];
         let selItem = null;
+        
+        // Configuración de campos habilitados según tipo
         const CONFIG_CAMPOS = {
             'PCB': ['inp-temp', 'inp-hum', 'inp-pcb', 'inp-responsable', 'inp-dictamen'],
             'PARCIAL': ['inp-temp', 'inp-hum', 'inp-color', 'inp-visual', 'inp-rigidez', 'inp-agua', 'inp-acidez', 'inp-tension', 'inp-responsable', 'inp-dictamen'],
@@ -248,11 +261,13 @@
             const esHistorial = selItem.status === 'REALIZADO';
             const i = selItem.info || {};
 
+            // Header Info
             document.getElementById('m-id').innerText = "#" + selItem.id;
             document.getElementById('m-cliente').innerText = selItem.cliente;
             document.getElementById('m-tipo').innerText = selItem.textoBoton;
             document.getElementById('m-fecha').innerText = selItem.fechaIngreso;
 
+            // Datos Placa
             const fields = [
                 {l:"Marca", v: i.marca}, {l:"Voltajes", v: `${i.vp}/${i.vs}`},
                 {l:"Aceite (L)", v: i.litros}, {l:"Año", v: i.anio}
@@ -260,27 +275,25 @@
             document.getElementById('m-datos-tecnicos').innerHTML = fields.map(f=>`
                 <div class="bg-slate-100 p-2 rounded border border-slate-200"><p class="text-[9px] text-slate-500 uppercase font-bold">${f.l}</p><p class="text-xs font-black text-slate-800 truncate" title="${f.v}">${f.v||'-'}</p></div>`).join('');
             
-            // RESETEAR INPUTS
+            // RESETEAR UI (Habilitar todo primero)
             const inputs = document.querySelectorAll('.input-tech, #inp-dictamen');
             inputs.forEach(inp => { 
                 if(inp.tagName !== 'SELECT') inp.value = ''; 
-                inp.disabled = false; // Habilitar por defecto
-                inp.classList.remove('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+                inp.disabled = false; 
+                inp.classList.remove('bg-gray-100', 'opacity-50', 'cursor-not-allowed', 'select-disabled');
             });
+            document.getElementById('form-registro').classList.remove('hidden');
+            document.getElementById('badge-readonly').classList.add('hidden');
+            document.getElementById('zone-pdf').classList.add('hidden');
 
-            // 1. SI ES HISTORIAL: LLENAR CON DATOS, BLOQUEAR TODO Y ESCONDER BOTONES
             if (esHistorial) {
-                document.getElementById('modal-footer').classList.add('hidden');
-                document.getElementById('info-historial').classList.remove('hidden');
+                // --- MODO HISTORIAL: LLENAR, BLOQUEAR Y MOSTRAR PDF ---
                 
-                // Mostrar Link PDF si hay
-                const divPdf = document.getElementById('btn-ver-pdf-container');
-                const linkPdf = document.getElementById('link-pdf');
-                if (selItem.pdf && selItem.pdf.startsWith('http')) {
-                    divPdf.classList.remove('hidden'); linkPdf.href = selItem.pdf;
-                } else divPdf.classList.add('hidden');
+                // 1. Ocultar Botones de Guardado
+                document.getElementById('modal-footer').classList.add('hidden');
+                document.getElementById('badge-readonly').classList.remove('hidden');
 
-                // LLENAR CAMPOS CON DATA DEL BACKEND
+                // 2. Llenar Inputs con datos guardados
                 const d = selItem.datos || {};
                 document.getElementById('inp-temp').value = d.temp || '';
                 document.getElementById('inp-hum').value = d.hum || '';
@@ -294,13 +307,21 @@
                 document.getElementById('inp-dictamen').value = selItem.resultado || 'APROBADO';
                 document.getElementById('inp-responsable').value = selItem.responsable || '';
 
-                // BLOQUEAR TODO
-                inputs.forEach(inp => inp.disabled = true);
+                // 3. Bloquear Inputs
+                inputs.forEach(inp => {
+                    inp.disabled = true;
+                    if(inp.tagName === 'SELECT') inp.classList.add('select-disabled');
+                });
+
+                // 4. Mostrar Link PDF si existe
+                if (selItem.pdf && selItem.pdf.startsWith('http')) {
+                    document.getElementById('zone-pdf').classList.remove('hidden');
+                    document.getElementById('link-pdf').href = selItem.pdf;
+                }
 
             } else {
-                // 2. SI ES PENDIENTE: PREPARAR FORMULARIO
+                // --- MODO EDICIÓN: LIMPIAR Y CONFIGURAR ---
                 document.getElementById('modal-footer').classList.remove('hidden');
-                document.getElementById('info-historial').classList.add('hidden');
                 
                 // Defaults
                 document.getElementById('inp-temp').value = "24";
@@ -308,10 +329,10 @@
                 document.getElementById('inp-pcb').value = "0";
                 document.getElementById('inp-dictamen').value = "APROBADO";
 
-                // BLOQUEO INTELIGENTE (V2.4)
+                // Aplicar Bloqueo Inteligente
                 configurarCamposPorTipo(selItem.accion);
                 
-                // Botones Activos
+                // Resetear botones
                 const btn1 = document.getElementById('btn-save-simple');
                 const btn2 = document.getElementById('btn-save-full');
                 btn1.disabled = false; btn2.disabled = false;
@@ -320,6 +341,7 @@
                 btn1.classList.remove('bg-gray-400'); btn1.classList.add('bg-blue-600');
                 btn2.classList.remove('bg-gray-400'); btn2.classList.add('bg-slate-900');
             }
+            
             document.getElementById('modal-ficha').classList.remove('hidden');
             lucide.createIcons();
         }
@@ -356,7 +378,9 @@
             }
 
             const btnUsado = generarPDF ? document.getElementById('btn-save-full') : document.getElementById('btn-save-simple');
-            btnUsado.disabled = true; 
+            const btnOtro = generarPDF ? document.getElementById('btn-save-simple') : document.getElementById('btn-save-full');
+            
+            btnUsado.disabled = true; btnOtro.disabled = true;
             btnUsado.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5"></i> <span>PROCESANDO...</span>';
             btnUsado.classList.add('bg-gray-400');
 
@@ -382,7 +406,8 @@
                 } else throw new Error(res.error);
             } catch(e) {
                 alert("❌ Error: " + e.message);
-                btnUsado.disabled = false; btnUsado.classList.remove('bg-gray-400');
+                btnUsado.disabled = false; btnOtro.disabled = false;
+                btnUsado.classList.remove('bg-gray-400');
                 btnUsado.innerHTML = '<i data-lucide="refresh-ccw"></i> REINTENTAR';
             }
         }
