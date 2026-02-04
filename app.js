@@ -3,7 +3,7 @@
 // =============================================================
 // 1. CONFIGURACIÓN
 // =============================================================
-const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbzVU2GRgkaYB6BBUyh5QWCmiCSjnbwS_tGwEGbd6o8u7hz6JwC98cTVhhOb4AmIQJXREQ/exec"; 
+const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbzdW332Skk5Po7SHLzOddgzLe2Am3WyPpQ6B9bYJI08Nz9sk8kAmWAX28HvAv3BFk-15A/exec"; 
 
 // =============================================================
 // 2. ADAPTADOR
