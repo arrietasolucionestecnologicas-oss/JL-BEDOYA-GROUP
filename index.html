@@ -254,7 +254,7 @@
                         <h6 class="font-bold text-slate-700 text-xs mb-2">AGREGAR MATERIALES</h6>
                         <div class="flex gap-2 mb-2">
                             <input id="req-cant" type="number" placeholder="Cant" class="w-20 border rounded px-3 py-2 text-sm text-center font-bold" value="1">
-                            <input id="req-desc" type="text" placeholder="Descripción..." class="flex-1 border rounded px-3 py-2 text-sm font-bold" onkeypress="if(event.key==='Enter') agregarFilaReqTemp()">
+                            <input id="req-desc" type="text" placeholder="Descripción (Ej: Tornillo 3/8...)" class="flex-1 border rounded px-3 py-2 text-sm font-bold" onkeypress="if(event.key==='Enter') agregarFilaReqTemp()">
                             <button onclick="agregarFilaReqTemp()" class="bg-slate-800 text-white w-10 rounded flex items-center justify-center hover:bg-slate-700 font-bold text-lg">+</button>
                         </div>
                         
@@ -264,7 +264,7 @@
                                 <tbody id="tbody-req-temp"></tbody>
                             </table>
                             <div class="p-2 bg-slate-50 border-t border-slate-200">
-                                <button onclick="guardarTodoReq()" id="btn-save-reqs" class="w-full bg-green-600 text-white font-bold py-2 rounded text-xs shadow-sm hover:bg-green-700 transition-colors">GUARDAR LISTA</button>
+                                <button onclick="guardarTodoReq()" id="btn-save-reqs" class="w-full bg-green-600 text-white font-bold py-2 rounded text-xs shadow-sm hover:bg-green-700 transition-colors">GUARDAR LISTA DE MATERIALES</button>
                             </div>
                         </div>
                     </div>
