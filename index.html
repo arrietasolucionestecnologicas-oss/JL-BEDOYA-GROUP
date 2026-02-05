@@ -269,7 +269,13 @@
                         </div>
                     </div>
 
-                    <h6 class="font-bold text-slate-400 text-[10px] uppercase mb-2">HISTORIAL DE SOLICITUDES</h6>
+                    <div class="flex justify-between items-end mb-2">
+                        <h6 class="font-bold text-slate-400 text-[10px] uppercase">HISTORIAL DE SOLICITUDES</h6>
+                        <button onclick="copiarRequerimientosAlmacen()" class="bg-yellow-50 text-yellow-700 border border-yellow-200 px-3 py-1 rounded text-xs font-bold hover:bg-yellow-100 flex items-center gap-1">
+                            <i data-lucide="clipboard-copy" class="w-3 h-3"></i> COPIAR PEDIDO
+                        </button>
+                    </div>
+                    
                     <div id="lista-reqs" class="space-y-2 pb-4">
                         <div class="text-center py-4 text-slate-400 italic text-xs">Cargando requerimientos...</div>
                     </div>
