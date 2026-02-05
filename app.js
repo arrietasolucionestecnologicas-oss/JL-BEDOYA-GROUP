@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V23.6 - UX MOBILE + EDIT) */
+/* JLB OPERACIONES - APP.JS (V23.7 - UX PRO) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -187,6 +187,10 @@ function abrirModal(i){
     // --- RESETEAR MODULO REQUERIMIENTOS ---
     listaReqTemp = [];
     historialReqCache = [];
+    document.getElementById('req-cant').value = "1";
+    document.getElementById('req-desc').value = "";
+    document.getElementById('req-edit-index').value = "-1";
+    toggleEditMode(false);
     renderListaReqTemp();
     
     // Identificar ID único del trafo
@@ -311,72 +315,90 @@ function avanzarEstado(nuevoEstado, accion) {
     google.script.run.withSuccessHandler(res => { if(!res.exito) alert("Error al sincronizar estado."); }).avanzarEstadoAdmin({ rowIndex: d.rowIndex, nuevoEstado: nuevoEstado, accion: accion, idTrafo: d.idJLB||d.idGroup });
 }
 
-// --- LOGICA REQUERIMIENTOS: MODAL GRANDE + EDICION ---
+// --- LOGICA REQUERIMIENTOS: PANEL INTEGRADO PRO ---
 
-function abrirModalAgregarItem(index = -1) {
-    document.getElementById('modal-agregar-item').classList.remove('hidden');
-    document.getElementById('item-edit-index').value = index;
-    
-    // Si es edición, cargamos los datos
-    if (index >= 0 && listaReqTemp[index]) {
-        document.getElementById('modal-item-title').innerText = "Editar Item";
-        document.getElementById('input-item-cant').value = listaReqTemp[index].cant;
-        document.getElementById('input-item-desc').value = listaReqTemp[index].desc;
-    } else {
-        // Si es nuevo
-        document.getElementById('modal-item-title').innerText = "Nuevo Item";
-        document.getElementById('input-item-cant').value = "1";
-        document.getElementById('input-item-desc').value = "";
-    }
-    
-    // Enfocar input descripcion
-    setTimeout(() => document.getElementById('input-item-desc').focus(), 100);
-}
-
-function cerrarModalItem() {
-    document.getElementById('modal-agregar-item').classList.add('hidden');
-}
-
-function ajustarCant(delta) {
-    const input = document.getElementById('input-item-cant');
-    let val = parseInt(input.value) || 0;
-    val = Math.max(1, val + delta); // Mínimo 1
-    input.value = val;
-}
-
-function confirmarAgregarItem() {
-    const desc = document.getElementById('input-item-desc').value.trim();
-    const cant = document.getElementById('input-item-cant').value;
-    const index = parseInt(document.getElementById('item-edit-index').value);
+function agregarFilaReqTemp() {
+    const descInput = document.getElementById('req-desc');
+    const cantInput = document.getElementById('req-cant');
+    const desc = descInput.value.trim().toUpperCase();
+    const cant = cantInput.value;
+    const index = parseInt(document.getElementById('req-edit-index').value);
     
     if (!desc) {
         showToast("Escribe una descripción", "error");
+        descInput.focus();
         return;
     }
     
     if (index >= 0) {
         // Editar existente
         listaReqTemp[index] = { cant, desc };
+        showToast("Item actualizado");
+        toggleEditMode(false);
     } else {
         // Agregar nuevo
         listaReqTemp.push({ cant, desc });
     }
     
-    cerrarModalItem();
+    // Limpiar
+    descInput.value = "";
+    cantInput.value = "1";
+    document.getElementById('req-edit-index').value = "-1";
+    descInput.focus();
+    
     renderListaReqTemp();
 }
 
+function editarItemTemp(i) {
+    const item = listaReqTemp[i];
+    document.getElementById('req-desc').value = item.desc;
+    document.getElementById('req-cant').value = item.cant;
+    document.getElementById('req-edit-index').value = i;
+    
+    toggleEditMode(true);
+    document.getElementById('req-desc').focus();
+}
+
 function borrarReqTemp(index) {
-    if(confirm("¿Borrar este item?")) {
+    if(confirm("¿Borrar este item de la lista?")) {
         listaReqTemp.splice(index, 1);
+        // Si borramos el que se estaba editando, cancelar edición
+        if (parseInt(document.getElementById('req-edit-index').value) === index) {
+            cancelarEdicion();
+        }
         renderListaReqTemp();
     }
+}
+
+function cancelarEdicion() {
+    document.getElementById('req-desc').value = "";
+    document.getElementById('req-cant').value = "1";
+    document.getElementById('req-edit-index').value = "-1";
+    toggleEditMode(false);
+}
+
+function toggleEditMode(isEditing) {
+    const btnAdd = document.getElementById('btn-add-item');
+    const btnCancel = document.getElementById('btn-cancel-edit');
+    
+    if (isEditing) {
+        btnAdd.innerHTML = '<i data-lucide="refresh-cw"></i> ACTUALIZAR ITEM';
+        btnAdd.classList.replace('bg-slate-800', 'bg-blue-600');
+        btnAdd.classList.replace('hover:bg-slate-700', 'hover:bg-blue-700');
+        btnCancel.classList.remove('hidden');
+    } else {
+        btnAdd.innerHTML = '<i data-lucide="plus-circle"></i> AGREGAR A LA LISTA';
+        btnAdd.classList.replace('bg-blue-600', 'bg-slate-800');
+        btnAdd.classList.replace('hover:bg-blue-700', 'hover:bg-slate-700');
+        btnCancel.classList.add('hidden');
+    }
+    if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function renderListaReqTemp() {
     const tbody = document.getElementById('tbody-req-temp');
     const container = document.getElementById('lista-req-temp');
-    const badge = document.getElementById('badge-count-items');
+    const badge = document.getElementById('contador-temp');
     
     if (listaReqTemp.length === 0) { 
         container.classList.add('hidden'); 
@@ -384,23 +406,20 @@ function renderListaReqTemp() {
     }
     
     container.classList.remove('hidden');
-    badge.innerText = `${listaReqTemp.length} Items`;
+    badge.innerText = listaReqTemp.length;
     tbody.innerHTML = "";
     
     listaReqTemp.forEach((item, i) => {
         tbody.innerHTML += `
-            <tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                <td class="p-3 text-center font-black text-slate-800 text-lg w-16">${item.cant}</td>
-                <td class="p-3">
-                    <p class="text-sm font-bold text-slate-700 cursor-pointer hover:text-blue-600" onclick="abrirModalAgregarItem(${i})">${item.desc}</p>
-                </td>
-                <td class="p-3 text-center w-24">
-                    <div class="flex gap-2 justify-center">
-                        <button onclick="abrirModalAgregarItem(${i})" class="bg-blue-50 text-blue-600 p-2 rounded-lg hover:bg-blue-100"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-                        <button onclick="borrarReqTemp(${i})" class="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            <div class="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="editarItemTemp(${i})">
+                    <div class="w-8 h-8 rounded bg-slate-200 flex items-center justify-center font-black text-slate-700 text-sm border border-slate-300">
+                        ${item.cant}
                     </div>
-                </td>
-            </tr>
+                    <span class="font-bold text-slate-700 text-xs uppercase leading-tight">${item.desc}</span>
+                </div>
+                <button onclick="borrarReqTemp(${i})" class="text-red-400 hover:text-red-600 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
         `;
     });
     
@@ -476,7 +495,8 @@ function guardarTodoReq() {
         listaReqTemp = [];
         renderListaReqTemp();
         cargarRequerimientos(idTrafo);
-        btn.disabled = false; btn.innerText = "GUARDAR";
+        btn.disabled = false; btn.innerHTML = '<i data-lucide="save"></i> GUARDAR';
+        if(typeof lucide !== 'undefined') lucide.createIcons();
         showToast("Requerimientos guardados");
     });
 }
