@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V23.2 - GALERIA PRO + FILTROS) */
+/* JLB OPERACIONES - APP.JS (V23.3 - REQUERIMIENTOS RAPIDOS) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -45,6 +45,7 @@ const google = { script: { get run() { return new GasRunner(); } } };
 
 let datosProg=[], datosEntradas=[], datosAlq=[], dbClientes = [], tareasCache = [];
 let alqFotosNuevas = []; 
+let listaReqTemp = []; // Lista temporal para requerimientos
 let canvas, ctx, isDrawing=false, indiceActual=-1;
 
 window.onload = function() { 
@@ -87,29 +88,14 @@ function fechaParaInput(f){
     return "";
 }
 
-// HACK: Convertir URL de Drive para ver directa
-// --- FIX VISUALIZACIÓN FOTOS (HACK THUMBNAIL) ---
 function convertirLinkDrive(url) {
     if (!url) return "";
     try {
         let id = "";
-        // Estrategia 1: Buscar ID entre /d/ y /view
         const partes = url.split('/d/');
-        if (partes.length > 1) {
-            id = partes[1].split('/')[0];
-        } 
-        // Estrategia 2: Regex estándar si la URL es rara
-        else {
-            const match = url.match(/[-\w]{25,}/);
-            if (match) id = match[0];
-        }
-
-        if (id) {
-            // EL CAMBIO MÁGICO:
-            // Usamos el endpoint 'thumbnail' y pedimos tamaño 1000px (sz=w1000)
-            // Esto carga instantáneo y no muestra el error de imagen rota.
-            return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
-        }
+        if (partes.length > 1) { id = partes[1].split('/')[0]; } 
+        else { const match = url.match(/[-\w]{25,}/); if (match) id = match[0]; }
+        if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
         return url;
     } catch (e) { return url; }
 }
@@ -193,11 +179,16 @@ function abrirModal(i){
     
     const selTipo = document.getElementById('in-tipo');
     selTipo.value = d.tipo; 
-    if(selTipo.value === "") { 
-        // Si el valor no coincide con la lista, no forzamos nada (queda en Seleccionar)
-    }
+    if(selTipo.value === "") { } // Dejar en default si no coincide
 
     renderPasosSeguimiento(d);
+    
+    // --- RESETEAR MODULO REQUERIMIENTOS ---
+    listaReqTemp = [];
+    renderListaReqTemp();
+    // Identificar ID único del trafo para los requerimientos
+    const idUnico = d.idJLB || d.idGroup;
+    cargarRequerimientos(idUnico);
 }
 
 function renderPasosSeguimiento(d) {
@@ -224,7 +215,8 @@ function renderPasosSeguimiento(d) {
     ps.forEach(p => { 
         let valFecha = fechaParaInput(d.fases[p.id]) || (p.id==='listo'?fechaParaInput(d.f_listo):""); 
         const dn = valFecha !== ""; 
-        stepsContainer.insertAdjacentHTML('beforeend', `<div class="step-card ${dn?'done':''}"><label class="text-[10px] font-bold uppercase mb-1 ${dn?'text-green-700':'text-slate-400'}">${p.l}</label><input type="date" id="date-${p.id}" value="${valFecha}" class="date-input"></div>`); 
+        const div = `<div class="step-card ${dn?'done':''}"><label class="text-[10px] font-bold uppercase mb-1 ${dn?'text-green-700':'text-slate-400'}">${p.l}</label><input type="date" id="date-${p.id}" value="${valFecha}" class="date-input"></div>`;
+        stepsContainer.insertAdjacentHTML('beforeend', div); 
     }); 
     switchTab('seg'); 
     if(typeof lucide !== 'undefined') lucide.createIcons();
@@ -312,14 +304,101 @@ function avanzarEstado(nuevoEstado, accion) {
     google.script.run.withSuccessHandler(res => { if(!res.exito) alert("Error al sincronizar estado."); }).avanzarEstadoAdmin({ rowIndex: d.rowIndex, nuevoEstado: nuevoEstado, accion: accion, idTrafo: d.idJLB||d.idGroup });
 }
 
+// --- LOGICA REQUERIMIENTOS RAPIDOS ---
+function agregarFilaReqTemp() {
+    const desc = document.getElementById('req-desc').value.trim();
+    const cant = document.getElementById('req-cant').value;
+    if (!desc) return;
+    
+    listaReqTemp.push({ cant, desc });
+    document.getElementById('req-desc').value = "";
+    document.getElementById('req-cant').value = "1";
+    document.getElementById('req-desc').focus();
+    renderListaReqTemp();
+}
+
+function borrarReqTemp(index) {
+    listaReqTemp.splice(index, 1);
+    renderListaReqTemp();
+}
+
+function renderListaReqTemp() {
+    const tbody = document.getElementById('tbody-req-temp');
+    const container = document.getElementById('lista-req-temp');
+    if (listaReqTemp.length === 0) { container.classList.add('hidden'); return; }
+    container.classList.remove('hidden');
+    tbody.innerHTML = "";
+    listaReqTemp.forEach((item, i) => {
+        tbody.innerHTML += `<tr class="border-b border-slate-100 last:border-0"><td class="p-2 text-center font-bold text-slate-700">${item.cant}</td><td class="p-2 text-slate-600">${item.desc}</td><td class="p-2 text-center"><button onclick="borrarReqTemp(${i})" class="text-red-400 hover:text-red-600 font-bold">✕</button></td></tr>`;
+    });
+}
+
+function cargarRequerimientos(idTrafo) {
+    const div = document.getElementById('lista-reqs');
+    div.innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs">Cargando...</div>';
+    
+    google.script.run.withSuccessHandler(list => {
+        div.innerHTML = '';
+        if(!list || list.length === 0) {
+            div.innerHTML = '<div class="text-center py-4 text-slate-300 text-xs">No hay historial.</div>';
+            return;
+        }
+        list.forEach(r => {
+            let color = "text-orange-500";
+            if(r.estado === "COMPRADO" || r.estado === "ENTREGADO") color = "text-green-600";
+            
+            div.innerHTML += `
+                <div class="bg-white border border-slate-100 p-2 rounded shadow-sm text-xs flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-800 font-medium">${r.texto}</p>
+                        <p class="text-[10px] text-slate-400">${r.fecha} - ${r.autor}</p>
+                    </div>
+                    <span class="font-bold ${color} text-[10px] uppercase">${r.estado}</span>
+                </div>
+            `;
+        });
+    }).obtenerRequerimientos(idTrafo);
+}
+
+function guardarTodoReq() {
+    const d = datosProg[indiceActual];
+    const idTrafo = d.idJLB || d.idGroup;
+    if (!idTrafo) { alert("Error: No hay ID de Trafo"); return; }
+    if (listaReqTemp.length === 0) return;
+
+    const btn = document.getElementById('btn-save-reqs');
+    btn.disabled = true; btn.innerText = "ENVIANDO...";
+
+    // Enviamos el lote uno por uno (para asegurar compatibilidad con tu backend actual)
+    let promesas = listaReqTemp.map(item => {
+        return new Promise((resolve) => {
+            const payload = {
+                idTrafo: idTrafo,
+                descripcion: item.desc,
+                cantidad: item.cant,
+                texto: `(${item.cant}) ${item.desc}`, // Concatenamos para compatibilidad
+                autor: "Producción"
+            };
+            google.script.run.withSuccessHandler(resolve).withFailureHandler(resolve).guardarRequerimiento(payload);
+        });
+    });
+
+    Promise.all(promesas).then(() => {
+        listaReqTemp = [];
+        renderListaReqTemp();
+        cargarRequerimientos(idTrafo);
+        btn.disabled = false; btn.innerText = "GUARDAR LISTA DE MATERIALES";
+        showToast("Requerimientos enviados");
+    });
+}
+
+// RESTO DE FUNCIONES
 function subLog(id) { document.querySelectorAll('.log-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.log-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-log-'+id).classList.add('active'); if(id==='term') cargarTerminados(); if(id==='alq') cargarAlquiler(); if(id==='pat') cargarPatio(); }
 function subNav(id) { 
     document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); 
     document.querySelectorAll('.cp-btn').forEach(e=>e.classList.remove('active')); 
     document.getElementById('view-'+id).classList.add('active'); 
     document.getElementById('btn-cp-'+id).classList.add('active');
-    
-    // TRIGGER GALERÍA
     if(id === 'fot') cargarGaleriaFotos();
 }
 
@@ -360,7 +439,6 @@ function filtrarAlquiler() {
 function cargarGaleriaFotos() {
     const grid = document.getElementById('galeria-fotos-grid');
     if(!grid) return;
-    
     grid.innerHTML = '<div class="col-span-full text-center text-blue-500 py-8"><i data-lucide="loader-2" class="animate-spin w-8 h-8 mx-auto"></i><p class="text-xs mt-2">Sincronizando fotos recientes...</p></div>';
     if(typeof lucide !== 'undefined') lucide.createIcons();
 
@@ -373,9 +451,7 @@ function cargarGaleriaFotos() {
                 return;
             }
             fotos.forEach(f => {
-                // Generamos URL directa
                 const directUrl = convertirLinkDrive(f.url);
-                // Card limpia, sin opacidad oscura
                 const card = `
                     <div class="gallery-card relative group bg-white rounded-lg overflow-hidden aspect-square border border-slate-200 shadow-sm hover:shadow-lg transition-all cursor-pointer" onclick="window.open('${directUrl}', '_blank')">
                         <img src="${directUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-105">
@@ -392,35 +468,25 @@ function cargarGaleriaFotos() {
             });
         })
         .withFailureHandler(error => {
-            console.error("Error Galería:", error);
             grid.innerHTML = `<div class="col-span-full text-center text-red-400 py-8"><i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i><p>Error de conexión.</p><button onclick="cargarGaleriaFotos()" class="text-blue-500 underline mt-2">Reintentar</button></div>`;
             if(typeof lucide !== 'undefined') lucide.createIcons();
         })
         .obtenerUltimasFotos();
 }
 
-// --- FUNCIÓN FILTRADO GALERÍA CLIENTE ---
 function filtrarFotos() {
     const idQuery = document.getElementById('filtro-foto-id').value.toUpperCase();
     const etapaQuery = document.getElementById('filtro-foto-etapa').value.toUpperCase();
-    
     const cards = document.querySelectorAll('.gallery-card');
     cards.forEach(card => {
         const idText = card.querySelector('.trafo-id').innerText.toUpperCase();
         const etapaText = card.querySelector('.etapa-tag').innerText.toUpperCase();
-        
         const matchId = idText.includes(idQuery);
         const matchEtapa = etapaQuery === "TODAS" || etapaText.includes(etapaQuery);
-        
-        if(matchId && matchEtapa) {
-            card.classList.remove('hidden');
-        } else {
-            card.classList.add('hidden');
-        }
+        if(matchId && matchEtapa) { card.classList.remove('hidden'); } else { card.classList.add('hidden'); }
     });
 }
 
-// RESTO DE FUNCIONES
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); if(!dl) return; dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
 function abrirModalNuevaEntrada() { document.getElementById('modal-nueva-entrada').classList.remove('hidden'); setTimeout(initCanvas, 100); }
