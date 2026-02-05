@@ -1,15 +1,9 @@
-
-
-### 2. ARCHIVO `app.js` (PRODUCCIÓN - COMPLETO)
-*Actualización:* Se agregó la función `enviarAlmacenAPI` que envía el pedido a Almacén.
-
-```javascript
 /* JLB OPERACIONES - APP.JS (V23.4 - PUENTE ALMACÉN INTEGRADO) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
 // =============================================================
-const API_ENDPOINT = "[https://script.google.com/macros/s/AKfycbzdW332Skk5Po7SHLzOddgzLe2Am3WyPpQ6B9bYJI08Nz9sk8kAmWAX28HvAv3BFk-15A/exec](https://script.google.com/macros/s/AKfycbzdW332Skk5Po7SHLzOddgzLe2Am3WyPpQ6B9bYJI08Nz9sk8kAmWAX28HvAv3BFk-15A/exec)"; 
+const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbzdW332Skk5Po7SHLzOddgzLe2Am3WyPpQ6B9bYJI08Nz9sk8kAmWAX28HvAv3BFk-15A/exec";
 
 // =============================================================
 // 2. ADAPTADOR
