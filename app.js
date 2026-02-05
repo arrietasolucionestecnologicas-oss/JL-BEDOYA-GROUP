@@ -311,7 +311,7 @@ function avanzarEstado(nuevoEstado, accion) {
     google.script.run.withSuccessHandler(res => { if(!res.exito) alert("Error al sincronizar estado."); }).avanzarEstadoAdmin({ rowIndex: d.rowIndex, nuevoEstado: nuevoEstado, accion: accion, idTrafo: d.idJLB||d.idGroup });
 }
 
-// --- LOGICA REQUERIMIENTOS ---
+// --- LOGICA REQUERIMIENTOS RAPIDOS (CORREGIDO) ---
 function agregarFilaReqTemp() {
     const desc = document.getElementById('req-desc').value.trim();
     const cant = document.getElementById('req-cant').value;
@@ -344,18 +344,22 @@ function cargarRequerimientos(idTrafo) {
     const div = document.getElementById('lista-reqs');
     div.innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs">Cargando...</div>';
     
+    // ERROR HANDLER PARA EVITAR CARGA INFINITA
     google.script.run.withSuccessHandler(list => {
         div.innerHTML = '';
-        historialReqCache = list || []; 
+        historialReqCache = list || []; // Guardar en caché para el botón copiar
+        
         if(!list || list.length === 0) {
             div.innerHTML = '<div class="text-center py-4 text-slate-300 text-xs">No hay historial.</div>';
             return;
         }
         
         list.forEach(r => {
+            // Compatibilidad: r.texto viene del backend, r.descripcion del frontend nuevo
             const textoMostrado = r.texto || r.descripcion || "Sin detalle";
+            
             let color = "text-orange-500";
-            if(r.estado && (r.estado === "COMPRADO" || r.estado === "ENTREGADO" || r.estado.includes("ENVIADO"))) color = "text-green-600";
+            if(r.estado === "COMPRADO" || r.estado === "ENTREGADO" || r.estado.includes("ENVIADO")) color = "text-green-600";
             
             div.innerHTML += `
                 <div class="bg-white border border-slate-100 p-2 rounded shadow-sm text-xs flex justify-between items-start">
@@ -381,15 +385,17 @@ function guardarTodoReq() {
     const btn = document.getElementById('btn-save-reqs');
     btn.disabled = true; btn.innerText = "ENVIANDO...";
 
+    // Enviamos el lote uno por uno (para asegurar compatibilidad)
     let promesas = listaReqTemp.map(item => {
         return new Promise((resolve) => {
             const payload = {
                 idTrafo: idTrafo,
                 descripcion: item.desc,
                 cantidad: item.cant,
-                texto: `(${item.cant}) ${item.desc}`, 
+                texto: `(${item.cant}) ${item.desc}`, // Concatenamos para compatibilidad con backend viejo
                 autor: "Producción"
             };
+            // Usamos withFailureHandler también para que no se detenga si uno falla
             google.script.run.withSuccessHandler(resolve).withFailureHandler(resolve).guardarRequerimiento(payload);
         });
     });
@@ -399,10 +405,11 @@ function guardarTodoReq() {
         renderListaReqTemp();
         cargarRequerimientos(idTrafo);
         btn.disabled = false; btn.innerText = "GUARDAR LISTA DE MATERIALES";
-        showToast("Requerimientos guardados");
+        showToast("Requerimientos enviados");
     });
 }
 
+// NUEVA FUNCIÓN: COPIAR ALMACÉN
 function copiarRequerimientosAlmacen() {
     if(!historialReqCache || historialReqCache.length === 0) {
         showToast("No hay nada para copiar", "error");
@@ -413,7 +420,9 @@ function copiarRequerimientosAlmacen() {
     let texto = `*REQUERIMIENTO TRAFO ${d.idJLB || d.idGroup}*\nCliente: ${d.cliente}\n------------------\n`;
     
     historialReqCache.forEach(r => {
+        // Limpiamos el texto si viene con paréntesis del backend antiguo
         let linea = r.texto || r.descripcion || "";
+        // Si el estado es pendiente, lo copiamos. Si ya está entregado, lo ignoramos (opcional)
         if(r.estado === "PENDIENTE") {
             texto += `• ${linea}\n`;
         }
@@ -426,7 +435,9 @@ function copiarRequerimientosAlmacen() {
     });
 }
 
+// --- FUNCIÓN ENVIAR A API ALMACÉN ---
 function enviarAlmacenAPI() {
+    // Verificar si hay items pendientes (usando la cache)
     const pendientes = historialReqCache.filter(r => r.estado === "PENDIENTE");
     if (pendientes.length === 0) {
         alert("No hay items PENDIENTES para enviar.");
@@ -438,20 +449,21 @@ function enviarAlmacenAPI() {
     const d = datosProg[indiceActual];
     const idTrafo = d.idJLB || d.idGroup;
     const cliente = d.cliente;
+    const prioridad = document.getElementById('req-prioridad-envio').value;
 
     showToast("Conectando con Almacén...", "info");
 
     const payload = {
         idTrafo: idTrafo,
         cliente: cliente,
-        prioridad: "Media"
+        prioridad: prioridad // Se lee del nuevo selector
     };
 
     google.script.run
         .withSuccessHandler(res => {
             if (res.success) {
                 showToast("✅ " + res.msg);
-                cargarRequerimientos(idTrafo); 
+                cargarRequerimientos(idTrafo); // Recargar para ver estado "ENVIADO"
             } else {
                 alert("Error Almacén: " + res.error);
             }
@@ -462,7 +474,7 @@ function enviarAlmacenAPI() {
         .enviarPedidoAlmacen(payload);
 }
 
-// RESTO DE FUNCIONES (Logística, Fotos, Tareas, etc.)
+// RESTO DE FUNCIONES
 function subLog(id) { document.querySelectorAll('.log-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.log-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-log-'+id).classList.add('active'); if(id==='term') cargarTerminados(); if(id==='alq') cargarAlquiler(); if(id==='pat') cargarPatio(); }
 function subNav(id) { 
     document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); 
