@@ -1,9 +1,15 @@
-/* JLB OPERACIONES - APP.JS (V23.3 - REQUERIMIENTOS RAPIDOS) */
+
+
+### 2. ARCHIVO `app.js` (PRODUCCIÓN - COMPLETO)
+*Actualización:* Se agregó la función `enviarAlmacenAPI` que envía el pedido a Almacén.
+
+```javascript
+/* JLB OPERACIONES - APP.JS (V23.4 - PUENTE ALMACÉN INTEGRADO) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
 // =============================================================
-const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbzdW332Skk5Po7SHLzOddgzLe2Am3WyPpQ6B9bYJI08Nz9sk8kAmWAX28HvAv3BFk-15A/exec"; 
+const API_ENDPOINT = "[https://script.google.com/macros/s/AKfycbzdW332Skk5Po7SHLzOddgzLe2Am3WyPpQ6B9bYJI08Nz9sk8kAmWAX28HvAv3BFk-15A/exec](https://script.google.com/macros/s/AKfycbzdW332Skk5Po7SHLzOddgzLe2Am3WyPpQ6B9bYJI08Nz9sk8kAmWAX28HvAv3BFk-15A/exec)"; 
 
 // =============================================================
 // 2. ADAPTADOR
@@ -46,7 +52,7 @@ const google = { script: { get run() { return new GasRunner(); } } };
 let datosProg=[], datosEntradas=[], datosAlq=[], dbClientes = [], tareasCache = [];
 let alqFotosNuevas = []; 
 let listaReqTemp = []; // Lista temporal para requerimientos
-let historialReqCache = []; // Cache para el botón de copiar
+let historialReqCache = []; // Cache para el botón de copiar y enviar
 let canvas, ctx, isDrawing=false, indiceActual=-1;
 
 window.onload = function() { 
@@ -359,7 +365,7 @@ function cargarRequerimientos(idTrafo) {
             const textoMostrado = r.texto || r.descripcion || "Sin detalle";
             
             let color = "text-orange-500";
-            if(r.estado === "COMPRADO" || r.estado === "ENTREGADO") color = "text-green-600";
+            if(r.estado === "COMPRADO" || r.estado === "ENTREGADO" || r.estado.includes("ENVIADO")) color = "text-green-600";
             
             div.innerHTML += `
                 <div class="bg-white border border-slate-100 p-2 rounded shadow-sm text-xs flex justify-between items-start">
@@ -433,6 +439,44 @@ function copiarRequerimientosAlmacen() {
     }).catch(err => {
         showToast("Error al copiar: " + err, "error");
     });
+}
+
+// --- FUNCIÓN ENVIAR A API ALMACÉN ---
+function enviarAlmacenAPI() {
+    // Verificar si hay items pendientes (usando la cache)
+    const pendientes = historialReqCache.filter(r => r.estado === "PENDIENTE");
+    if (pendientes.length === 0) {
+        alert("No hay items PENDIENTES para enviar.");
+        return;
+    }
+
+    if (!confirm(`¿Enviar ${pendientes.length} items a la App de Almacén?`)) return;
+
+    const d = datosProg[indiceActual];
+    const idTrafo = d.idJLB || d.idGroup;
+    const cliente = d.cliente;
+
+    showToast("Conectando con Almacén...", "info");
+
+    const payload = {
+        idTrafo: idTrafo,
+        cliente: cliente,
+        prioridad: "Media" // Podrías poner un select en el HTML para esto
+    };
+
+    google.script.run
+        .withSuccessHandler(res => {
+            if (res.success) {
+                showToast("✅ " + res.msg);
+                cargarRequerimientos(idTrafo); // Recargar para ver estado "ENVIADO"
+            } else {
+                alert("Error Almacén: " + res.error);
+            }
+        })
+        .withFailureHandler(e => {
+            alert("Error de Red: " + e);
+        })
+        .enviarPedidoAlmacen(payload);
 }
 
 // RESTO DE FUNCIONES
