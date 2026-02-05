@@ -45,6 +45,7 @@
 <body class="p-4 md:p-8 text-slate-800 bg-slate-50">
 
     <script>
+        // API URL - RECUERDA: Si cambiaste el Backend, haz un "New Deployment" y actualiza este link si cambió.
         const URL_API = "https://script.google.com/macros/s/AKfycbzdW332Skk5Po7SHLzOddgzLe2Am3WyPpQ6B9bYJI08Nz9sk8kAmWAX28HvAv3BFk-15A/exec";
     </script>
 
@@ -71,10 +72,21 @@
     </header>
 
     <main class="max-w-7xl mx-auto">
-        <div class="flex border-b border-slate-200 mb-6 bg-white rounded-t-xl shadow-sm px-4">
-            <button onclick="switchTab('pendientes')" id="btn-pendientes" class="tab-btn active flex-1 flex items-center justify-center gap-2 py-4"><i data-lucide="list-todo" class="w-4 h-4"></i> PENDIENTES</button>
-            <button onclick="switchTab('analizados')" id="btn-analizados" class="tab-btn flex-1 flex items-center justify-center gap-2 py-4"><i data-lucide="history" class="w-4 h-4"></i> HISTORIAL</button>
+        
+        <div class="bg-white rounded-t-xl shadow-sm border-b border-slate-200 mb-6">
+            <div class="p-4 border-b border-slate-100">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                    <input type="text" id="buscador" onkeyup="filtrarTarjetas()" placeholder="Buscar por ID de Entrada o Nombre del Cliente..." 
+                        class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 bg-slate-50 font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
+                </div>
+            </div>
+            <div class="flex px-4">
+                <button onclick="switchTab('pendientes')" id="btn-pendientes" class="tab-btn active flex-1 flex items-center justify-center gap-2 py-4"><i data-lucide="list-todo" class="w-4 h-4"></i> PENDIENTES</button>
+                <button onclick="switchTab('analizados')" id="btn-analizados" class="tab-btn flex-1 flex items-center justify-center gap-2 py-4"><i data-lucide="history" class="w-4 h-4"></i> HISTORIAL</button>
+            </div>
         </div>
+
         <div id="grid-pendientes" class="grid-view active grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <div class="col-span-full py-20 text-center text-slate-400"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-3 text-yellow-500"></i><p class="font-bold text-sm">Conectando...</p></div>
         </div>
@@ -83,7 +95,6 @@
 
     <div id="modal-ficha" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-slate-700">
-            
             <div class="bg-slate-900 p-6 flex justify-between items-start shrink-0 border-b-4 border-yellow-500">
                 <div>
                     <div class="flex items-center gap-2 mb-1">
@@ -97,7 +108,6 @@
             </div>
 
             <div class="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50">
-                
                 <div class="mb-6">
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                         <i data-lucide="database" class="w-4 h-4 text-yellow-600"></i> Especificaciones del Equipo
@@ -106,13 +116,11 @@
                 </div>
 
                 <div id="form-registro" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative">
-                    
                     <div id="badge-readonly" class="hidden absolute top-4 right-4 bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border border-gray-300">
-                        <i data-lucide="lock" class="w-3 h-3 inline mr-1"></i> Modo Histórico
+                        <i data-lucide="lock" class="w-3 h-3 inline mr-1"></i> Solo Lectura
                     </div>
-
                     <h4 class="text-sm font-black text-slate-800 uppercase mb-4 flex items-center gap-2 border-b pb-2">
-                        <i data-lucide="flask-conical" class="w-5 h-5 text-blue-600"></i> Registro de Resultados
+                        <i data-lucide="flask-conical" class="w-5 h-5 text-blue-600"></i> Registro de Variables
                     </h4>
                     
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -155,13 +163,17 @@
                     </div>
                 </div>
 
-                <div id="zone-pdf" class="hidden mt-4 p-4 bg-slate-100 rounded-xl text-center border-2 border-dashed border-slate-300">
-                    <a id="link-pdf" href="#" target="_blank" class="inline-flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all transform hover:scale-105">
-                        <i data-lucide="file-text" class="w-5 h-5"></i> <span>VER CERTIFICADO ORIGINAL (PDF)</span>
-                    </a>
-                    <p class="text-xs text-slate-400 mt-2">Documento generado y firmado digitalmente.</p>
+                <div id="info-historial" class="hidden mt-6 bg-green-50 p-6 rounded-xl border border-green-200 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <i data-lucide="calendar-check" class="w-5 h-5 text-green-700"></i>
+                        <h3 class="text-lg font-black text-green-800 uppercase">FECHA DE REPORTE: <span id="hist-fecha-reporte">--</span></h3>
+                    </div>
+                    <div id="btn-ver-pdf-container" class="hidden mt-4">
+                        <a id="link-pdf" href="#" target="_blank" class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all transform hover:scale-105">
+                            <i data-lucide="file-text" class="w-5 h-5"></i> VER CERTIFICADO PDF
+                        </a>
+                    </div>
                 </div>
-
             </div>
 
             <div class="p-4 bg-white border-t border-slate-200 shrink-0 grid grid-cols-1 md:grid-cols-2 gap-3" id="modal-footer">
@@ -179,7 +191,6 @@
         let rawData = [];
         let selItem = null;
         
-        // Configuración de campos habilitados según tipo
         const CONFIG_CAMPOS = {
             'PCB': ['inp-temp', 'inp-hum', 'inp-pcb', 'inp-responsable', 'inp-dictamen'],
             'PARCIAL': ['inp-temp', 'inp-hum', 'inp-color', 'inp-visual', 'inp-rigidez', 'inp-agua', 'inp-acidez', 'inp-tension', 'inp-responsable', 'inp-dictamen'],
@@ -203,12 +214,29 @@
         }
 
         function procesarListas(data) {
+            // CORRECCIÓN V3.0: YA NO EXCLUIMOS SI EXISTE EN HISTORIAL
+            // Separamos listas sin filtrar ID duplicados entre listas.
             const realizados = data.filter(i => i.status === 'REALIZADO');
-            const idsListos = realizados.map(r => String(r.id));
-            const pendientes = data.filter(i => i.status === 'PENDIENTE' && !idsListos.includes(String(i.id)));
+            const pendientes = data.filter(i => i.status === 'PENDIENTE');
+
             document.getElementById('stat-total').innerText = pendientes.length;
             renderGrid(pendientes, 'grid-pendientes', false);
             renderGrid(realizados, 'grid-analizados', true);
+        }
+
+        // FUNCIÓN DE BÚSQUEDA V3.0
+        function filtrarTarjetas() {
+            const termino = document.getElementById('buscador').value.toUpperCase();
+            const tarjetas = document.querySelectorAll('.card-oil');
+            
+            tarjetas.forEach(card => {
+                const texto = card.innerText.toUpperCase();
+                if (texto.includes(termino)) {
+                    card.parentElement.style.display = ""; // Mostrar (Grid wrapper)
+                } else {
+                    card.parentElement.style.display = "none"; // Ocultar
+                }
+            });
         }
 
         function renderGrid(lista, containerId, esHistorial) {
@@ -230,7 +258,9 @@
                 }
                 const hasPDF = esHistorial && item.pdf && item.pdf.includes('http');
                 
-                const card = `
+                // Envolvemos la tarjeta en un div para poder ocultarla con el buscador sin romper el grid
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = `
                     <div class="card-oil p-5 group flex flex-col h-full" onclick="abrirFicha('${encodeURIComponent(JSON.stringify(item))}')">
                         <div class="flex justify-between items-start mb-3">
                             <span class="badge-step ${colorBadge}">${item.textoBoton}</span>
@@ -251,7 +281,7 @@
                             </div>` : `
                             <div class="mt-auto pt-3 border-t border-slate-100 text-center"><span class="text-xs font-bold text-yellow-600 group-hover:underline">GESTIONAR CALIDAD &rarr;</span></div>`}
                     </div>`;
-                grid.insertAdjacentHTML('beforeend', card);
+                grid.appendChild(wrapper);
             });
             lucide.createIcons();
         }
@@ -261,13 +291,11 @@
             const esHistorial = selItem.status === 'REALIZADO';
             const i = selItem.info || {};
 
-            // Header Info
             document.getElementById('m-id').innerText = "#" + selItem.id;
             document.getElementById('m-cliente').innerText = selItem.cliente;
             document.getElementById('m-tipo').innerText = selItem.textoBoton;
             document.getElementById('m-fecha').innerText = selItem.fechaIngreso;
 
-            // Datos Placa
             const fields = [
                 {l:"Marca", v: i.marca}, {l:"Voltajes", v: `${i.vp}/${i.vs}`},
                 {l:"Aceite (L)", v: i.litros}, {l:"Año", v: i.anio}
@@ -275,7 +303,6 @@
             document.getElementById('m-datos-tecnicos').innerHTML = fields.map(f=>`
                 <div class="bg-slate-100 p-2 rounded border border-slate-200"><p class="text-[9px] text-slate-500 uppercase font-bold">${f.l}</p><p class="text-xs font-black text-slate-800 truncate" title="${f.v}">${f.v||'-'}</p></div>`).join('');
             
-            // RESETEAR UI (Habilitar todo primero)
             const inputs = document.querySelectorAll('.input-tech, #inp-dictamen');
             inputs.forEach(inp => { 
                 if(inp.tagName !== 'SELECT') inp.value = ''; 
@@ -284,16 +311,12 @@
             });
             document.getElementById('form-registro').classList.remove('hidden');
             document.getElementById('badge-readonly').classList.add('hidden');
-            document.getElementById('zone-pdf').classList.add('hidden');
 
             if (esHistorial) {
-                // --- MODO HISTORIAL: LLENAR, BLOQUEAR Y MOSTRAR PDF ---
-                
-                // 1. Ocultar Botones de Guardado
                 document.getElementById('modal-footer').classList.add('hidden');
+                document.getElementById('info-historial').classList.remove('hidden');
                 document.getElementById('badge-readonly').classList.remove('hidden');
 
-                // 2. Llenar Inputs con datos guardados
                 const d = selItem.datos || {};
                 document.getElementById('inp-temp').value = d.temp || '';
                 document.getElementById('inp-hum').value = d.hum || '';
@@ -306,33 +329,29 @@
                 document.getElementById('inp-pcb').value = d.pcb || '';
                 document.getElementById('inp-dictamen').value = selItem.resultado || 'APROBADO';
                 document.getElementById('inp-responsable').value = selItem.responsable || '';
+                document.getElementById('hist-fecha-reporte').innerText = selItem.fechaReporte || 'N/D';
 
-                // 3. Bloquear Inputs
                 inputs.forEach(inp => {
                     inp.disabled = true;
                     if(inp.tagName === 'SELECT') inp.classList.add('select-disabled');
                 });
 
-                // 4. Mostrar Link PDF si existe
+                const divPdf = document.getElementById('btn-ver-pdf-container');
+                const linkPdf = document.getElementById('link-pdf');
                 if (selItem.pdf && selItem.pdf.startsWith('http')) {
-                    document.getElementById('zone-pdf').classList.remove('hidden');
-                    document.getElementById('link-pdf').href = selItem.pdf;
-                }
+                    divPdf.classList.remove('hidden'); linkPdf.href = selItem.pdf;
+                } else divPdf.classList.add('hidden');
 
             } else {
-                // --- MODO EDICIÓN: LIMPIAR Y CONFIGURAR ---
                 document.getElementById('modal-footer').classList.remove('hidden');
-                
-                // Defaults
+                document.getElementById('info-historial').classList.add('hidden');
                 document.getElementById('inp-temp').value = "24";
                 document.getElementById('inp-hum').value = "50";
                 document.getElementById('inp-pcb').value = "0";
                 document.getElementById('inp-dictamen').value = "APROBADO";
 
-                // Aplicar Bloqueo Inteligente
                 configurarCamposPorTipo(selItem.accion);
                 
-                // Resetear botones
                 const btn1 = document.getElementById('btn-save-simple');
                 const btn2 = document.getElementById('btn-save-full');
                 btn1.disabled = false; btn2.disabled = false;
@@ -341,7 +360,6 @@
                 btn1.classList.remove('bg-gray-400'); btn1.classList.add('bg-blue-600');
                 btn2.classList.remove('bg-gray-400'); btn2.classList.add('bg-slate-900');
             }
-            
             document.getElementById('modal-ficha').classList.remove('hidden');
             lucide.createIcons();
         }
@@ -379,7 +397,6 @@
 
             const btnUsado = generarPDF ? document.getElementById('btn-save-full') : document.getElementById('btn-save-simple');
             const btnOtro = generarPDF ? document.getElementById('btn-save-simple') : document.getElementById('btn-save-full');
-            
             btnUsado.disabled = true; btnOtro.disabled = true;
             btnUsado.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5"></i> <span>PROCESANDO...</span>';
             btnUsado.classList.add('bg-gray-400');
@@ -417,6 +434,8 @@
             document.getElementById('btn-' + tab).classList.add('active');
             document.querySelectorAll('.grid-view').forEach(g => g.classList.remove('active'));
             document.getElementById('grid-' + tab).classList.add('active');
+            // Al cambiar de tab, limpiamos o reaplicamos el filtro si hay texto escrito
+            filtrarTarjetas();
         }
         function cerrarFicha() { document.getElementById('modal-ficha').classList.add('hidden'); }
         
