@@ -254,7 +254,7 @@
                         <h6 class="font-bold text-slate-700 text-xs mb-2">AGREGAR MATERIALES</h6>
                         <div class="flex gap-2 mb-2">
                             <input id="req-cant" type="number" placeholder="Cant" class="w-20 border rounded px-3 py-2 text-sm text-center font-bold" value="1">
-                            <input id="req-desc" type="text" placeholder="Descripción (Ej: Tornillo 3/8...)" class="flex-1 border rounded px-3 py-2 text-sm font-bold" onkeypress="if(event.key==='Enter') agregarFilaReqTemp()">
+                            <input id="req-desc" type="text" placeholder="Descripción..." class="flex-1 border rounded px-3 py-2 text-sm font-bold" onkeypress="if(event.key==='Enter') agregarFilaReqTemp()">
                             <button onclick="agregarFilaReqTemp()" class="bg-slate-800 text-white w-10 rounded flex items-center justify-center hover:bg-slate-700 font-bold text-lg">+</button>
                         </div>
                         
@@ -264,15 +264,21 @@
                                 <tbody id="tbody-req-temp"></tbody>
                             </table>
                             <div class="p-2 bg-slate-50 border-t border-slate-200">
-                                <button onclick="guardarTodoReq()" id="btn-save-reqs" class="w-full bg-green-600 text-white font-bold py-2 rounded text-xs shadow-sm hover:bg-green-700 transition-colors">GUARDAR LISTA DE MATERIALES</button>
+                                <button onclick="guardarTodoReq()" id="btn-save-reqs" class="w-full bg-green-600 text-white font-bold py-2 rounded text-xs shadow-sm hover:bg-green-700 transition-colors">GUARDAR LISTA</button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex justify-between items-end mb-2">
-                        <h6 class="font-bold text-slate-400 text-[10px] uppercase">HISTORIAL DE SOLICITUDES</h6>
-                        <button onclick="copiarRequerimientosAlmacen()" class="bg-yellow-50 text-yellow-700 border border-yellow-200 px-3 py-1 rounded text-xs font-bold hover:bg-yellow-100 flex items-center gap-1">
-                            <i data-lucide="clipboard-copy" class="w-3 h-3"></i> COPIAR PEDIDO
+                    <div class="flex justify-between items-end mb-2 border-b pb-2">
+                        <h6 class="font-bold text-slate-400 text-[10px] uppercase">ACCIONES MASIVAS</h6>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <button onclick="copiarRequerimientosAlmacen()" class="bg-yellow-50 text-yellow-700 border border-yellow-200 px-3 py-2 rounded text-xs font-bold hover:bg-yellow-100 flex items-center justify-center gap-2">
+                            <i data-lucide="clipboard-copy" class="w-4 h-4"></i> COPIAR TXT
+                        </button>
+                        <button onclick="enviarAlmacenAPI()" class="bg-blue-600 text-white border border-blue-700 px-3 py-2 rounded text-xs font-bold hover:bg-blue-700 flex items-center justify-center gap-2 shadow-sm">
+                            <i data-lucide="send" class="w-4 h-4"></i> ENVIAR A ALMACÉN
                         </button>
                     </div>
                     
