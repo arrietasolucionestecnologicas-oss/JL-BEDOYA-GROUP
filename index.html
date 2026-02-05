@@ -89,11 +89,11 @@
                                   <div class="w-full md:w-32">
                                      <label class="text-[10px] font-bold text-slate-500 uppercase">Estado</label>
                                      <select id="filtro-estado" onchange="filtrarAlquiler()" class="w-full border rounded p-2 text-sm bg-white font-bold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500">
-                                         <option value="TODOS">TODOS</option>
-                                         <option value="DISPONIBLE">DISPONIBLE 🟢</option>
-                                         <option value="PRESTADO">PRESTADO 🔵</option>
-                                         <option value="MANTENIMIENTO">MANTEN. 🟠</option>
-                                         <option value="REPARACION">REPAR. 🔴</option>
+                                          <option value="TODOS">TODOS</option>
+                                          <option value="DISPONIBLE">DISPONIBLE 🟢</option>
+                                          <option value="PRESTADO">PRESTADO 🔵</option>
+                                          <option value="MANTENIMIENTO">MANTEN. 🟠</option>
+                                          <option value="REPARACION">REPAR. 🔴</option>
                                      </select>
                                   </div>
 
@@ -250,12 +250,31 @@
                 </div>
 
                 <div id="view-req" class="tab-content hidden">
-                    <div class="flex gap-2 mb-4">
-                        <input id="txt-nuevo-req" type="text" placeholder="Nuevo requerimiento..." class="flex-1 border rounded px-3 py-2 text-sm">
-                        <button onclick="guardarNuevoReq()" class="bg-slate-800 text-white px-4 rounded text-xs font-bold">AGREGAR</button>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4">
+                        <h6 class="font-bold text-slate-700 text-xs mb-2">AGREGAR MATERIALES</h6>
+                        <div class="flex gap-2 mb-2">
+                            <input id="req-cant" type="number" placeholder="Cant" class="w-20 border rounded px-3 py-2 text-sm text-center font-bold" value="1">
+                            <input id="req-desc" type="text" placeholder="Descripción (Ej: Tornillo 3/8...)" class="flex-1 border rounded px-3 py-2 text-sm font-bold" onkeypress="if(event.key==='Enter') agregarFilaReqTemp()">
+                            <button onclick="agregarFilaReqTemp()" class="bg-slate-800 text-white w-10 rounded flex items-center justify-center hover:bg-slate-700 font-bold text-lg">+</button>
+                        </div>
+                        
+                        <div id="lista-req-temp" class="bg-white rounded border border-slate-200 overflow-hidden mb-2 hidden">
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-slate-100 font-bold text-slate-500"><tr><th class="p-2 text-center w-12">#</th><th class="p-2">Material a solicitar</th><th class="p-2 w-8"></th></tr></thead>
+                                <tbody id="tbody-req-temp"></tbody>
+                            </table>
+                            <div class="p-2 bg-slate-50 border-t border-slate-200">
+                                <button onclick="guardarTodoReq()" id="btn-save-reqs" class="w-full bg-green-600 text-white font-bold py-2 rounded text-xs shadow-sm hover:bg-green-700 transition-colors">GUARDAR LISTA DE MATERIALES</button>
+                            </div>
+                        </div>
                     </div>
-                    <div id="lista-reqs" class="space-y-2"></div>
+
+                    <h6 class="font-bold text-slate-400 text-[10px] uppercase mb-2">HISTORIAL DE SOLICITUDES</h6>
+                    <div id="lista-reqs" class="space-y-2 pb-4">
+                        <div class="text-center py-4 text-slate-400 italic text-xs">Cargando requerimientos...</div>
+                    </div>
                 </div>
+
             </div>
 
             <div class="p-4 border-t border-slate-100 bg-white sticky bottom-0 z-10">
