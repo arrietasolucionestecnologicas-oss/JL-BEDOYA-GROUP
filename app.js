@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V23.5 - STABLE) */
+/* JLB OPERACIONES - APP.JS (V23.6 - UX MOBILE + EDIT) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -311,43 +311,109 @@ function avanzarEstado(nuevoEstado, accion) {
     google.script.run.withSuccessHandler(res => { if(!res.exito) alert("Error al sincronizar estado."); }).avanzarEstadoAdmin({ rowIndex: d.rowIndex, nuevoEstado: nuevoEstado, accion: accion, idTrafo: d.idJLB||d.idGroup });
 }
 
-// --- LOGICA REQUERIMIENTOS RAPIDOS (CORREGIDO) ---
-function agregarFilaReqTemp() {
-    const desc = document.getElementById('req-desc').value.trim();
-    const cant = document.getElementById('req-cant').value;
-    if (!desc) return;
+// --- LOGICA REQUERIMIENTOS: MODAL GRANDE + EDICION ---
+
+function abrirModalAgregarItem(index = -1) {
+    document.getElementById('modal-agregar-item').classList.remove('hidden');
+    document.getElementById('item-edit-index').value = index;
     
-    listaReqTemp.push({ cant, desc });
-    document.getElementById('req-desc').value = "";
-    document.getElementById('req-cant').value = "1";
-    document.getElementById('req-desc').focus();
+    // Si es edición, cargamos los datos
+    if (index >= 0 && listaReqTemp[index]) {
+        document.getElementById('modal-item-title').innerText = "Editar Item";
+        document.getElementById('input-item-cant').value = listaReqTemp[index].cant;
+        document.getElementById('input-item-desc').value = listaReqTemp[index].desc;
+    } else {
+        // Si es nuevo
+        document.getElementById('modal-item-title').innerText = "Nuevo Item";
+        document.getElementById('input-item-cant').value = "1";
+        document.getElementById('input-item-desc').value = "";
+    }
+    
+    // Enfocar input descripcion
+    setTimeout(() => document.getElementById('input-item-desc').focus(), 100);
+}
+
+function cerrarModalItem() {
+    document.getElementById('modal-agregar-item').classList.add('hidden');
+}
+
+function ajustarCant(delta) {
+    const input = document.getElementById('input-item-cant');
+    let val = parseInt(input.value) || 0;
+    val = Math.max(1, val + delta); // Mínimo 1
+    input.value = val;
+}
+
+function confirmarAgregarItem() {
+    const desc = document.getElementById('input-item-desc').value.trim();
+    const cant = document.getElementById('input-item-cant').value;
+    const index = parseInt(document.getElementById('item-edit-index').value);
+    
+    if (!desc) {
+        showToast("Escribe una descripción", "error");
+        return;
+    }
+    
+    if (index >= 0) {
+        // Editar existente
+        listaReqTemp[index] = { cant, desc };
+    } else {
+        // Agregar nuevo
+        listaReqTemp.push({ cant, desc });
+    }
+    
+    cerrarModalItem();
     renderListaReqTemp();
 }
 
 function borrarReqTemp(index) {
-    listaReqTemp.splice(index, 1);
-    renderListaReqTemp();
+    if(confirm("¿Borrar este item?")) {
+        listaReqTemp.splice(index, 1);
+        renderListaReqTemp();
+    }
 }
 
 function renderListaReqTemp() {
     const tbody = document.getElementById('tbody-req-temp');
     const container = document.getElementById('lista-req-temp');
-    if (listaReqTemp.length === 0) { container.classList.add('hidden'); return; }
+    const badge = document.getElementById('badge-count-items');
+    
+    if (listaReqTemp.length === 0) { 
+        container.classList.add('hidden'); 
+        return; 
+    }
+    
     container.classList.remove('hidden');
+    badge.innerText = `${listaReqTemp.length} Items`;
     tbody.innerHTML = "";
+    
     listaReqTemp.forEach((item, i) => {
-        tbody.innerHTML += `<tr class="border-b border-slate-100 last:border-0"><td class="p-2 text-center font-bold text-slate-700">${item.cant}</td><td class="p-2 text-slate-600">${item.desc}</td><td class="p-2 text-center"><button onclick="borrarReqTemp(${i})" class="text-red-400 hover:text-red-600 font-bold">✕</button></td></tr>`;
+        tbody.innerHTML += `
+            <tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                <td class="p-3 text-center font-black text-slate-800 text-lg w-16">${item.cant}</td>
+                <td class="p-3">
+                    <p class="text-sm font-bold text-slate-700 cursor-pointer hover:text-blue-600" onclick="abrirModalAgregarItem(${i})">${item.desc}</p>
+                </td>
+                <td class="p-3 text-center w-24">
+                    <div class="flex gap-2 justify-center">
+                        <button onclick="abrirModalAgregarItem(${i})" class="bg-blue-50 text-blue-600 p-2 rounded-lg hover:bg-blue-100"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        <button onclick="borrarReqTemp(${i})" class="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
     });
+    
+    if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function cargarRequerimientos(idTrafo) {
     const div = document.getElementById('lista-reqs');
     div.innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs">Cargando...</div>';
     
-    // ERROR HANDLER PARA EVITAR CARGA INFINITA
     google.script.run.withSuccessHandler(list => {
         div.innerHTML = '';
-        historialReqCache = list || []; // Guardar en caché para el botón copiar
+        historialReqCache = list || []; 
         
         if(!list || list.length === 0) {
             div.innerHTML = '<div class="text-center py-4 text-slate-300 text-xs">No hay historial.</div>';
@@ -355,22 +421,30 @@ function cargarRequerimientos(idTrafo) {
         }
         
         list.forEach(r => {
-            // Compatibilidad: r.texto viene del backend, r.descripcion del frontend nuevo
             const textoMostrado = r.texto || r.descripcion || "Sin detalle";
-            
             let color = "text-orange-500";
-            if(r.estado === "COMPRADO" || r.estado === "ENTREGADO" || r.estado.includes("ENVIADO")) color = "text-green-600";
+            let icon = "clock";
+            
+            if(r.estado && (r.estado === "COMPRADO" || r.estado === "ENTREGADO" || r.estado.includes("ENVIADO"))) {
+                color = "text-green-600";
+                icon = "check-circle";
+            }
             
             div.innerHTML += `
-                <div class="bg-white border border-slate-100 p-2 rounded shadow-sm text-xs flex justify-between items-start">
-                    <div>
-                        <p class="text-slate-800 font-medium">${textoMostrado}</p>
-                        <p class="text-[10px] text-slate-400">${r.fecha} - ${r.autor}</p>
+                <div class="bg-white border border-slate-100 p-3 rounded-xl shadow-sm flex justify-between items-center">
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-slate-700">${textoMostrado}</p>
+                        <p class="text-[10px] text-slate-400 mt-1">${r.fecha} - ${r.autor}</p>
                     </div>
-                    <span class="font-bold ${color} text-[10px] uppercase">${r.estado}</span>
+                    <div class="flex flex-col items-end">
+                        <span class="font-bold ${color} text-[10px] uppercase bg-slate-50 px-2 py-1 rounded flex items-center gap-1">
+                            <i data-lucide="${icon}" class="w-3 h-3"></i> ${r.estado}
+                        </span>
+                    </div>
                 </div>
             `;
         });
+        if(typeof lucide !== 'undefined') lucide.createIcons();
     }).withFailureHandler(e => {
         div.innerHTML = `<div class="text-center py-4 text-red-400 text-xs">Error de conexión: ${e}</div>`;
     }).obtenerRequerimientos(idTrafo);
@@ -383,19 +457,17 @@ function guardarTodoReq() {
     if (listaReqTemp.length === 0) return;
 
     const btn = document.getElementById('btn-save-reqs');
-    btn.disabled = true; btn.innerText = "ENVIANDO...";
+    btn.disabled = true; btn.innerText = "GUARDANDO...";
 
-    // Enviamos el lote uno por uno (para asegurar compatibilidad)
     let promesas = listaReqTemp.map(item => {
         return new Promise((resolve) => {
             const payload = {
                 idTrafo: idTrafo,
                 descripcion: item.desc,
                 cantidad: item.cant,
-                texto: `(${item.cant}) ${item.desc}`, // Concatenamos para compatibilidad con backend viejo
+                texto: `(${item.cant}) ${item.desc}`, 
                 autor: "Producción"
             };
-            // Usamos withFailureHandler también para que no se detenga si uno falla
             google.script.run.withSuccessHandler(resolve).withFailureHandler(resolve).guardarRequerimiento(payload);
         });
     });
@@ -404,12 +476,11 @@ function guardarTodoReq() {
         listaReqTemp = [];
         renderListaReqTemp();
         cargarRequerimientos(idTrafo);
-        btn.disabled = false; btn.innerText = "GUARDAR LISTA DE MATERIALES";
-        showToast("Requerimientos enviados");
+        btn.disabled = false; btn.innerText = "GUARDAR";
+        showToast("Requerimientos guardados");
     });
 }
 
-// NUEVA FUNCIÓN: COPIAR ALMACÉN
 function copiarRequerimientosAlmacen() {
     if(!historialReqCache || historialReqCache.length === 0) {
         showToast("No hay nada para copiar", "error");
@@ -420,27 +491,21 @@ function copiarRequerimientosAlmacen() {
     let texto = `*REQUERIMIENTO TRAFO ${d.idJLB || d.idGroup}*\nCliente: ${d.cliente}\n------------------\n`;
     
     historialReqCache.forEach(r => {
-        // Limpiamos el texto si viene con paréntesis del backend antiguo
         let linea = r.texto || r.descripcion || "";
-        // Si el estado es pendiente, lo copiamos. Si ya está entregado, lo ignoramos (opcional)
         if(r.estado === "PENDIENTE") {
             texto += `• ${linea}\n`;
         }
     });
     
     navigator.clipboard.writeText(texto).then(() => {
-        showToast("📋 Pedido copiado al portapapeles");
-    }).catch(err => {
-        showToast("Error al copiar: " + err, "error");
+        showToast("📋 Pedido copiado");
     });
 }
 
-// --- FUNCIÓN ENVIAR A API ALMACÉN ---
 function enviarAlmacenAPI() {
-    // Verificar si hay items pendientes (usando la cache)
     const pendientes = historialReqCache.filter(r => r.estado === "PENDIENTE");
     if (pendientes.length === 0) {
-        alert("No hay items PENDIENTES para enviar.");
+        alert("⚠️ No hay items PENDIENTES guardados.\nGuarda primero la lista y luego dale a enviar.");
         return;
     }
 
@@ -456,14 +521,14 @@ function enviarAlmacenAPI() {
     const payload = {
         idTrafo: idTrafo,
         cliente: cliente,
-        prioridad: prioridad // Se lee del nuevo selector
+        prioridad: prioridad
     };
 
     google.script.run
         .withSuccessHandler(res => {
             if (res.success) {
                 showToast("✅ " + res.msg);
-                cargarRequerimientos(idTrafo); // Recargar para ver estado "ENVIADO"
+                cargarRequerimientos(idTrafo);
             } else {
                 alert("Error Almacén: " + res.error);
             }
@@ -474,114 +539,18 @@ function enviarAlmacenAPI() {
         .enviarPedidoAlmacen(payload);
 }
 
-// RESTO DE FUNCIONES
+// RESTO DE FUNCIONES (Logística, Fotos, Tareas, etc.) - Sin cambios
 function subLog(id) { document.querySelectorAll('.log-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.log-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-log-'+id).classList.add('active'); if(id==='term') cargarTerminados(); if(id==='alq') cargarAlquiler(); if(id==='pat') cargarPatio(); }
-function subNav(id) { 
-    document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); 
-    document.querySelectorAll('.cp-btn').forEach(e=>e.classList.remove('active')); 
-    document.getElementById('view-'+id).classList.add('active'); 
-    document.getElementById('btn-cp-'+id).classList.add('active');
-    if(id === 'fot') cargarGaleriaFotos();
-}
-
+function subNav(id) { document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.cp-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-cp-'+id).classList.add('active'); if(id === 'fot') cargarGaleriaFotos(); }
 function cargarAlquiler() { google.script.run.withSuccessHandler(d => { datosAlq = d; filtrarAlquiler(); }).obtenerLogistica({ tipo: 'ALQUILER' }); }
-
-function filtrarAlquiler() {
-    const kva = document.getElementById('filtro-kva').value.toLowerCase();
-    const volt = document.getElementById('filtro-voltaje').value.toLowerCase();
-    const estadoFiltro = document.getElementById('filtro-estado').value;
-    
-    const t = document.getElementById('tabla-alq');
-    if(!t) return;
-    t.innerHTML = '';
-    
-    const filtrados = datosAlq.filter(item => {
-        const matchKVA = kva === "" || item.kva.toString().toLowerCase().includes(kva);
-        const matchVolt = volt === "" || item.voltajes.toString().toLowerCase().includes(volt);
-        const matchEstado = estadoFiltro === "TODOS" || item.estado.toUpperCase().includes(estadoFiltro);
-        return matchKVA && matchVolt && matchEstado;
-    });
-
-    if(filtrados.length === 0) { t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>'; return; }
-    
-    filtrados.forEach((r, i) => {
-        const btnFoto = r.foto ? `<a href="${convertirLinkDrive(r.foto)}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="image" class="w-5 h-5"></i></a>` : '<span class="text-slate-300">-</span>';
-        let badgeClass = 'bg-gray-100 text-slate-700';
-        if (r.estado.includes("DISPONIBLE")) badgeClass = 'bg-green-100 text-green-700';
-        else if (r.estado === "PRESTADO" || r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700';
-        else if (r.estado.includes("MANTENIMIENTO")) badgeClass = 'bg-orange-100 text-orange-700';
-        else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700';
-        const indexReal = datosAlq.indexOf(r);
-        t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`);
-    });
-    if(typeof lucide !== 'undefined') lucide.createIcons();
-}
-
-// --- FUNCIÓN GALERÍA ---
-function cargarGaleriaFotos() {
-    const grid = document.getElementById('galeria-fotos-grid');
-    if(!grid) return;
-    grid.innerHTML = '<div class="col-span-full text-center text-blue-500 py-8"><i data-lucide="loader-2" class="animate-spin w-8 h-8 mx-auto"></i><p class="text-xs mt-2">Sincronizando fotos recientes...</p></div>';
-    if(typeof lucide !== 'undefined') lucide.createIcons();
-
-    google.script.run
-        .withSuccessHandler(fotos => {
-            grid.innerHTML = '';
-            if(!fotos || fotos.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-8 bg-slate-50 rounded-lg border border-dashed border-slate-300"><i data-lucide="image-off" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p>Aún no hay fotos registradas.</p></div>';
-                if(typeof lucide !== 'undefined') lucide.createIcons();
-                return;
-            }
-            fotos.forEach(f => {
-                const directUrl = convertirLinkDrive(f.url);
-                const card = `
-                    <div class="gallery-card relative group bg-white rounded-lg overflow-hidden aspect-square border border-slate-200 shadow-sm hover:shadow-lg transition-all cursor-pointer" onclick="window.open('${directUrl}', '_blank')">
-                        <img src="${directUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-105">
-                        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3 pt-8">
-                            <span class="text-white font-bold text-sm block shadow-black drop-shadow-md trafo-id">${f.idTrafo}</span>
-                            <span class="text-[10px] text-white/90 uppercase font-bold bg-black/30 px-1.5 py-0.5 rounded backdrop-blur-sm etapa-tag">${f.etapa}</span>
-                        </div>
-                        <div class="absolute top-2 right-2 bg-white/90 text-slate-700 text-[9px] px-2 py-1 rounded-full shadow-sm font-bold border border-slate-100">
-                            ${f.fecha ? f.fecha.split(' ')[0] : 'Hoy'}
-                        </div>
-                    </div>
-                `;
-                grid.insertAdjacentHTML('beforeend', card);
-            });
-        })
-        .withFailureHandler(error => {
-            grid.innerHTML = `<div class="col-span-full text-center text-red-400 py-8"><i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i><p>Error de conexión.</p><button onclick="cargarGaleriaFotos()" class="text-blue-500 underline mt-2">Reintentar</button></div>`;
-            if(typeof lucide !== 'undefined') lucide.createIcons();
-        })
-        .obtenerUltimasFotos();
-}
-
-function filtrarFotos() {
-    const idQuery = document.getElementById('filtro-foto-id').value.toUpperCase();
-    const etapaQuery = document.getElementById('filtro-foto-etapa').value.toUpperCase();
-    const cards = document.querySelectorAll('.gallery-card');
-    cards.forEach(card => {
-        const idText = card.querySelector('.trafo-id').innerText.toUpperCase();
-        const etapaText = card.querySelector('.etapa-tag').innerText.toUpperCase();
-        const matchId = idText.includes(idQuery);
-        const matchEtapa = etapaQuery === "TODAS" || etapaText.includes(etapaQuery);
-        if(matchId && matchEtapa) { card.classList.remove('hidden'); } else { card.classList.add('hidden'); }
-    });
-}
-
+function filtrarAlquiler() { const kva = document.getElementById('filtro-kva').value.toLowerCase(); const volt = document.getElementById('filtro-voltaje').value.toLowerCase(); const estadoFiltro = document.getElementById('filtro-estado').value; const t = document.getElementById('tabla-alq'); if(!t) return; t.innerHTML = ''; const filtrados = datosAlq.filter(item => { const matchKVA = kva === "" || item.kva.toString().toLowerCase().includes(kva); const matchVolt = volt === "" || item.voltajes.toString().toLowerCase().includes(volt); const matchEstado = estadoFiltro === "TODOS" || item.estado.toUpperCase().includes(estadoFiltro); return matchKVA && matchVolt && matchEstado; }); if(filtrados.length === 0) { t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>'; return; } filtrados.forEach((r, i) => { const btnFoto = r.foto ? `<a href="${convertirLinkDrive(r.foto)}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="image" class="w-5 h-5"></i></a>` : '<span class="text-slate-300">-</span>'; let badgeClass = 'bg-gray-100 text-slate-700'; if (r.estado.includes("DISPONIBLE")) badgeClass = 'bg-green-100 text-green-700'; else if (r.estado === "PRESTADO" || r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700'; else if (r.estado.includes("MANTENIMIENTO")) badgeClass = 'bg-orange-100 text-orange-700'; else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700'; const indexReal = datosAlq.indexOf(r); t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }
+function cargarGaleriaFotos() { const grid = document.getElementById('galeria-fotos-grid'); if(!grid) return; grid.innerHTML = '<div class="col-span-full text-center text-blue-500 py-8"><i data-lucide="loader-2" class="animate-spin w-8 h-8 mx-auto"></i><p class="text-xs mt-2">Sincronizando fotos recientes...</p></div>'; if(typeof lucide !== 'undefined') lucide.createIcons(); google.script.run .withSuccessHandler(fotos => { grid.innerHTML = ''; if(!fotos || fotos.length === 0) { grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-8 bg-slate-50 rounded-lg border border-dashed border-slate-300"><i data-lucide="image-off" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p>Aún no hay fotos registradas.</p></div>'; if(typeof lucide !== 'undefined') lucide.createIcons(); return; } fotos.forEach(f => { const directUrl = convertirLinkDrive(f.url); const card = `<div class="gallery-card relative group bg-white rounded-lg overflow-hidden aspect-square border border-slate-200 shadow-sm hover:shadow-lg transition-all cursor-pointer" onclick="window.open('${directUrl}', '_blank')"> <img src="${directUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-105"> <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3 pt-8"> <span class="text-white font-bold text-sm block shadow-black drop-shadow-md trafo-id">${f.idTrafo}</span> <span class="text-[10px] text-white/90 uppercase font-bold bg-black/30 px-1.5 py-0.5 rounded backdrop-blur-sm etapa-tag">${f.etapa}</span> </div> <div class="absolute top-2 right-2 bg-white/90 text-slate-700 text-[9px] px-2 py-1 rounded-full shadow-sm font-bold border border-slate-100"> ${f.fecha ? f.fecha.split(' ')[0] : 'Hoy'} </div> </div>`; grid.insertAdjacentHTML('beforeend', card); }); }) .withFailureHandler(error => { grid.innerHTML = `<div class="col-span-full text-center text-red-400 py-8"><i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i><p>Error de conexión.</p><button onclick="cargarGaleriaFotos()" class="text-blue-500 underline mt-2">Reintentar</button></div>`; if(typeof lucide !== 'undefined') lucide.createIcons(); }) .obtenerUltimasFotos(); }
+function filtrarFotos() { const idQuery = document.getElementById('filtro-foto-id').value.toUpperCase(); const etapaQuery = document.getElementById('filtro-foto-etapa').value.toUpperCase(); const cards = document.querySelectorAll('.gallery-card'); cards.forEach(card => { const idText = card.querySelector('.trafo-id').innerText.toUpperCase(); const etapaText = card.querySelector('.etapa-tag').innerText.toUpperCase(); const matchId = idText.includes(idQuery); const matchEtapa = etapaQuery === "TODAS" || etapaText.includes(etapaQuery); if(matchId && matchEtapa) { card.classList.remove('hidden'); } else { card.classList.add('hidden'); } }); }
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); if(!dl) return; dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
 function abrirModalNuevaEntrada() { document.getElementById('modal-nueva-entrada').classList.remove('hidden'); setTimeout(initCanvas, 100); }
 function cerrarModalNueva() { document.getElementById('modal-nueva-entrada').classList.add('hidden'); document.getElementById('form-entrada').reset(); limpiarFirma(); }
-function filtrarProg() { 
-    const q = document.getElementById('searchProg').value.toLowerCase(); 
-    const tDesk = document.getElementById('tabla-prog-desktop'); 
-    const tMob = document.getElementById('lista-prog-mobile'); 
-    tDesk.innerHTML = ''; tMob.innerHTML = ''; 
-    const f = datosProg.filter(r => ((r.idJLB || "") + " " + (r.idGroup || "") + " " + (r.cliente || "") + " " + (r.desc || "") + " " + (r.estado || "")).toLowerCase().includes(q)); 
-    f.forEach(r => insertarFilaHTML(r, datosProg.indexOf(r), tDesk, tMob)); 
-    if(typeof lucide !== 'undefined') lucide.createIcons(); 
-}
+function filtrarProg() { const q = document.getElementById('searchProg').value.toLowerCase(); const tDesk = document.getElementById('tabla-prog-desktop'); const tMob = document.getElementById('lista-prog-mobile'); tDesk.innerHTML = ''; tMob.innerHTML = ''; const f = datosProg.filter(r => ((r.idJLB || "") + " " + (r.idGroup || "") + " " + (r.cliente || "") + " " + (r.desc || "") + " " + (r.estado || "")).toLowerCase().includes(q)); f.forEach(r => insertarFilaHTML(r, datosProg.indexOf(r), tDesk, tMob)); if(typeof lucide !== 'undefined') lucide.createIcons(); }
 function initCanvas() { canvas = document.getElementById('signature-pad'); if(!canvas) return; ctx = canvas.getContext('2d'); const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#000'; canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', endDraw); canvas.addEventListener('mouseout', endDraw); canvas.addEventListener('touchstart', (e)=>{e.preventDefault();startDraw(e.touches[0])}); canvas.addEventListener('touchmove', (e)=>{e.preventDefault();draw(e.touches[0])}); canvas.addEventListener('touchend', (e)=>{e.preventDefault();endDraw()}); }
 function startDraw(e) { isDrawing = true; const r = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo((e.clientX||e.pageX)-r.left, (e.clientY||e.pageY)-r.top); }
 function draw(e) { if(!isDrawing)return; const r = canvas.getBoundingClientRect(); ctx.lineTo((e.clientX||e.pageX)-r.left, (e.clientY||e.pageY)-r.top); ctx.stroke(); }
