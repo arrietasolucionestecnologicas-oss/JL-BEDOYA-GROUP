@@ -254,7 +254,7 @@
                         <h6 class="font-bold text-slate-700 text-xs mb-2">AGREGAR MATERIALES</h6>
                         <div class="flex gap-2 mb-2">
                             <input id="req-cant" type="number" placeholder="Cant" class="w-20 border rounded px-3 py-2 text-sm text-center font-bold" value="1">
-                            <input id="req-desc" type="text" placeholder="Descripción (Ej: Tornillo 3/8...)" class="flex-1 border rounded px-3 py-2 text-sm font-bold" onkeypress="if(event.key==='Enter') agregarFilaReqTemp()">
+                            <input id="req-desc" type="text" placeholder="Descripción..." class="flex-1 border rounded px-3 py-2 text-sm font-bold" onkeypress="if(event.key==='Enter') agregarFilaReqTemp()">
                             <button onclick="agregarFilaReqTemp()" class="bg-slate-800 text-white w-10 rounded flex items-center justify-center hover:bg-slate-700 font-bold text-lg">+</button>
                         </div>
                         
@@ -271,6 +271,12 @@
 
                     <div class="flex justify-between items-end mb-2 border-b pb-2">
                         <h6 class="font-bold text-slate-400 text-[10px] uppercase">ACCIONES MASIVAS</h6>
+                        <select id="req-prioridad-envio" class="border rounded p-1 text-xs font-bold text-slate-600 outline-none">
+                            <option value="Media">Prioridad: Media</option>
+                            <option value="Baja">Prioridad: Baja</option>
+                            <option value="Alta">Prioridad: Alta</option>
+                            <option value="Urgente">Prioridad: Urgente 🔴</option>
+                        </select>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-2 mb-4">
