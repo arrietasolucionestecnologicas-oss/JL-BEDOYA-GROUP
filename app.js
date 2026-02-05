@@ -46,6 +46,7 @@ const google = { script: { get run() { return new GasRunner(); } } };
 let datosProg=[], datosEntradas=[], datosAlq=[], dbClientes = [], tareasCache = [];
 let alqFotosNuevas = []; 
 let listaReqTemp = []; // Lista temporal para requerimientos
+let historialReqCache = []; // Cache para el botón de copiar
 let canvas, ctx, isDrawing=false, indiceActual=-1;
 
 window.onload = function() { 
@@ -185,10 +186,16 @@ function abrirModal(i){
     
     // --- RESETEAR MODULO REQUERIMIENTOS ---
     listaReqTemp = [];
+    historialReqCache = [];
     renderListaReqTemp();
-    // Identificar ID único del trafo para los requerimientos
+    
+    // Identificar ID único del trafo para los requerimientos (Prioridad JLB, luego Group)
     const idUnico = d.idJLB || d.idGroup;
-    cargarRequerimientos(idUnico);
+    if(idUnico) {
+        cargarRequerimientos(idUnico);
+    } else {
+        document.getElementById('lista-reqs').innerHTML = '<div class="text-center py-4 text-red-300 text-xs">Error: Trafo sin ID.</div>';
+    }
 }
 
 function renderPasosSeguimiento(d) {
@@ -304,7 +311,7 @@ function avanzarEstado(nuevoEstado, accion) {
     google.script.run.withSuccessHandler(res => { if(!res.exito) alert("Error al sincronizar estado."); }).avanzarEstadoAdmin({ rowIndex: d.rowIndex, nuevoEstado: nuevoEstado, accion: accion, idTrafo: d.idJLB||d.idGroup });
 }
 
-// --- LOGICA REQUERIMIENTOS RAPIDOS ---
+// --- LOGICA REQUERIMIENTOS RAPIDOS (CORREGIDO) ---
 function agregarFilaReqTemp() {
     const desc = document.getElementById('req-desc').value.trim();
     const cant = document.getElementById('req-cant').value;
@@ -337,26 +344,35 @@ function cargarRequerimientos(idTrafo) {
     const div = document.getElementById('lista-reqs');
     div.innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs">Cargando...</div>';
     
+    // ERROR HANDLER PARA EVITAR CARGA INFINITA
     google.script.run.withSuccessHandler(list => {
         div.innerHTML = '';
+        historialReqCache = list || []; // Guardar en caché para el botón copiar
+        
         if(!list || list.length === 0) {
             div.innerHTML = '<div class="text-center py-4 text-slate-300 text-xs">No hay historial.</div>';
             return;
         }
+        
         list.forEach(r => {
+            // Compatibilidad: r.texto viene del backend, r.descripcion del frontend nuevo
+            const textoMostrado = r.texto || r.descripcion || "Sin detalle";
+            
             let color = "text-orange-500";
             if(r.estado === "COMPRADO" || r.estado === "ENTREGADO") color = "text-green-600";
             
             div.innerHTML += `
                 <div class="bg-white border border-slate-100 p-2 rounded shadow-sm text-xs flex justify-between items-start">
                     <div>
-                        <p class="text-slate-800 font-medium">${r.texto}</p>
+                        <p class="text-slate-800 font-medium">${textoMostrado}</p>
                         <p class="text-[10px] text-slate-400">${r.fecha} - ${r.autor}</p>
                     </div>
                     <span class="font-bold ${color} text-[10px] uppercase">${r.estado}</span>
                 </div>
             `;
         });
+    }).withFailureHandler(e => {
+        div.innerHTML = `<div class="text-center py-4 text-red-400 text-xs">Error de conexión: ${e}</div>`;
     }).obtenerRequerimientos(idTrafo);
 }
 
@@ -369,16 +385,17 @@ function guardarTodoReq() {
     const btn = document.getElementById('btn-save-reqs');
     btn.disabled = true; btn.innerText = "ENVIANDO...";
 
-    // Enviamos el lote uno por uno (para asegurar compatibilidad con tu backend actual)
+    // Enviamos el lote uno por uno (para asegurar compatibilidad)
     let promesas = listaReqTemp.map(item => {
         return new Promise((resolve) => {
             const payload = {
                 idTrafo: idTrafo,
                 descripcion: item.desc,
                 cantidad: item.cant,
-                texto: `(${item.cant}) ${item.desc}`, // Concatenamos para compatibilidad
+                texto: `(${item.cant}) ${item.desc}`, // Concatenamos para compatibilidad con backend viejo
                 autor: "Producción"
             };
+            // Usamos withFailureHandler también para que no se detenga si uno falla
             google.script.run.withSuccessHandler(resolve).withFailureHandler(resolve).guardarRequerimiento(payload);
         });
     });
@@ -389,6 +406,32 @@ function guardarTodoReq() {
         cargarRequerimientos(idTrafo);
         btn.disabled = false; btn.innerText = "GUARDAR LISTA DE MATERIALES";
         showToast("Requerimientos enviados");
+    });
+}
+
+// NUEVA FUNCIÓN: COPIAR ALMACÉN
+function copiarRequerimientosAlmacen() {
+    if(!historialReqCache || historialReqCache.length === 0) {
+        showToast("No hay nada para copiar", "error");
+        return;
+    }
+    
+    const d = datosProg[indiceActual];
+    let texto = `*REQUERIMIENTO TRAFO ${d.idJLB || d.idGroup}*\nCliente: ${d.cliente}\n------------------\n`;
+    
+    historialReqCache.forEach(r => {
+        // Limpiamos el texto si viene con paréntesis del backend antiguo
+        let linea = r.texto || r.descripcion || "";
+        // Si el estado es pendiente, lo copiamos. Si ya está entregado, lo ignoramos (opcional)
+        if(r.estado === "PENDIENTE") {
+            texto += `• ${linea}\n`;
+        }
+    });
+    
+    navigator.clipboard.writeText(texto).then(() => {
+        showToast("📋 Pedido copiado al portapapeles");
+    }).catch(err => {
+        showToast("Error al copiar: " + err, "error");
     });
 }
 
