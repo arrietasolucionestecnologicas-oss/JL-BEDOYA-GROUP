@@ -37,6 +37,8 @@
     .label-mini { font-size: 0.7rem; color: #6c757d; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
     .unit-select { max-width: 70px; font-weight: bold; background-color: #f8f9fa; border: 1px solid #ced4da; font-size: 0.8rem; }
     .bg-garantia { background-color: #e8f5e9; border-color: #c8e6c9; color: #1b5e20; }
+    
+    /* AGENDA STYLES */
     .agenda-card { border-left: 4px solid var(--primary); transition: transform 0.2s; cursor: pointer; }
     .agenda-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .badge-jlb { background-color: #0d6efd; color: white; }
@@ -45,6 +47,13 @@
     .text-purple { color: #6f42c1 !important; }
     .blink { animation: blinker 1.5s linear infinite; }
     @keyframes blinker { 50% { opacity: 0.5; } }
+    
+    /* FILTER BUTTONS SCROLL */
+    .filter-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; white-space: nowrap; }
+    .btn-filter { border-radius: 20px; font-weight: bold; font-size: 0.8rem; padding: 5px 15px; border: 1px solid #dee2e6; background: white; color: #555; }
+    .btn-filter.active { background-color: #0d6efd; color: white; border-color: #0d6efd; }
+    .btn-filter:hover { background-color: #e9ecef; }
+    
     .hover-effect { transition: transform 0.2s; cursor: pointer; }
     .hover-effect:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     .link-entrada { color: var(--primary); font-weight: bold; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; }
@@ -65,7 +74,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V31.0 | Auto-Fill</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V39.0 | Campo</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -190,16 +199,14 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold">AGENDA PENDIENTE</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
             <div class="modal-body bg-light">
-                <div class="row g-2 mb-3">
-                    <div class="col-md-6"><div class="input-group"><span class="input-group-text"><i class="fas fa-search"></i></span><input type="text" id="filtroAgenda" class="form-control" placeholder="Buscar Cliente/ID..." onkeyup="filtrarAgenda()"></div></div>
-                    <div class="col-md-6">
-                        <select id="filtroEstadoAgenda" class="form-select fw-bold text-primary" onchange="filtrarAgenda()">
-                            <option value="TODOS">⚡ TODOS LOS PENDIENTES</option>
-                            <option value="danger">🔴 FALTA INSPECCIÓN</option>
-                            <option value="warning">⚠️ FALTA INICIALES</option>
-                            <option value="primary">🔵 FALTA FINALES</option>
-                            <option value="purple">🟣 PROTOCOLO DIRECTO</option>
-                        </select>
+                <div class="mb-3">
+                    <input type="text" id="filtroAgenda" class="form-control mb-2" placeholder="🔍 Buscar Cliente o ID..." onkeyup="filtrarAgenda()">
+                    
+                    <div class="filter-scroll">
+                        <button class="btn btn-filter active" onclick="filtrarAgenda('all', this)">⚡ TODOS</button>
+                        <button class="btn btn-filter" onclick="filtrarAgenda('warning', this)">🟡 INICIALES</button>
+                        <button class="btn btn-filter" onclick="filtrarAgenda('primary', this)">🔵 EN TALLER</button>
+                        <button class="btn btn-filter" onclick="filtrarAgenda('purple', this)">🟣 FINALES</button>
                     </div>
                 </div>
                 <div id="listaAgendaContainer"><div class="text-center py-5 text-muted">Cargando...</div></div>
@@ -224,8 +231,9 @@
     let chartInstance = null;
     let modalCrear = null;
     let modalAgenda = null;
+    let CRITERIO_FILTRO_ACTUAL = 'all';
 
-    // --- CONECTOR GOOGLE APPS SCRIPT (RESTAURADO) ---
+    // --- CONECTOR GOOGLE APPS SCRIPT ---
     class GasRunner {
         constructor() {
             this._success = null;
@@ -269,7 +277,7 @@
     var google = window.google || {};
     if (!google.script || !google.script.run) { google = { script: { run: new GasRunner() } }; }
 
-    // --- INICIALIZACIÓN SEGURA ---
+    // --- INICIALIZACIÓN ---
     document.addEventListener('DOMContentLoaded', () => {
         try {
             if(typeof bootstrap !== 'undefined') {
@@ -352,18 +360,16 @@
             if(r.isConfirmed) { 
                 document.getElementById('new_entrada').value = val;
                 
-                // Si venimos de la Agenda, intentamos llenar los datos
+                // Si venimos de la Agenda, intentamos llenar los datos (INTEGRIDAD DE DATOS V38.0)
                 if(ITEM_SELECCIONADO && String(ITEM_SELECCIONADO.id) === String(val)) {
                     if(ITEM_SELECCIONADO.cliente) document.getElementById('new_cliente').value = ITEM_SELECCIONADO.cliente;
                     if(ITEM_SELECCIONADO.serie) document.getElementById('new_serie').value = ITEM_SELECCIONADO.serie;
                     
-                    // Intentamos sacar KVA de la descripción si no vino explícito
-                    // Ej: "75 KVA..." -> 75
+                    // KVA Parse
                     let kva = "";
                     const desc = ITEM_SELECCIONADO.descripcion || "";
                     const match = desc.match(/(\d+(\.\d+)?)\s*KVA/i);
                     if(match) kva = match[1];
-                    
                     if(kva) document.getElementById('new_kva').value = kva;
                 }
                 
@@ -409,7 +415,7 @@
            if (colorTecnico === 'purple') badgeColorClass = 'bg-purple';
 
            let html = `
-           <div class="card agenda-card mb-3 p-3" onclick="seleccionarDeAgenda(${index})">
+           <div class="card agenda-card mb-3 p-3 border-left-${colorTecnico} ${colorTecnico}" onclick="seleccionarDeAgenda(${index})">
                <div class="d-flex justify-content-between align-items-start">
                    <div>
                        <span class="badge ${badgeClass} mb-1">${item.empresa} #${item.id}</span>
@@ -425,23 +431,68 @@
        });
     }
 
-    function filtrarAgenda() {
+    // --- FUNCIÓN DE FILTRADO CORREGIDA V39.0 ---
+    function filtrarAgenda(criterio, btn) {
+       // 1. Gestión de estado y botones
+       if(criterio) CRITERIO_FILTRO_ACTUAL = criterio;
+       if(btn) {
+           document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+           btn.classList.add('active');
+       }
+
        const q = document.getElementById('filtroAgenda').value.toLowerCase();
-       const estadoFiltro = document.getElementById('filtroEstadoAgenda').value; 
+       
        const filtrados = AGENDA_CACHE.filter(i => {
+           // Filtro de Texto
            const matchTexto = i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q);
+           
+           // Filtro de Categoría (Botones)
            let matchEstado = true;
-           if (estadoFiltro !== 'TODOS') { matchEstado = i.colorTecnico === estadoFiltro; }
+           const textoTarjeta = (i.estadoTecnico || "").toUpperCase();
+           
+           if (CRITERIO_FILTRO_ACTUAL === 'warning') {
+               // AMARILLO: Iniciales
+               matchEstado = textoTarjeta.includes("INSPECCION") || textoTarjeta.includes("DIAGNOSTICO") || textoTarjeta.includes("PENDIENTE");
+           } 
+           else if (CRITERIO_FILTRO_ACTUAL === 'primary') {
+               // AZUL: En Taller (Reparación) - EXCLUYE FINALES
+               matchEstado = (textoTarjeta.includes("REPARACION") || textoTarjeta.includes("EN PROCESO")) && !textoTarjeta.includes("FINALES");
+           }
+           else if (CRITERIO_FILTRO_ACTUAL === 'purple') {
+               // MORADO: Finales
+               matchEstado = textoTarjeta.includes("PRUEBAS FINALES") || textoTarjeta.includes("PROTOCOLO") || textoTarjeta.includes("SOLO PRUEBAS");
+           }
+           
            return matchTexto && matchEstado;
        });
+       
        renderAgenda(filtrados);
     }
     
     function seleccionarDeAgenda(index) {
-        ITEM_SELECCIONADO = AGENDA_CACHE[index];
-        modalAgenda.hide();
-        document.getElementById('search_insp').value = ITEM_SELECCIONADO.id;
-        buscar('insp');
+        // Obtenemos el item filtrado real
+        // Como 'filtrarAgenda' renderiza solo un subconjunto, necesitamos saber cuál es el item real en cache
+        // Pero renderAgenda recibe la lista filtrada.
+        // El index que viene del onclick es el índice de la lista filtrada renderizada.
+        
+        // CORRECCIÓN: Volvemos a filtrar para encontrar el objeto correcto
+        const q = document.getElementById('filtroAgenda').value.toLowerCase();
+        const filtrados = AGENDA_CACHE.filter(i => {
+           const matchTexto = i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q);
+           let matchEstado = true;
+           const textoTarjeta = (i.estadoTecnico || "").toUpperCase();
+           if (CRITERIO_FILTRO_ACTUAL === 'warning') matchEstado = textoTarjeta.includes("INSPECCION") || textoTarjeta.includes("DIAGNOSTICO");
+           else if (CRITERIO_FILTRO_ACTUAL === 'primary') matchEstado = (textoTarjeta.includes("REPARACION") || textoTarjeta.includes("EN PROCESO")) && !textoTarjeta.includes("FINALES");
+           else if (CRITERIO_FILTRO_ACTUAL === 'purple') matchEstado = textoTarjeta.includes("PRUEBAS FINALES") || textoTarjeta.includes("PROTOCOLO");
+           return matchTexto && matchEstado;
+        });
+
+        if(filtrados[index]) {
+            ITEM_SELECCIONADO = filtrados[index];
+            modalAgenda.hide();
+            document.getElementById('search_insp').value = ITEM_SELECCIONADO.id;
+            buscar('insp');
+        }
     }
 
     function buscarCurva() { 
