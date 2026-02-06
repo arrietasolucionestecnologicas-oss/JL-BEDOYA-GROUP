@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V23.7 - UX PRO) */
+/* JLB OPERACIONES - APP.JS (V24.0 - BORRADOR INTELIGENTE) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -45,8 +45,8 @@ const google = { script: { get run() { return new GasRunner(); } } };
 
 let datosProg=[], datosEntradas=[], datosAlq=[], dbClientes = [], tareasCache = [];
 let alqFotosNuevas = []; 
-let listaReqTemp = []; // Lista temporal para requerimientos
-let historialReqCache = []; // Cache para el botón de copiar y enviar
+let listaReqTemp = []; // Lista editable (Borrador)
+let historialReqCache = []; 
 let canvas, ctx, isDrawing=false, indiceActual=-1;
 
 window.onload = function() { 
@@ -180,25 +180,25 @@ function abrirModal(i){
     
     const selTipo = document.getElementById('in-tipo');
     selTipo.value = d.tipo; 
-    if(selTipo.value === "") { } // Dejar en default si no coincide
+    if(selTipo.value === "") { } 
 
     renderPasosSeguimiento(d);
     
-    // --- RESETEAR MODULO REQUERIMIENTOS ---
+    // --- LÓGICA DE CARGA INTELIGENTE ---
     listaReqTemp = [];
     historialReqCache = [];
     document.getElementById('req-cant').value = "1";
     document.getElementById('req-desc').value = "";
     document.getElementById('req-edit-index').value = "-1";
     toggleEditMode(false);
-    renderListaReqTemp();
     
-    // Identificar ID único del trafo
+    // Limpiamos listas visuales
+    renderListaReqTemp();
+    document.getElementById('lista-reqs').innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs">Cargando historial...</div>';
+
     const idUnico = d.idJLB || d.idGroup;
     if(idUnico) {
         cargarRequerimientos(idUnico);
-    } else {
-        document.getElementById('lista-reqs').innerHTML = '<div class="text-center py-4 text-red-300 text-xs">Error: Trafo sin ID.</div>';
     }
 }
 
@@ -331,16 +331,13 @@ function agregarFilaReqTemp() {
     }
     
     if (index >= 0) {
-        // Editar existente
         listaReqTemp[index] = { cant, desc };
         showToast("Item actualizado");
         toggleEditMode(false);
     } else {
-        // Agregar nuevo
         listaReqTemp.push({ cant, desc });
     }
     
-    // Limpiar
     descInput.value = "";
     cantInput.value = "1";
     document.getElementById('req-edit-index').value = "-1";
@@ -362,7 +359,6 @@ function editarItemTemp(i) {
 function borrarReqTemp(index) {
     if(confirm("¿Borrar este item de la lista?")) {
         listaReqTemp.splice(index, 1);
-        // Si borramos el que se estaba editando, cancelar edición
         if (parseInt(document.getElementById('req-edit-index').value) === index) {
             cancelarEdicion();
         }
@@ -426,137 +422,172 @@ function renderListaReqTemp() {
     if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
+// ========================================================
+// CARGAR REQUERIMIENTOS: CLASIFICACIÓN BORRADOR / HISTORIAL
+// ========================================================
 function cargarRequerimientos(idTrafo) {
-    const div = document.getElementById('lista-reqs');
-    div.innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs">Cargando...</div>';
+    const divHistory = document.getElementById('lista-reqs');
+    
+    // Limpiamos visualmente antes de cargar
+    divHistory.innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs">Cargando historial...</div>';
     
     google.script.run.withSuccessHandler(list => {
-        div.innerHTML = '';
-        historialReqCache = list || []; 
-        
+        divHistory.innerHTML = '';
+        historialReqCache = []; 
+        listaReqTemp = []; // Reiniciamos el borrador local para llenarlo con lo del servidor
+
         if(!list || list.length === 0) {
-            div.innerHTML = '<div class="text-center py-4 text-slate-300 text-xs">No hay historial.</div>';
+            divHistory.innerHTML = '<div class="text-center py-4 text-slate-300 text-xs">No hay historial.</div>';
+            renderListaReqTemp(); // Actualiza contador a 0
             return;
         }
         
         list.forEach(r => {
             const textoMostrado = r.texto || r.descripcion || "Sin detalle";
-            let color = "text-orange-500";
-            let icon = "clock";
             
-            if(r.estado && (r.estado === "COMPRADO" || r.estado === "ENTREGADO" || r.estado.includes("ENVIADO"))) {
-                color = "text-green-600";
-                icon = "check-circle";
+            // LÓGICA DE SEPARACIÓN
+            if (r.estado === "PENDIENTE") {
+                // Es un borrador -> Lo recuperamos a la lista editable
+                let cant = "1";
+                let desc = textoMostrado;
+                
+                // Intentamos parsear "(5) TORNILLOS"
+                const match = textoMostrado.match(/^\((\d+)\)\s*(.*)/);
+                if (match) {
+                    cant = match[1];
+                    desc = match[2];
+                }
+                
+                listaReqTemp.push({ cant: cant, desc: desc });
+
+            } else {
+                // Es historial (Enviado, Comprado, etc) -> Lo mostramos abajo solo lectura
+                let color = "text-green-600";
+                let icon = "check-circle";
+                
+                if(r.estado.includes("ENVIADO")) {
+                    color = "text-blue-600";
+                    icon = "send";
+                }
+
+                divHistory.innerHTML += `
+                    <div class="bg-white border border-slate-100 p-3 rounded-xl shadow-sm flex justify-between items-center mb-2">
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-slate-700">${textoMostrado}</p>
+                            <p class="text-[10px] text-slate-400 mt-1">${r.fecha} - ${r.autor}</p>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="font-bold ${color} text-[10px] uppercase bg-slate-50 px-2 py-1 rounded flex items-center gap-1">
+                                <i data-lucide="${icon}" class="w-3 h-3"></i> ${r.estado}
+                            </span>
+                        </div>
+                    </div>
+                `;
             }
-            
-            div.innerHTML += `
-                <div class="bg-white border border-slate-100 p-3 rounded-xl shadow-sm flex justify-between items-center">
-                    <div class="flex-1">
-                        <p class="text-sm font-bold text-slate-700">${textoMostrado}</p>
-                        <p class="text-[10px] text-slate-400 mt-1">${r.fecha} - ${r.autor}</p>
-                    </div>
-                    <div class="flex flex-col items-end">
-                        <span class="font-bold ${color} text-[10px] uppercase bg-slate-50 px-2 py-1 rounded flex items-center gap-1">
-                            <i data-lucide="${icon}" class="w-3 h-3"></i> ${r.estado}
-                        </span>
-                    </div>
-                </div>
-            `;
         });
+
+        // Actualizamos la visualización del borrador con lo recuperado
+        renderListaReqTemp();
+        
         if(typeof lucide !== 'undefined') lucide.createIcons();
+
     }).withFailureHandler(e => {
-        div.innerHTML = `<div class="text-center py-4 text-red-400 text-xs">Error de conexión: ${e}</div>`;
+        divHistory.innerHTML = `<div class="text-center py-4 text-red-400 text-xs">Error de conexión: ${e}</div>`;
     }).obtenerRequerimientos(idTrafo);
 }
 
+// ========================================================
+// GUARDAR BORRADOR (MASIVO)
+// ========================================================
 function guardarTodoReq() {
     const d = datosProg[indiceActual];
     const idTrafo = d.idJLB || d.idGroup;
+    
     if (!idTrafo) { alert("Error: No hay ID de Trafo"); return; }
-    if (listaReqTemp.length === 0) return;
-
+    
+    // Permitimos guardar lista vacía (para borrar todo el borrador si se desea)
+    
     const btn = document.getElementById('btn-save-reqs');
-    btn.disabled = true; btn.innerText = "GUARDANDO...";
+    const txtOriginal = btn.innerHTML;
+    btn.disabled = true; 
+    btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> GUARDANDO...';
+    if(typeof lucide !== 'undefined') lucide.createIcons();
 
-    let promesas = listaReqTemp.map(item => {
-        return new Promise((resolve) => {
-            const payload = {
-                idTrafo: idTrafo,
-                descripcion: item.desc,
-                cantidad: item.cant,
-                texto: `(${item.cant}) ${item.desc}`, 
-                autor: "Producción"
-            };
-            google.script.run.withSuccessHandler(resolve).withFailureHandler(resolve).guardarRequerimiento(payload);
-        });
-    });
+    const payload = {
+        idTrafo: idTrafo,
+        items: listaReqTemp, // Enviamos toda la lista
+        autor: "Producción"
+    };
 
-    Promise.all(promesas).then(() => {
-        listaReqTemp = [];
-        renderListaReqTemp();
-        cargarRequerimientos(idTrafo);
-        btn.disabled = false; btn.innerHTML = '<i data-lucide="save"></i> GUARDAR';
-        if(typeof lucide !== 'undefined') lucide.createIcons();
-        showToast("Requerimientos guardados");
-    });
+    google.script.run
+        .withSuccessHandler(res => {
+            btn.disabled = false; 
+            btn.innerHTML = txtOriginal;
+            if (res.success) {
+                showToast("✅ Borrador sincronizado");
+                // Recargamos para verificar que se guardó bien
+                cargarRequerimientos(idTrafo);
+            } else {
+                alert("Error al guardar: " + res.error);
+            }
+        })
+        .withFailureHandler(e => {
+            btn.disabled = false; 
+            btn.innerHTML = txtOriginal;
+            alert("Error de red: " + e);
+        })
+        .guardarBorradorMasivo(payload); // Llamamos a la nueva función masiva
 }
 
-function copiarRequerimientosAlmacen() {
-    if(!historialReqCache || historialReqCache.length === 0) {
-        showToast("No hay nada para copiar", "error");
-        return;
-    }
-    
-    const d = datosProg[indiceActual];
-    let texto = `*REQUERIMIENTO TRAFO ${d.idJLB || d.idGroup}*\nCliente: ${d.cliente}\n------------------\n`;
-    
-    historialReqCache.forEach(r => {
-        let linea = r.texto || r.descripcion || "";
-        if(r.estado === "PENDIENTE") {
-            texto += `• ${linea}\n`;
-        }
-    });
-    
-    navigator.clipboard.writeText(texto).then(() => {
-        showToast("📋 Pedido copiado");
-    });
-}
-
+// ========================================================
+// ENVIAR A ALMACÉN (API)
+// ========================================================
 function enviarAlmacenAPI() {
-    const pendientes = historialReqCache.filter(r => r.estado === "PENDIENTE");
+    const pendientes = listaReqTemp; // Usamos la lista local que está sincronizada
     if (pendientes.length === 0) {
-        alert("⚠️ No hay items PENDIENTES guardados.\nGuarda primero la lista y luego dale a enviar.");
+        alert("⚠️ No hay items en el borrador para enviar.\nAgrega items a la lista primero.");
         return;
     }
 
-    if (!confirm(`¿Enviar ${pendientes.length} items a la App de Almacén?`)) return;
+    if (!confirm(`¿Confirmar envío de ${pendientes.length} items a Almacén?`)) return;
 
+    // Primero aseguramos que esté guardado (Auto-Save antes de enviar)
     const d = datosProg[indiceActual];
     const idTrafo = d.idJLB || d.idGroup;
     const cliente = d.cliente;
     const prioridad = document.getElementById('req-prioridad-envio').value;
 
-    showToast("Conectando con Almacén...", "info");
+    showToast("Procesando envío...", "info");
 
-    const payload = {
+    // Paso 1: Guardamos el borrador actual por seguridad
+    const payloadGuardar = {
         idTrafo: idTrafo,
-        cliente: cliente,
-        prioridad: prioridad
+        items: listaReqTemp,
+        autor: "Producción"
     };
 
-    google.script.run
-        .withSuccessHandler(res => {
-            if (res.success) {
-                showToast("✅ " + res.msg);
-                cargarRequerimientos(idTrafo);
-            } else {
-                alert("Error Almacén: " + res.error);
-            }
-        })
-        .withFailureHandler(e => {
-            alert("Error de Red: " + e);
-        })
-        .enviarPedidoAlmacen(payload);
+    google.script.run.withSuccessHandler(resGuardar => {
+        if(resGuardar.success) {
+            // Paso 2: Si guardó bien, disparamos el envío
+            const payloadEnviar = {
+                idTrafo: idTrafo,
+                cliente: cliente,
+                prioridad: prioridad
+            };
+
+            google.script.run.withSuccessHandler(resEnvio => {
+                if (resEnvio.success) {
+                    showToast("🚀 " + resEnvio.msg);
+                    cargarRequerimientos(idTrafo); // Esto moverá todo a historial
+                } else {
+                    alert("Error Almacén: " + resEnvio.error);
+                }
+            }).enviarPedidoAlmacen(payloadEnviar);
+
+        } else {
+            alert("Error guardando borrador previo: " + resGuardar.error);
+        }
+    }).guardarBorradorMasivo(payloadGuardar);
 }
 
 // RESTO DE FUNCIONES (Logística, Fotos, Tareas, etc.) - Sin cambios
