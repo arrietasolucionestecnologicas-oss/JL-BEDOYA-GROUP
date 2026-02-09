@@ -37,8 +37,6 @@
     .label-mini { font-size: 0.7rem; color: #6c757d; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
     .unit-select { max-width: 70px; font-weight: bold; background-color: #f8f9fa; border: 1px solid #ced4da; font-size: 0.8rem; }
     .bg-garantia { background-color: #e8f5e9; border-color: #c8e6c9; color: #1b5e20; }
-    
-    /* AGENDA STYLES */
     .agenda-card { border-left: 4px solid var(--primary); transition: transform 0.2s; cursor: pointer; }
     .agenda-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .badge-jlb { background-color: #0d6efd; color: white; }
@@ -47,13 +45,10 @@
     .text-purple { color: #6f42c1 !important; }
     .blink { animation: blinker 1.5s linear infinite; }
     @keyframes blinker { 50% { opacity: 0.5; } }
-    
-    /* FILTER BUTTONS SCROLL */
     .filter-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; white-space: nowrap; }
     .btn-filter { border-radius: 20px; font-weight: bold; font-size: 0.8rem; padding: 5px 15px; border: 1px solid #dee2e6; background: white; color: #555; }
     .btn-filter.active { background-color: #0d6efd; color: white; border-color: #0d6efd; }
     .btn-filter:hover { background-color: #e9ecef; }
-    
     .hover-effect { transition: transform 0.2s; cursor: pointer; }
     .hover-effect:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     .link-entrada { color: var(--primary); font-weight: bold; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; }
@@ -74,7 +69,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V39.0 | Campo</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V40.0 | Certificación</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -201,7 +196,6 @@
             <div class="modal-body bg-light">
                 <div class="mb-3">
                     <input type="text" id="filtroAgenda" class="form-control mb-2" placeholder="🔍 Buscar Cliente o ID..." onkeyup="filtrarAgenda()">
-                    
                     <div class="filter-scroll">
                         <button class="btn btn-filter active" onclick="filtrarAgenda('all', this)">⚡ TODOS</button>
                         <button class="btn btn-filter" onclick="filtrarAgenda('warning', this)">🟡 INICIALES</button>
@@ -221,7 +215,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // URL DE HOY 04/02
+    // URL API
     const URL_API_CAMPO = "https://script.google.com/macros/s/AKfycbwd4ckii8-VM9sCzrOHhijQ1-BImInqTZ5YfhVpS2wyQE6BE2PDRmPb-yHJgY0910csBQ/exec";
     
     let DATA = {};
@@ -233,14 +227,13 @@
     let modalAgenda = null;
     let CRITERIO_FILTRO_ACTUAL = 'all';
 
-    // --- CONECTOR GOOGLE APPS SCRIPT ---
     class GasRunner {
         constructor() {
             this._success = null;
             this._failure = null;
             this.argMap = { 
-                'buscarInfoEntrada': ['entrada'], 'guardarPruebasIniciales': ['form', 'soloGuardar'], 
-                'guardarPruebasFinales': ['form', 'soloGuardar'], 'registrarNuevaEntrada': ['payload'],
+                'buscarInfoEntrada': ['entrada'], 'guardarPruebasIniciales': ['form', 'soloGuardar', 'esCertificacion'], 
+                'guardarPruebasFinales': ['form', 'soloGuardar', 'esCertificacion'], 'registrarNuevaEntrada': ['payload'],
                 'actualizarHojaVida': ['payload'], 'procesarInspeccion': ['payload'],
                 'guardarSoloBD_Inspeccion': ['payload'], 'generarProtocoloClienteDoc': ['payload'],
                 'buscarProtocoloExistente': ['payload'], 'obtenerDatosProgramacion': [],
@@ -277,7 +270,6 @@
     var google = window.google || {};
     if (!google.script || !google.script.run) { google = { script: { run: new GasRunner() } }; }
 
-    // --- INICIALIZACIÓN ---
     document.addEventListener('DOMContentLoaded', () => {
         try {
             if(typeof bootstrap !== 'undefined') {
@@ -291,7 +283,6 @@
         }
     });
 
-    // --- FUNCIONES CORE ---
     function fillDatalists(lists) {
        const fill = (id, arr) => {
          const dl = document.getElementById(id); let opts = '';
@@ -314,9 +305,43 @@
         document.querySelectorAll('.lbl-is').forEach(e => e.innerText = is.toFixed(2));
     }
 
+    // --- CONSTRUCCIÓN DE VISTAS CON DOBLE BOTÓN (GUARDAR vs CERTIFICAR) ---
     function buildLabViews() {
-      const botonesFin = `<div class="row g-2"><div class="col-4"><button class="btn btn-success w-100 fw-bold small-text p-1" onclick="guardarLab('fin',true)"><i class="fas fa-save d-block mb-1"></i>GUARDAR</button></div><div class="col-4"><button class="btn btn-primary w-100 fw-bold small-text p-1" onclick="verProtocolo()"><i class="fas fa-eye d-block mb-1"></i>VER DOC</button></div><div class="col-4"><button class="btn btn-dark w-100 fw-bold small-text p-1" onclick="generarProtocoloCliente('fin')"><i class="fas fa-sync d-block mb-1"></i>REGENERAR</button></div></div>`;
-      const botonesIni = `<div class="row g-2"><div class="col-6"><button class="btn btn-success w-100 fw-bold small-text p-1" onclick="guardarLab('ini',true)"><i class="fas fa-save d-block mb-1"></i>GUARDAR</button></div><div class="col-6"><button class="btn btn-warning w-100 fw-bold small-text p-1" onclick="guardarLab('ini',false)"><i class="fas fa-file-pdf d-block mb-1"></i>REPORTE</button></div></div>`;
+      // BOTONES DE PRUEBAS FINALES (V40.0)
+      const botonesFin = `
+        <div class="row g-2">
+            <div class="col-6">
+                <button class="btn btn-secondary w-100 fw-bold small-text p-2" onclick="guardarLab('fin', true, false)">
+                    <i class="fas fa-save me-1"></i> GUARDAR
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-primary w-100 fw-bold small-text p-2" onclick="guardarLab('fin', false, true)">
+                    <i class="fas fa-check-double me-1"></i> CERTIFICAR
+                </button>
+            </div>
+            <div class="col-12 mt-2">
+                <button class="btn btn-dark w-100 fw-bold small-text p-2" onclick="verProtocolo()">
+                    <i class="fas fa-eye me-1"></i> VER PROTOCOLO
+                </button>
+            </div>
+        </div>`;
+
+      // BOTONES DE PRUEBAS INICIALES (V40.0)
+      const botonesIni = `
+        <div class="row g-2">
+            <div class="col-6">
+                <button class="btn btn-secondary w-100 fw-bold small-text p-2" onclick="guardarLab('ini', true, false)">
+                    <i class="fas fa-save me-1"></i> GUARDAR
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-warning w-100 fw-bold small-text p-2" onclick="guardarLab('ini', false, true)">
+                    <i class="fas fa-check-double me-1"></i> CERTIFICAR
+                </button>
+            </div>
+        </div>`;
+
       const labs = [{id:'ini',title:'Pruebas Iniciales',color:'warning',icon:'flask', btns: botonesIni}, {id:'fin',title:'Pruebas Finales',color:'primary',icon:'check-circle', btns: botonesFin}];
       let html = '';
       labs.forEach(l => {
@@ -431,9 +456,8 @@
        });
     }
 
-    // --- FUNCIÓN DE FILTRADO CORREGIDA V39.0 ---
+    // --- FUNCIÓN DE FILTRADO ---
     function filtrarAgenda(criterio, btn) {
-       // 1. Gestión de estado y botones
        if(criterio) CRITERIO_FILTRO_ACTUAL = criterio;
        if(btn) {
            document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
@@ -443,25 +467,13 @@
        const q = document.getElementById('filtroAgenda').value.toLowerCase();
        
        const filtrados = AGENDA_CACHE.filter(i => {
-           // Filtro de Texto
            const matchTexto = i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q);
-           
-           // Filtro de Categoría (Botones)
            let matchEstado = true;
            const textoTarjeta = (i.estadoTecnico || "").toUpperCase();
            
-           if (CRITERIO_FILTRO_ACTUAL === 'warning') {
-               // AMARILLO: Iniciales
-               matchEstado = textoTarjeta.includes("INSPECCION") || textoTarjeta.includes("DIAGNOSTICO") || textoTarjeta.includes("PENDIENTE");
-           } 
-           else if (CRITERIO_FILTRO_ACTUAL === 'primary') {
-               // AZUL: En Taller (Reparación) - EXCLUYE FINALES
-               matchEstado = (textoTarjeta.includes("REPARACION") || textoTarjeta.includes("EN PROCESO")) && !textoTarjeta.includes("FINALES");
-           }
-           else if (CRITERIO_FILTRO_ACTUAL === 'purple') {
-               // MORADO: Finales
-               matchEstado = textoTarjeta.includes("PRUEBAS FINALES") || textoTarjeta.includes("PROTOCOLO") || textoTarjeta.includes("SOLO PRUEBAS");
-           }
+           if (CRITERIO_FILTRO_ACTUAL === 'warning') matchEstado = textoTarjeta.includes("INSPECCION") || textoTarjeta.includes("DIAGNOSTICO") || textoTarjeta.includes("PENDIENTE");
+           else if (CRITERIO_FILTRO_ACTUAL === 'primary') matchEstado = (textoTarjeta.includes("REPARACION") || textoTarjeta.includes("EN PROCESO")) && !textoTarjeta.includes("FINALES");
+           else if (CRITERIO_FILTRO_ACTUAL === 'purple') matchEstado = textoTarjeta.includes("PRUEBAS FINALES") || textoTarjeta.includes("PROTOCOLO");
            
            return matchTexto && matchEstado;
        });
@@ -470,18 +482,12 @@
     }
     
     function seleccionarDeAgenda(index) {
-        // Obtenemos el item filtrado real
-        // Como 'filtrarAgenda' renderiza solo un subconjunto, necesitamos saber cuál es el item real en cache
-        // Pero renderAgenda recibe la lista filtrada.
-        // El index que viene del onclick es el índice de la lista filtrada renderizada.
-        
-        // CORRECCIÓN: Volvemos a filtrar para encontrar el objeto correcto
         const q = document.getElementById('filtroAgenda').value.toLowerCase();
         const filtrados = AGENDA_CACHE.filter(i => {
            const matchTexto = i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q);
            let matchEstado = true;
            const textoTarjeta = (i.estadoTecnico || "").toUpperCase();
-           if (CRITERIO_FILTRO_ACTUAL === 'warning') matchEstado = textoTarjeta.includes("INSPECCION") || textoTarjeta.includes("DIAGNOSTICO");
+           if (CRITERIO_FILTRO_ACTUAL === 'warning') matchEstado = textoTarjeta.includes("INSPECCION") || textoTarjeta.includes("DIAGNOSTICO") || textoTarjeta.includes("PENDIENTE");
            else if (CRITERIO_FILTRO_ACTUAL === 'primary') matchEstado = (textoTarjeta.includes("REPARACION") || textoTarjeta.includes("EN PROCESO")) && !textoTarjeta.includes("FINALES");
            else if (CRITERIO_FILTRO_ACTUAL === 'purple') matchEstado = textoTarjeta.includes("PRUEBAS FINALES") || textoTarjeta.includes("PROTOCOLO");
            return matchTexto && matchEstado;
@@ -591,7 +597,46 @@
     function calcResBal(mod, type, rowIdx) { if(DATA.fases !== 3) return; let v1=0, v2=0, v3=0; let badgeId = ''; if(type === 'pri') { v1 = getNum(`inp-${mod}-r-uv-${rowIdx}`); v2 = getNum(`inp-${mod}-r-vw-${rowIdx}`); v3 = getNum(`inp-${mod}-r-wu-${rowIdx}`); badgeId = `res-err-${mod}-pri-${rowIdx}`; } else { v1 = getNum(`${mod}_pnx`); v2 = getNum(`${mod}_pny`); v3 = getNum(`${mod}_pnz`); badgeId = `res-err-${mod}-sec`; } let badge = document.getElementById(badgeId); if(v1 > 0 && v2 > 0 && v3 > 0) { let avg = (v1 + v2 + v3) / 3; let maxDev = Math.max(Math.abs(v1-avg), Math.abs(v2-avg), Math.abs(v3-avg)); let percentDev = (maxDev / avg) * 100; badge.innerText = percentDev.toFixed(2) + '%'; badge.className = percentDev > 5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
     function calcLoss(mod) { let f = (DATA.fases === 3) ? 1.73205 : 1; document.getElementById(`${mod}_wcc`).value = (getNum(`${mod}_vcc`)*getNum(`${mod}_icc`)*f).toFixed(2); let i1=getNum(`${mod}_io1`), i2=getNum(`${mod}_io2`), i3=getNum(`${mod}_io3`); let div = (DATA.fases === 3) ? 3 : 1; let iavg = (i1+i2+i3)/div; document.getElementById(`${mod}_wo`).value = (getNum(`${mod}_vo`)*iavg*f).toFixed(2); }
     function recopilarDatos(mod) { let f = {...DATA}; let lblIp = document.querySelector('.lbl-ip'); let lblIs = document.querySelector('.lbl-is'); if (lblIp && lblIs) { f.calc_iprim = lblIp.innerText; f.calc_isec = lblIs.innerText; } else { const kva = parseFloat(DATA.kva) || 0; const vp = parseFloat(DATA.vp) || 0; const vs = parseFloat(DATA.vs) || 0; f.calc_iprim = (kva > 0 && vp > 0) ? ((kva*1000)/(vp * (DATA.fases==3?1.732:1))).toFixed(2) : "0"; f.calc_isec = (kva > 0 && vs > 0) ? ((kva*1000)/(vs * (DATA.fases==3?1.732:1))).toFixed(2) : "0"; } f.temp_amb = getVal(`${mod}_temp`); f.mat_pri = getVal(`${mod}_mat_pri`); f.mat_sec = getVal(`${mod}_mat_sec`); let u_p = getVal(`u_${mod}_res_pri`); let u_s = getVal(`u_${mod}_res_sec`); f.unidades = { res_pri: u_p, res_sec: u_s, aisl_at_bt: getVal(`u_${mod}_atbt`), aisl_at_t: getVal(`u_${mod}_att`), aisl_bt_t: getVal(`u_${mod}_btt`) }; f.aisl_at_bt = getVal(`${mod}_atbt`); f.aisl_at_t = getVal(`${mod}_att`); f.aisl_bt_t = getVal(`${mod}_btt`); f.cc_icc = getVal(`${mod}_icc`); f.cc_vcc = getVal(`${mod}_vcc`); f.cc_wcc = getVal(`${mod}_wcc`); f.vc_vo = getVal(`${mod}_vo`); f.vc_wo = getVal(`${mod}_wo`); f.vc_io_1 = getVal(`${mod}_io1`); f.vc_io_2 = getVal(`${mod}_io2`); f.vc_io_3 = getVal(`${mod}_io3`); f.observaciones = getVal(`${mod}_obs`); f.realizado = getVal(`${mod}_realizado`); f.gar_w_vacio = getVal(`${mod}_gar_wvacio`); f.gar_w_carga = getVal(`${mod}_gar_wcarga`); f.gar_uz = getVal(`${mod}_gar_uz`); f.dim_l = getVal(`${mod}_dim_l`); f.dim_a = getVal(`${mod}_dim_a`); f.dim_h = getVal(`${mod}_dim_h`); f.aceite = getVal(`${mod}_aceite`) || DATA.aceite; f.peso = getVal(`${mod}_peso`) || DATA.peso; f.color = getVal(`${mod}_color`); let ttr={}, res={}; for(let i=1; i<=5; i++){ ttr['tap'+i] = [getVal(`inp-${mod}-uv-${i}`), DATA.fases==3?getVal(`inp-${mod}-vw-${i}`):'', DATA.fases==3?getVal(`inp-${mod}-wu-${i}`):'']; res['tap'+i] = [getVal(`inp-${mod}-r-uv-${i}`), DATA.fases==3?getVal(`inp-${mod}-r-vw-${i}`):'', DATA.fases==3?getVal(`inp-${mod}-r-wu-${i}`):'']; } f.ttr = ttr; f.res_prim = res; f.res_sec = { pnx: getVal(`${mod}_pnx`), xy: getVal(`${mod}_xy`), pny: DATA.fases==3 ? getVal(`${mod}_pny`) : "", yz: DATA.fases==3 ? getVal(`${mod}_yz`) : "", pnz: DATA.fases==3 ? getVal(`${mod}_pnz`) : "", zx: DATA.fases==3 ? getVal(`${mod}_zx`) : "" }; return f; }
-    function guardarLab(mod, soloGuardar) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); const runner = (mod === 'ini') ? google.script.run.withSuccessHandler(fin).guardarPruebasIniciales(f, soloGuardar) : google.script.run.withSuccessHandler(fin).guardarPruebasFinales(f, soloGuardar); }
+    
+    // --- FUNCIÓN DE GUARDADO MODIFICADA (V40.0) ---
+    function guardarLab(mod, soloGuardar, esCertificacion) {
+        if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning');
+        
+        let f = recopilarDatos(mod);
+        
+        // Si es certificación, pedimos confirmación
+        if(esCertificacion) {
+            Swal.fire({
+                title: '¿Confirmar Certificación?',
+                text: "Esto notificará a Producción y marcará la tarea como LISTA.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0d6efd',
+                confirmButtonText: 'Sí, Certificar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    enviarAlBackend(mod, f, false, true); // soloGuardar=false, esCertificacion=true
+                }
+            });
+        } else {
+            // Guardado normal (Borrador)
+            enviarAlBackend(mod, f, true, false); // soloGuardar=true
+        }
+    }
+
+    // --- ENVIAR AL BACKEND ---
+    function enviarAlBackend(mod, f, soloGuardar, esCertificacion) {
+        loading(true);
+        const metodo = (mod === 'ini') ? 'guardarPruebasIniciales' : 'guardarPruebasFinales';
+        
+        // Llamada al backend con el nuevo parámetro esCertificacion
+        google.script.run.withSuccessHandler(fin).withFailureHandler(err => {
+            loading(false);
+            Swal.fire('Error', err.toString(), 'error');
+        })[metodo](f, soloGuardar, esCertificacion);
+    }
+
     function generarProtocoloCliente(mod) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) Swal.fire({title:'Protocolo Generado', html:`<a href="${res.url}" target="_blank" class="btn btn-dark btn-lg">Abrir Protocolo (PDF)</a>`, icon:'success'}); else Swal.fire('Error Word',res.error,'error'); }).generarProtocoloClienteDoc(f); }
     function fin(res) { if(res.success && DATA.entrada) localStorage.removeItem('backup_' + DATA.entrada); loading(false); if(res.success && res.message) { Swal.fire('Guardado', res.message, 'success'); } else if(res.success) { res.url ? window.open(res.url) : Swal.fire('Guardado','Datos en Excel','success'); } else { Swal.fire('Error',res.error,'error'); } }
   </script>
