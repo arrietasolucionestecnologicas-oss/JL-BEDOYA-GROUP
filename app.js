@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V24.0 - BORRADOR INTELIGENTE) */
+/* JLB OPERACIONES - APP.JS (V24.3 - INTEGRACIÓN LEGACY ROBUSTA) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -22,6 +22,8 @@ class GasRunner {
         });
     }
     _execute(actionName, payload) {
+        // NOTA TÉCNICA: Este adaptador serializa todo a JSON.
+        // Google Apps Script recibe esto y lo descompone.
         const requestBody = JSON.stringify({ action: actionName, payload: payload });
         fetch(API_ENDPOINT, {
             method: 'POST', redirect: 'follow', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: requestBody
@@ -48,6 +50,10 @@ let alqFotosNuevas = [];
 let listaReqTemp = []; // Lista editable (Borrador)
 let historialReqCache = []; 
 let canvas, ctx, isDrawing=false, indiceActual=-1;
+
+// VARIABLES PARA EL ROBOT DE FOTOS
+let COLA_FOTOS = [];
+let PROCESANDO_COLA = false;
 
 window.onload = function() { 
     if(typeof lucide !== 'undefined') lucide.createIcons();
@@ -636,3 +642,143 @@ function moverTarea(ix, est) { google.script.run.withSuccessHandler((listaActual
 function renderizarTareas(d) { ['pendiente', 'proceso', 'terminado'].forEach(k => { const col = document.getElementById('col-' + k); if(col) col.innerHTML = ''; }); d.forEach((t, index) => { const colName = t.estado === 'PENDIENTE' ? 'pendiente' : (t.estado === 'EN PROCESO' ? 'proceso' : 'terminado'); const col = document.getElementById('col-' + colName); if(!col) return; let botonAvance = ''; if(t.estado === 'PENDIENTE') { botonAvance = `<button onclick="moverTarea(${t.rowIndex},'EN PROCESO')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 p-1.5 rounded-full shadow-sm" title="Iniciar Tarea"><i data-lucide="play" class="w-3 h-3"></i></button>`; } else if (t.estado === 'EN PROCESO') { botonAvance = `<button onclick="moverTarea(${t.rowIndex},'TERMINADO')" class="bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 p-1.5 rounded-full shadow-sm" title="Finalizar Tarea"><i data-lucide="check" class="w-3 h-3"></i></button>`; } const html = `<div class="task-card relative group bg-white p-3 rounded shadow-sm border border-slate-200 hover:shadow-md transition-all"><div class="text-[10px] text-slate-400 mb-1 flex justify-between font-mono"><span>${t.fecha}</span><span class="font-bold text-slate-600 bg-slate-100 px-1 rounded">${t.idTrafo||'S/N'}</span></div><p class="font-bold text-slate-800 text-sm mb-2 leading-tight pr-6">${t.actividad}</p><div class="absolute top-2 right-2">${botonAvance}</div><div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100"><div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700 border border-blue-200">${t.responsable ? t.responsable.charAt(0) : '?'}</div><span class="text-xs text-slate-500 font-medium truncate max-w-[100px]">${t.responsable}</span><div class="ml-auto flex gap-1 items-center">${t.prioridad === 'Alta' ? '<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">ALTA</span>' : ''}<button onclick="editarTarea(${index})" class="p-1 text-slate-400 hover:text-blue-600"><i data-lucide="pencil" class="w-3 h-3"></i></button><button onclick="borrarTarea(${t.rowIndex})" class="p-1 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button></div></div></div>`; col.insertAdjacentHTML('beforeend', html); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }
 function abrirModalHistorico() { document.getElementById('modal-historico').classList.remove('hidden'); }
 function guardarHistorico() { const d = { idJLB: document.getElementById('hist-idjlb').value, idGroup: document.getElementById('hist-idgroup').value, fecha: document.getElementById('hist-fecha').value, cliente: document.getElementById('hist-cliente').value, desc: document.getElementById('hist-desc').value, serie: document.getElementById('hist-serie').value, estado: document.getElementById('hist-estado').value }; google.script.run.withSuccessHandler(() => { document.getElementById('modal-historico').classList.add('hidden'); cargarProgramacion(); showToast("Histórico cargado"); }).cargarHistoricoManual(d); }
+
+// =======================================================
+// 🚀 MOTOR DE COLA DE SUBIDA (INTEGRADO EN APP.JS)
+// =======================================================
+
+// 2. INTERCEPTOR DE CÁMARA (Reemplaza la función original de bloqueo)
+function procesarFotosInmediato(input) {
+    if (input.files && input.files.length > 0) {
+        const idTrafo = document.getElementById('foto-trafo').value.trim();
+        const etapa = document.getElementById('foto-etapa').value;
+
+        if (!idTrafo) {
+            alert("⚠️ Escribe el ID del Transformador primero.");
+            input.value = ""; // Limpiar input
+            return;
+        }
+
+        // Procesamos cada archivo seleccionado (soporta ráfaga de galería también)
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result; // Imagen en base64
+                // ENCOLAR (No subir todavía)
+                encolarFoto(base64, idTrafo, etapa);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Limpiamos el input para permitir tomar la misma foto de nuevo si se desea
+        input.value = "";
+    }
+}
+
+// 3. FUNCIÓN DE ENCOLADO VISUAL
+function encolarFoto(base64, idTrafo, etapa) {
+    // Agregamos a la lista
+    COLA_FOTOS.push({ base64: base64, id: idTrafo, etapa: etapa, intento: 0 });
+
+    // Actualizamos UI
+    actualizarIndicadorCola();
+    
+    // Mostrar miniatura en la lista visual (Feedback instantáneo para el usuario)
+    agregarMiniaturaVisual(base64);
+
+    // Despertamos al robot
+    if (!PROCESANDO_COLA) {
+        procesarCola();
+    }
+}
+
+// 4. EL ROBOT (Procesa 1 a 1 en segundo plano)
+// CORRECCIÓN CRÍTICA: ENVÍA 3 ARGUMENTOS SEPARADOS, NO UN OBJETO
+function procesarCola() {
+    if (COLA_FOTOS.length === 0) {
+        PROCESANDO_COLA = false;
+        actualizarIndicadorCola();
+        return;
+    }
+
+    PROCESANDO_COLA = true;
+    var tarea = COLA_FOTOS[0]; // Miramos la primera
+
+    actualizarIndicadorCola(); // Mostrar "Subiendo..."
+
+    google.script.run
+        .withSuccessHandler(function(res) {
+            if (res.exito) {
+                console.log("✅ Foto subida: " + res.url);
+                COLA_FOTOS.shift(); // Borrar de la cola
+                marcarMiniaturaComoSubida(); // Poner check verde visual
+            } else {
+                console.warn("⚠️ Error subida: " + res.error);
+                if (res.error === 'BUSY' && tarea.intento < 3) {
+                    tarea.intento++;
+                    setTimeout(function() { procesarCola(); }, 2000); // Reintentar
+                    return; 
+                } else {
+                    COLA_FOTOS.shift(); // Descartar si falla mucho
+                    alert("❌ Error subiendo una foto: " + res.error);
+                }
+            }
+            procesarCola(); // Siguiente
+        })
+        .withFailureHandler(function(e) {
+            console.error("Error Red: " + e);
+            setTimeout(function() { procesarCola(); }, 3000); // Reintentar en 3s
+        })
+        // LA CLAVE: 3 ARGUMENTOS SEPARADOS PARA COINCIDIR CON V23.0
+        .subirFotoProceso(tarea.base64, tarea.id, tarea.etapa);
+}
+
+// 5. UTILIDADES VISUALES
+function actualizarIndicadorCola() {
+    var div = document.getElementById('status-fotos');
+    if (div) {
+        if (COLA_FOTOS.length > 0) {
+            div.innerText = "⏳ Subiendo " + COLA_FOTOS.length + " fotos...";
+            div.style.color = "#eab308"; // Amarillo
+        } else {
+            div.innerText = "✅ Todo subido";
+            div.style.color = "#22c55e"; // Verde
+            setTimeout(() => { if(COLA_FOTOS.length===0) div.innerText = ""; }, 2000);
+        }
+    }
+}
+
+function agregarMiniaturaVisual(base64) {
+    const lista = document.getElementById('lista-fotos');
+    if (!lista) return;
+
+    const div = document.createElement('div');
+    div.className = "flex items-center gap-3 p-2 bg-slate-50 rounded border border-slate-200 foto-item-temp opacity-50"; // Opaco = Subiendo
+    div.innerHTML = `
+        <img src="${base64}" class="w-10 h-10 object-cover rounded">
+        <div class="text-xs text-slate-500 font-bold flex-1">En cola...</div>
+        <div class="loading-spinner w-3 h-3 border-2 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+    `;
+    // Insertar al principio
+    lista.insertBefore(div, lista.firstChild);
+}
+
+function marcarMiniaturaComoSubida() {
+    const loadingItems = document.querySelectorAll('.foto-item-temp .loading-spinner');
+    if(loadingItems.length > 0) {
+        const spinner = loadingItems[loadingItems.length - 1]; // El más viejo visualmente abajo
+        const row = spinner.parentElement;
+        
+        row.classList.remove('opacity-50');
+        row.querySelector('.text-xs').innerText = "Subida OK";
+        row.querySelector('.text-xs').classList.add('text-green-600');
+        spinner.remove(); // Quitar spinner
+        
+        // Agregar check
+        const check = document.createElement('i');
+        check.setAttribute('data-lucide', 'check');
+        check.className = "w-4 h-4 text-green-500";
+        row.appendChild(check);
+        lucide.createIcons();
+    }
+}
