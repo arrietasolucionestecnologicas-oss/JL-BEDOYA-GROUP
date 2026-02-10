@@ -17,7 +17,6 @@
           navigator.serviceWorker.register('sw.js')
             .then(reg => {
                 console.log('SW registrado', reg);
-                // Forzar actualización si hay una nueva versión esperando
                 reg.onupdatefound = () => {
                     const installingWorker = reg.installing;
                     installingWorker.onstatechange = () => {
@@ -484,7 +483,6 @@
       var PROCESANDO_COLA = false;
 
       // 2. INTERCEPTOR DE CÁMARA
-      // Esta función reemplaza a tu antigua procesarFotosInmediato para la cámara
       function procesarFotosInmediato(input) {
           if (input.files && input.files.length > 0) {
               const idTrafo = document.getElementById('foto-trafo').value.trim();
@@ -492,45 +490,34 @@
 
               if (!idTrafo) {
                   alert("⚠️ Escribe el ID del Transformador primero.");
-                  input.value = ""; // Limpiar input
+                  input.value = ""; 
                   return;
               }
 
-              // Procesamos cada archivo seleccionado (soporta ráfaga de galería también)
               Array.from(input.files).forEach(file => {
                   const reader = new FileReader();
                   reader.onload = function(e) {
-                      const base64 = e.target.result; // Imagen en base64
-                      
-                      // ENCOLAR (No subir todavía)
+                      const base64 = e.target.result; 
                       encolarFoto(base64, idTrafo, etapa);
                   };
                   reader.readAsDataURL(file);
               });
 
-              // Limpiamos el input para permitir tomar la misma foto de nuevo si se desea
               input.value = "";
           }
       }
 
       // 3. FUNCIÓN DE ENCOLADO VISUAL
       function encolarFoto(base64, idTrafo, etapa) {
-          // Agregamos a la lista
           COLA_FOTOS.push({ base64: base64, id: idTrafo, etapa: etapa, intento: 0 });
-
-          // Actualizamos UI
           actualizarIndicadorCola();
-          
-          // Mostrar miniatura en la lista visual (Feedback instantáneo para el usuario)
           agregarMiniaturaVisual(base64);
-
-          // Despertamos al robot
           if (!PROCESANDO_COLA) {
               procesarCola();
           }
       }
 
-      // 4. EL ROBOT (Procesa 1 a 1 en segundo plano)
+      // 4. EL ROBOT (MODO CLÁSICO: 3 ARGUMENTOS)
       function procesarCola() {
           if (COLA_FOTOS.length === 0) {
               PROCESANDO_COLA = false;
@@ -539,33 +526,35 @@
           }
 
           PROCESANDO_COLA = true;
-          var tarea = COLA_FOTOS[0]; // Miramos la primera
+          var tarea = COLA_FOTOS[0]; 
 
-          actualizarIndicadorCola(); // Mostrar "Subiendo..."
+          actualizarIndicadorCola(); 
 
+          // LLAMADA AL SERVIDOR (MÉTODO ANTIGUO: SEPARADO POR COMAS)
           google.script.run
               .withSuccessHandler(function(res) {
                   if (res.exito) {
                       console.log("✅ Foto subida: " + res.url);
-                      COLA_FOTOS.shift(); // Borrar de la cola
-                      marcarMiniaturaComoSubida(); // Poner check verde visual
+                      COLA_FOTOS.shift(); 
+                      marcarMiniaturaComoSubida(); 
                   } else {
                       console.warn("⚠️ Error subida: " + res.error);
                       if (res.error === 'BUSY' && tarea.intento < 3) {
                           tarea.intento++;
-                          setTimeout(function() { procesarCola(); }, 2000); // Reintentar
+                          setTimeout(function() { procesarCola(); }, 2000); 
                           return; 
                       } else {
-                          COLA_FOTOS.shift(); // Descartar si falla mucho
-                          alert("❌ Error subiendo una foto: " + res.error);
+                          COLA_FOTOS.shift(); 
+                          alert("❌ Error: " + res.error);
                       }
                   }
-                  procesarCola(); // Siguiente
+                  procesarCola(); 
               })
               .withFailureHandler(function(e) {
                   console.error("Error Red: " + e);
-                  setTimeout(function() { procesarCola(); }, 3000); // Reintentar en 3s
+                  setTimeout(function() { procesarCola(); }, 3000); 
               })
+              // CORRECCIÓN FINAL: ENVIAR 3 VARIABLES, NO UN OBJETO
               .subirFotoProceso(tarea.base64, tarea.id, tarea.etapa);
       }
 
@@ -575,11 +564,11 @@
           if (div) {
               if (COLA_FOTOS.length > 0) {
                   div.innerText = "⏳ Subiendo " + COLA_FOTOS.length + " fotos...";
-                  div.style.color = "#eab308"; // Amarillo
+                  div.style.color = "#eab308"; 
               } else {
                   div.innerText = "✅ Todo subido";
-                  div.style.color = "#22c55e"; // Verde
-                  setTimeout(() => { div.innerText = ""; }, 2000);
+                  div.style.color = "#22c55e"; 
+                  setTimeout(() => { if(COLA_FOTOS.length===0) div.innerText = ""; }, 2000);
               }
           }
       }
@@ -589,37 +578,26 @@
           if (!lista) return;
 
           const div = document.createElement('div');
-          div.className = "flex items-center gap-3 p-2 bg-slate-50 rounded border border-slate-200 foto-item-temp opacity-50"; // Opaco = Subiendo
+          div.className = "flex items-center gap-3 p-2 bg-slate-50 rounded border border-slate-200 foto-item-temp opacity-50"; 
           div.innerHTML = `
               <img src="${base64}" class="w-10 h-10 object-cover rounded">
-              <div class="text-xs text-slate-500 font-bold flex-1">Subiendo...</div>
+              <div class="text-xs text-slate-500 font-bold flex-1">En cola...</div>
               <div class="loading-spinner w-3 h-3 border-2 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
           `;
-          // Insertar al principio
           lista.insertBefore(div, lista.firstChild);
       }
 
       function marcarMiniaturaComoSubida() {
-          // Busca el último elemento agregado (que es el más viejo en la cola visual inversa o ajusta según tu orden)
-          // Para simplificar, buscamos el último item con clase opacity-50
-          const items = document.querySelectorAll('.foto-item-temp');
-          // En este caso simple, asumimos FIFO. El último en el DOM (abajo) es el primero que entró si usamos append, 
-          // pero usamos insertBefore, así que el de más abajo es el primero.
-          // Ajuste visual simple: cambiar el último que tenga spinner
           const loadingItems = document.querySelectorAll('.foto-item-temp .loading-spinner');
           if(loadingItems.length > 0) {
-              // El item visual correspondiente a la foto que se acaba de subir
-              // Nota: Esta lógica visual es aproximada. Para exactitud necesitaríamos IDs únicos.
-              // Para efectos prácticos, removemos el estilo de "cargando" del último elemento visual (el más antiguo)
-              const spinner = loadingItems[loadingItems.length - 1];
+              const spinner = loadingItems[loadingItems.length - 1]; 
               const row = spinner.parentElement;
               
               row.classList.remove('opacity-50');
               row.querySelector('.text-xs').innerText = "Subida OK";
               row.querySelector('.text-xs').classList.add('text-green-600');
-              spinner.remove(); // Quitar spinner
+              spinner.remove(); 
               
-              // Agregar check
               const check = document.createElement('i');
               check.setAttribute('data-lucide', 'check');
               check.className = "w-4 h-4 text-green-500";
