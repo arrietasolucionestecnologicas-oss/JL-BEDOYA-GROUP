@@ -97,33 +97,6 @@
             </div>
         </div>
 
-        <h3 class="text-sm font-bold text-slate-400 tracking-wider mt-4 mb-2">TIEMPOS PROMEDIO DE CICLO</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-yellow-900/10 border border-yellow-700/30 rounded-xl p-4 flex items-center justify-between">
-                <div>
-                    <div class="text-2xl font-black text-yellow-500" id="time-auth">0</div>
-                    <div class="text-[10px] font-bold text-yellow-700 uppercase">Días Autorización</div>
-                </div>
-                <i data-lucide="clock" class="w-8 h-8 text-yellow-500/30"></i>
-            </div>
-            
-            <div class="bg-cyan-900/10 border border-cyan-700/30 rounded-xl p-4 flex items-center justify-between">
-                <div>
-                    <div class="text-2xl font-black text-cyan-500" id="time-prod">0</div>
-                    <div class="text-[10px] font-bold text-cyan-700 uppercase">Días Producción</div>
-                </div>
-                <i data-lucide="zap" class="w-8 h-8 text-cyan-500/30"></i>
-            </div>
-
-            <div class="bg-indigo-900/10 border border-indigo-700/30 rounded-xl p-4 flex items-center justify-between">
-                <div>
-                    <div class="text-2xl font-black text-indigo-500" id="time-bod">0</div>
-                    <div class="text-[10px] font-bold text-indigo-700 uppercase">Días Bodega</div>
-                </div>
-                <i data-lucide="package" class="w-8 h-8 text-indigo-500/30"></i>
-            </div>
-        </div>
-
         <h3 class="text-sm font-bold text-slate-400 tracking-wider mt-4 mb-2">DETALLE OPERATIVO</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
              <div class="card border-l-4 border-l-cyan-500 bg-cyan-500/5 group" onclick="abrirModalLista('proceso', 'EQUIPOS EN PROCESO DE PRODUCCIÓN')">
@@ -250,20 +223,16 @@
             DATA_GLOBAL = data;
             if(data.error) { alert("Error: " + data.error); return; }
 
-            // KPIs CLÁSICOS
+            // KPIs
             animateValue("kpi-total", 0, data.listas.planta.length, 1000);
             animateValue("kpi-sin", 0, data.listas.sinAuth.length, 1000);
             animateValue("kpi-listos", 0, data.listas.listos.length, 1000);
             animateValue("kpi-mes", 0, data.kpis.entregadosMes, 1000);
             
+            // KPIs NUEVOS
             animateValue("kpi-proceso", 0, data.listas.proceso.length, 1000);
             animateValue("kpi-parados", 0, data.listas.parados.length, 1000);
             animateValue("kpi-devueltos", 0, data.listas.devueltos.length, 1000);
-
-            // KPIs DE TIEMPO (NUEVOS)
-            animateValue("time-auth", 0, data.kpis.tiempoAuth, 1200);
-            animateValue("time-prod", 0, data.kpis.tiempoProd, 1200);
-            animateValue("time-bod", 0, data.kpis.tiempoBodega, 1200);
 
             // PREVIEW ACEITE
             const divAceite = document.getElementById('preview-aceite');
@@ -333,7 +302,7 @@
                 htmlFechas += `<div class="text-slate-400">Ingreso: <span class="text-white">${i.fecha}</span> (${i.dias} días)</div>`;
                 
                 if(i.diasBodega !== undefined && i.diasBodega !== null) {
-                      htmlFechas += `<div class="text-yellow-600 font-bold">Bodegaje: <span class="text-yellow-400">${i.diasBodega} días</span></div>`;
+                     htmlFechas += `<div class="text-yellow-600 font-bold">Bodegaje: <span class="text-yellow-400">${i.diasBodega} días</span></div>`;
                 }
                 htmlFechas += `</div>`;
 
@@ -428,22 +397,6 @@
                             <div style="font-size:10px; font-weight:bold;">PARADOS</div>
                         </div>
                     </div>
-
-                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-                        <div style="border:1px solid #ca8a04; padding:10px; text-align:center; border-radius:8px;">
-                            <div style="font-size:18px; font-weight:bold; color:#ca8a04;">${DATA_GLOBAL.kpis.tiempoAuth} Días</div>
-                            <div style="font-size:9px; color:#a16207;">AUTORIZACIÓN</div>
-                        </div>
-                        <div style="border:1px solid #0891b2; padding:10px; text-align:center; border-radius:8px;">
-                            <div style="font-size:18px; font-weight:bold; color:#0891b2;">${DATA_GLOBAL.kpis.tiempoProd} Días</div>
-                            <div style="font-size:9px; color:#0e7490;">PRODUCCIÓN</div>
-                        </div>
-                         <div style="border:1px solid #4f46e5; padding:10px; text-align:center; border-radius:8px;">
-                            <div style="font-size:18px; font-weight:bold; color:#4f46e5;">${DATA_GLOBAL.kpis.tiempoBodega} Días</div>
-                            <div style="font-size:9px; color:#4338ca;">BODEGAJE</div>
-                        </div>
-                    </div>
-
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom:20px;">
                         <div>
                             <div class="pdf-section-title" style="color:#dc2626; border-color:#dc2626; margin-top:0;">⚠️ VENCIDOS OFERTA</div>
@@ -454,7 +407,7 @@
                             <table class="pdf-table"><thead><tr><th>ID</th><th>CLIENTE</th><th>DIAS</th></tr></thead><tbody>${rowsOld}</tbody></table>
                         </div>
                     </div>
-                    <div style="text-align:center;"><img src="${img1}" style="width:100%; height:200px; object-fit:contain;"></div>
+                    <div style="text-align:center;"><img src="${img1}" style="width:100%; height:250px; object-fit:contain;"></div>
                 </div>
             `;
             
