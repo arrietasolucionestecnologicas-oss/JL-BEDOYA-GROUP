@@ -206,6 +206,8 @@ function abrirModal(i){
     }
 }
 
+/* REEMPLAZA SOLO ESTA FUNCIÓN EN TU APP.JS */
+
 function renderPasosSeguimiento(d) {
     const stepsContainer = document.getElementById('steps-container'); 
     stepsContainer.innerHTML = ''; 
@@ -216,17 +218,52 @@ function renderPasosSeguimiento(d) {
 
     const estado = (d.estado || "").toUpperCase().trim();
     if(estado === "SIN INGRESAR A SISTEMA" || estado === "PENDIENTE" || estado === "") {
-        // CORRECCIÓN FLUJO V34: Botón envía 'INGRESO', no 'FALTA INSPECCION INICIAL'
         stepsContainer.insertAdjacentHTML('beforeend', `<div class="col-span-full mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-orange-800 font-bold text-sm uppercase">⚠️ Equipo pendiente de ingreso</p><button onclick="avanzarEstado('INGRESO', 'CONFIRMAR_ZIUR')" class="bg-orange-600 text-white px-6 py-2 rounded-lg font-bold shadow text-xs">✅ CONFIRMAR INGRESO</button></div>`);
     }
 
     const tipoServ = (d.tipo || "").toUpperCase();
     const desc = (d.desc || "").toUpperCase();
-    const esSoloAceite = tipoServ.includes("ACEITE") || desc.includes("ACEITE");
     
-    let ps = [{id:'pruebas_ini',l:'1. Pruebas Ini'}, {id:'desencube',l:'2. Desencube'}, {id:'desensamble',l:'3. Desensamble'}, {id:'bobinado',l:'4. Bobinado'}, {id:'ensamble',l:'5. Ensamble'}, {id:'horno',l:'6. Horno'}, {id:'encube',l:'7. Encube'}, {id:'pruebas_fin',l:'8. Pruebas Fin'}, {id:'pintura',l:'9. Pintura'}, {id:'listo',l:'10. Listo'}]; 
-    if(esSoloAceite) ps = [{id:'pruebas_ini',l:'1. Inicial'}, {id:'pruebas_fin',l:'2. Terminado'}, {id:'listo',l:'3. Listo'}];
-    if (esExterno) ps = ps.filter(p => ['pruebas_ini','pruebas_fin','pintura','listo'].includes(p.id));
+    // --- LÓGICA DE FILTROS VISUALES ---
+    const esSoloAceite = tipoServ.includes("ACEITE") || desc.includes("ACEITE");
+    const esSoloPruebas = tipoServ.includes("PRUEBA") || tipoServ.includes("DIAGNOSTICO"); // <--- DETECTAMOS PRUEBAS
+    
+    // Lista completa por defecto (Mantenimiento General)
+    let ps = [
+        {id:'pruebas_ini',l:'1. Pruebas Ini'}, 
+        {id:'desencube',l:'2. Desencube'}, 
+        {id:'desensamble',l:'3. Desensamble'}, 
+        {id:'bobinado',l:'4. Bobinado'}, 
+        {id:'ensamble',l:'5. Ensamble'}, 
+        {id:'horno',l:'6. Horno'}, 
+        {id:'encube',l:'7. Encube'}, 
+        {id:'pruebas_fin',l:'8. Pruebas Fin'}, 
+        {id:'pintura',l:'9. Pintura'}, 
+        {id:'listo',l:'10. Listo'}
+    ]; 
+    
+    // Caso 1: Aceites
+    if(esSoloAceite) {
+        ps = [
+            {id:'pruebas_ini',l:'1. Inicial'}, 
+            {id:'pruebas_fin',l:'2. Terminado'}, 
+            {id:'listo',l:'3. Listo'}
+        ];
+    }
+    // Caso 2: Solo Pruebas / Diagnóstico (TU SOLICITUD)
+    else if (esSoloPruebas) {
+        ps = [
+            {id:'pruebas_ini',l:'1. Recepción / Diag.'},
+            {id:'pruebas_fin',l:'2. Protocolo Final'}, // Saltamos reparación
+            {id:'pintura',l:'3. Adec. Estética'}, // A veces pintan o limpian
+            {id:'listo',l:'4. Listo para Entrega'}
+        ];
+    }
+    
+    // Caso 3: Externo (Manda sobre los demás)
+    if (esExterno) {
+        ps = ps.filter(p => ['pruebas_ini','pruebas_fin','pintura','listo'].includes(p.id));
+    }
 
     ps.forEach(p => { 
         let valFecha = fechaParaInput(d.fases[p.id]) || (p.id==='listo'?fechaParaInput(d.f_listo):""); 
