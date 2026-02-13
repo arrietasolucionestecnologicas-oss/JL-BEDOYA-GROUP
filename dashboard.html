@@ -194,7 +194,7 @@
             google.script.run
                 .withSuccessHandler(renderizarDashboard)
                 .withFailureHandler(e => document.getElementById('loader').innerHTML = `<p class="text-red-500 font-bold">${e}</p>`)
-                .obtenerDataDashboardBlindado();
+                .function obtenerDataDashboardBlindado_V36();
         };
 
         function volverOperacion() { google.script.run.withSuccessHandler(u => window.open(u, '_top')).getScriptUrl(); }
