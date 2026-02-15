@@ -678,6 +678,139 @@ function cerrarModalTarea() { document.getElementById('modal-tarea').classList.a
 function guardarTarea() { const datos = { rowIndex: document.getElementById('task-rowIndex').value, actividad: document.getElementById('task-desc').value, responsable: document.getElementById('task-resp').value, idTrafo: document.getElementById('task-trafo').value, prioridad: document.getElementById('task-prio').value }; const btn = document.querySelector('#modal-tarea button:last-child'); const txtOriginal = btn.innerText; btn.innerText = "Guardando..."; btn.disabled = true; google.script.run.withSuccessHandler((listaActualizada) => { cerrarModalTarea(); tareasCache = listaActualizada; renderizarTareas(listaActualizada); showToast(datos.rowIndex ? "Tarea actualizada" : "Tarea creada"); btn.innerText = txtOriginal; btn.disabled = false; }).crearNuevaActividad(datos); }
 function moverTarea(ix, est) { google.script.run.withSuccessHandler((listaActualizada) => { tareasCache = listaActualizada; renderizarTareas(listaActualizada); }).actualizarEstadoActividad({ index: ix, estado: est }); }
 function renderizarTareas(d) { ['pendiente', 'proceso', 'terminado'].forEach(k => { const col = document.getElementById('col-' + k); if(col) col.innerHTML = ''; }); d.forEach((t, index) => { const colName = t.estado === 'PENDIENTE' ? 'pendiente' : (t.estado === 'EN PROCESO' ? 'proceso' : 'terminado'); const col = document.getElementById('col-' + colName); if(!col) return; let botonAvance = ''; if(t.estado === 'PENDIENTE') { botonAvance = `<button onclick="moverTarea(${t.rowIndex},'EN PROCESO')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 p-1.5 rounded-full shadow-sm" title="Iniciar Tarea"><i data-lucide="play" class="w-3 h-3"></i></button>`; } else if (t.estado === 'EN PROCESO') { botonAvance = `<button onclick="moverTarea(${t.rowIndex},'TERMINADO')" class="bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 p-1.5 rounded-full shadow-sm" title="Finalizar Tarea"><i data-lucide="check" class="w-3 h-3"></i></button>`; } const html = `<div class="task-card relative group bg-white p-3 rounded shadow-sm border border-slate-200 hover:shadow-md transition-all"><div class="text-[10px] text-slate-400 mb-1 flex justify-between font-mono"><span>${t.fecha}</span><span class="font-bold text-slate-600 bg-slate-100 px-1 rounded">${t.idTrafo||'S/N'}</span></div><p class="font-bold text-slate-800 text-sm mb-2 leading-tight pr-6">${t.actividad}</p><div class="absolute top-2 right-2">${botonAvance}</div><div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100"><div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700 border border-blue-200">${t.responsable ? t.responsable.charAt(0) : '?'}</div><span class="text-xs text-slate-500 font-medium truncate max-w-[100px]">${t.responsable}</span><div class="ml-auto flex gap-1 items-center">${t.prioridad === 'Alta' ? '<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">ALTA</span>' : ''}<button onclick="editarTarea(${index})" class="p-1 text-slate-400 hover:text-blue-600"><i data-lucide="pencil" class="w-3 h-3"></i></button><button onclick="borrarTarea(${t.rowIndex})" class="p-1 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button></div></div></div>`; col.insertAdjacentHTML('beforeend', html); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }
-function procesarFotosInmediato(input) { const idTrafo = document.getElementById('foto-trafo').value; if(!idTrafo) { alert("¡Escribe primero el ID del Trafo!"); input.value = ""; return; } if (input.files && input.files.length > 0) { const statusDiv = document.getElementById('status-fotos'); const listaDiv = document.getElementById('lista-fotos'); const etapa = document.getElementById('foto-etapa').value; statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Iniciando carga secuencial...</span>'; const archivos = Array.from(input.files); (async () => { for (const file of archivos) { const divPreview = document.createElement('div'); divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50 mb-1"; divPreview.innerHTML = `<span class="text-xs truncate font-bold w-2/3">${file.name}</span><span class="text-xs text-blue-500">Procesando...</span>`; listaDiv.prepend(divPreview); try { const base64 = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = (e) => resolve(e.target.result); reader.onerror = (e) => reject(e); reader.readAsDataURL(file); }); await new Promise((resolve, reject) => { google.script.run.withSuccessHandler(res => { if(res.exito){ divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200 mb-1"; divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800 w-2/3">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`; if(typeof lucide !== 'undefined') lucide.createIcons(); resolve(); } else { divPreview.className = "bg-red-50 p-2 rounded border border-red-200 mb-1"; divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`; reject(res.error); } }).withFailureHandler(err => { divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`; reject(err); }).subirFotoProceso({ base64: base64, idTrafo: idTrafo, etapa: etapa }); }); } catch (error) { console.error("Error subiendo foto:", error); } } statusDiv.innerHTML = '<span class="text-green-600 font-bold">¡Carga completa!</span>'; setTimeout(() => { statusDiv.innerHTML = ''; }, 3000); input.value = ""; })(); } }
+
+function procesarFotosInmediato(input) {
+    const idTrafo = document.getElementById('foto-trafo').value;
+    if (!idTrafo) {
+        alert("¡Escribe primero el ID del Trafo!");
+        input.value = "";
+        return;
+    }
+    if (input.files && input.files.length > 0) {
+        const statusDiv = document.getElementById('status-fotos');
+        const listaDiv = document.getElementById('lista-fotos');
+        const etapa = document.getElementById('foto-etapa').value;
+        statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Iniciando carga inteligente...</span>';
+        const archivos = Array.from(input.files);
+
+        (async () => {
+            for (const file of archivos) {
+                const divPreview = document.createElement('div');
+                divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50 mb-1";
+                divPreview.innerHTML = `<span class="text-xs truncate font-bold w-2/3">${file.name}</span><span class="text-xs text-blue-500">Optimizando...</span>`;
+                listaDiv.prepend(divPreview);
+
+                try {
+                    // 1. LECTURA Y COMPRESIÓN INTELIGENTE
+                    const base64 = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                let width = img.width;
+                                let height = img.height;
+                                
+                                // Configuración Inicial: Calidad Alta (Informes Técnicos)
+                                let quality = 0.75;
+                                let targetWidth = 1600;
+
+                                console.log(`[IMG] Original: ${(file.size / 1024 / 1024).toFixed(2)} MB | Res: ${width}x${height}`);
+
+                                // Paso 1: Redimensionar inicial (Max 1600px)
+                                if (width > targetWidth) {
+                                    height = Math.round(height * (targetWidth / width));
+                                    width = targetWidth;
+                                }
+
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+
+                                // Generar primer candidato
+                                let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                                let sizeKB = dataUrl.length / 1024;
+
+                                // Paso 2: Si pesa > 500KB, bajar calidad a 0.7
+                                if (sizeKB > 500) {
+                                    quality = 0.7;
+                                    console.log(`[IMG] > 500KB (${sizeKB.toFixed(0)}KB). Recomprimiendo a Q=${quality}...`);
+                                    dataUrl = canvas.toDataURL('image/jpeg', quality);
+                                    sizeKB = dataUrl.length / 1024;
+                                }
+
+                                // Paso 3: Si AÚN pesa > 500KB, bajar resolución a 1400px
+                                if (sizeKB > 500) {
+                                    targetWidth = 1400;
+                                    console.log(`[IMG] Aún > 500KB. Redimensionando a ${targetWidth}px...`);
+                                    
+                                    // Limpiar y redibujar más pequeño
+                                    let newHeight = Math.round(img.height * (targetWidth / img.width));
+                                    canvas.width = targetWidth;
+                                    canvas.height = newHeight;
+                                    ctx.drawImage(img, 0, 0, targetWidth, newHeight);
+                                    
+                                    dataUrl = canvas.toDataURL('image/jpeg', quality); // Mantiene 0.7
+                                    sizeKB = dataUrl.length / 1024;
+                                    width = targetWidth;
+                                    height = newHeight;
+                                }
+
+                                console.log(`[IMG] Res Final: ${width}x${height} | Tamaño Final: ${sizeKB.toFixed(2)} KB`);
+                                console.log("Imagen lista para envío");
+
+                                // Liberar memoria
+                                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                canvas.width = 0;
+                                canvas.height = 0;
+
+                                resolve(dataUrl);
+                            };
+                            img.onerror = (err) => reject(err);
+                            img.src = e.target.result;
+                        };
+                        reader.onerror = (err) => reject(err);
+                        reader.readAsDataURL(file);
+                    });
+
+                    divPreview.querySelector('span.text-blue-500').innerText = "Subiendo...";
+
+                    // 2. ENVÍO AL SERVIDOR (FLUJO ORIGINAL)
+                    await new Promise((resolve, reject) => {
+                        google.script.run.withSuccessHandler(res => {
+                            if (res.exito) {
+                                divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200 mb-1";
+                                divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800 w-2/3">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`;
+                                if (typeof lucide !== 'undefined') lucide.createIcons();
+                                resolve();
+                            } else {
+                                divPreview.className = "bg-red-50 p-2 rounded border border-red-200 mb-1";
+                                divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`;
+                                reject(res.error);
+                            }
+                        }).withFailureHandler(err => {
+                            divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`;
+                            reject(err);
+                        }).subirFotoProceso({
+                            base64: base64,
+                            idTrafo: idTrafo,
+                            etapa: etapa
+                        });
+                    });
+
+                } catch (error) {
+                    console.error("Error procesando foto:", error);
+                    divPreview.innerHTML = `<span class="text-xs text-red-600">Fallo Crítico</span>`;
+                }
+            }
+            statusDiv.innerHTML = '<span class="text-green-600 font-bold">¡Carga completa!</span>';
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 3000);
+            input.value = "";
+        })();
+    }
+}
 function abrirModalHistorico() { document.getElementById('modal-historico').classList.remove('hidden'); }
 function guardarHistorico() { const d = { idJLB: document.getElementById('hist-idjlb').value, idGroup: document.getElementById('hist-idgroup').value, fecha: document.getElementById('hist-fecha').value, cliente: document.getElementById('hist-cliente').value, desc: document.getElementById('hist-desc').value, serie: document.getElementById('hist-serie').value, estado: document.getElementById('hist-estado').value }; google.script.run.withSuccessHandler(() => { document.getElementById('modal-historico').classList.add('hidden'); cargarProgramacion(); showToast("Histórico cargado"); }).cargarHistoricoManual(d); }
