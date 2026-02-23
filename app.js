@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V24.7 - FIX INTEGRAL FOTOS Y FLUJO) */
+/* JLB OPERACIONES - APP.JS (V24.8 - FIX INTEGRAL FOTOS, FLUJO EXTERNO) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -190,7 +190,7 @@ function abrirModal(i){
     
     // --- LÓGICA DE CARGA INTELIGENTE ---
     listaReqTemp = [];
-    historialReqCache = [];
+    histrialReqCache = [];
     document.getElementById('req-cant').value = "1";
     document.getElementById('req-desc').value = "";
     document.getElementById('req-edit-index').value = "-1";
@@ -206,8 +206,6 @@ function abrirModal(i){
     }
 }
 
-/* REEMPLAZA SOLO ESTA FUNCIÓN EN TU APP.JS */
-
 function renderPasosSeguimiento(d) {
     const stepsContainer = document.getElementById('steps-container'); 
     stepsContainer.innerHTML = ''; 
@@ -219,6 +217,8 @@ function renderPasosSeguimiento(d) {
     const estado = (d.estado || "").toUpperCase().trim();
     if(estado === "SIN INGRESAR A SISTEMA" || estado === "PENDIENTE" || estado === "") {
         stepsContainer.insertAdjacentHTML('beforeend', `<div class="col-span-full mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-orange-800 font-bold text-sm uppercase">⚠️ Equipo pendiente de ingreso</p><button onclick="avanzarEstado('INGRESO', 'CONFIRMAR_ZIUR')" class="bg-orange-600 text-white px-6 py-2 rounded-lg font-bold shadow text-xs">✅ CONFIRMAR INGRESO</button></div>`);
+    } else if (estado === "EN PROVEEDOR / EXTERNO" && esExterno) {
+        stepsContainer.insertAdjacentHTML('beforeend', `<div class="col-span-full mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-blue-800 font-bold text-sm uppercase">🚚 Equipo en Proveedor Externo</p><button onclick="avanzarEstado('PRUEBAS FINALES', 'REGRESO_EXTERNO')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow text-xs transition-colors">📥 CONFIRMAR REGRESO A PLANTA</button></div>`);
     }
 
     const tipoServ = (d.tipo || "").toUpperCase();
@@ -250,7 +250,7 @@ function renderPasosSeguimiento(d) {
             {id:'listo',l:'3. Listo'}
         ];
     }
-    // Caso 2: Solo Pruebas / Diagnóstico (TU SOLICITUD)
+    // Caso 2: Solo Pruebas / Diagnóstico
     else if (esSoloPruebas) {
         ps = [
             {id:'pruebas_ini',l:'1. Recepción / Diag.'},
@@ -312,7 +312,7 @@ function guardarCambios(){
     let nuevoEstado = datosProg[indiceActual].estado;
     if(c.entrega) nuevoEstado = "ENTREGADO";
     else if(c.listo) nuevoEstado = "FINALIZADO / LISTO";
-    else if(c.tipo_ejecucion === 'EXTERNA') nuevoEstado = "EN PROVEEDOR / EXTERNO";
+    else if(c.tipo_ejecucion === 'EXTERNA' && (nuevoEstado === "INGRESO" || nuevoEstado === "PENDIENTE" || nuevoEstado === "SIN INGRESAR A SISTEMA" || nuevoEstado === "" || nuevoEstado === "EN PROVEEDOR / EXTERNO")) nuevoEstado = "EN PROVEEDOR / EXTERNO";
     
     const item = datosProg[indiceActual];
     item.estado = nuevoEstado;
@@ -348,12 +348,10 @@ function actualizarFilaDOM(i, r) {
     }
 }
 
-// CORRECCIÓN CRÍTICA: SE ELIMINA LA LÍNEA QUE FORZABA "EN PROCESO"
 function avanzarEstado(nuevoEstado, accion) {
     if(!confirm("¿Confirmar cambio?")) return;
     const d = datosProg[indiceActual];
-    // d.estado = "EN PROCESO"; <-- ESTA LÍNEA SE ELIMINÓ.
-    d.estado = nuevoEstado; // AHORA RESPETA EL PARÁMETRO
+    d.estado = nuevoEstado; 
     actualizarFilaDOM(indiceActual, d);
     cerrarModal();
     google.script.run.withSuccessHandler(res => { if(!res.exito) alert("Error al sincronizar estado."); }).avanzarEstadoAdmin({ rowIndex: d.rowIndex, nuevoEstado: nuevoEstado, accion: accion, idTrafo: d.idJLB||d.idGroup });
@@ -812,5 +810,6 @@ function procesarFotosInmediato(input) {
         })();
     }
 }
+
 function abrirModalHistorico() { document.getElementById('modal-historico').classList.remove('hidden'); }
 function guardarHistorico() { const d = { idJLB: document.getElementById('hist-idjlb').value, idGroup: document.getElementById('hist-idgroup').value, fecha: document.getElementById('hist-fecha').value, cliente: document.getElementById('hist-cliente').value, desc: document.getElementById('hist-desc').value, serie: document.getElementById('hist-serie').value, estado: document.getElementById('hist-estado').value }; google.script.run.withSuccessHandler(() => { document.getElementById('modal-historico').classList.add('hidden'); cargarProgramacion(); showToast("Histórico cargado"); }).cargarHistoricoManual(d); }
