@@ -405,6 +405,14 @@
                 <button onclick="cerrarModalAlq()"><i data-lucide="x" class="text-slate-400"></i></button>
             </div>
             <form id="form-alq" class="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+                
+                <div class="bg-slate-100 p-3 rounded-lg border border-slate-200 flex flex-col items-center justify-center min-h-[120px] mb-2" id="alq-foto-actual-container">
+                    <span class="text-xs text-slate-400 font-bold mb-2 uppercase">FOTO REGISTRADA</span>
+                    <div id="alq-foto-actual" class="w-full flex justify-center items-center">
+                        <span class="text-xs text-slate-500 italic">Sin registro fotográfico</span>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="label-form">Código</label><input id="alq-codigo" class="input-form font-bold"></div>
                     <div><label class="label-form">KVA</label><input id="alq-kva" type="number" class="input-form"></div>
