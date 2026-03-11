@@ -305,7 +305,10 @@
                 htmlFechas += `<div class="text-slate-400">Ingreso: <span class="text-white">${i.fecha}</span> (${i.dias} días)</div>`;
                 
                 if(i.diasBodega !== undefined && i.diasBodega !== null) {
-                     htmlFechas += `<div class="text-yellow-600 font-bold">Bodegaje: <span class="text-yellow-400">${i.diasBodega} días</span></div>`;
+                     let fBod = i.fechaBodega ? i.fechaBodega.split(" ")[0] : "S/F";
+                     htmlFechas += `<div class="text-yellow-600 font-bold">Terminado: <span class="text-yellow-400">${fBod}</span> (⏳ Bodega: ${i.diasBodega} días)</div>`;
+                } else if(i.estado.includes("FINALIZADO") || i.estado.includes("LISTO") || i.estado.includes("TERMINADO")) {
+                     htmlFechas += `<div class="text-red-500 font-bold text-[10px]">⚠️ Error: Formato de Fecha 'Terminado' inválido en Excel</div>`;
                 }
                 htmlFechas += `</div>`;
 
