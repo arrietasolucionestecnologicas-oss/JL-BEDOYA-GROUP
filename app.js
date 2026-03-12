@@ -95,6 +95,9 @@ function fechaParaInput(f){
 
 function convertirLinkDrive(url) {
     if (!url) return "";
+    // Si detectamos que es una carpeta, no intentamos hacer miniatura
+    if (url.includes('/folders/')) return url; 
+    
     try {
         let id = "";
         const partes = url.split('/d/');
@@ -190,7 +193,7 @@ function abrirModal(i){
     
     // --- LÓGICA DE CARGA INTELIGENTE ---
     listaReqTemp = [];
-    histrialReqCache = [];
+    historialReqCache = [];
     document.getElementById('req-cant').value = "1";
     document.getElementById('req-desc').value = "";
     document.getElementById('req-edit-index').value = "-1";
@@ -636,7 +639,43 @@ function enviarAlmacenAPI() {
 function subLog(id) { document.querySelectorAll('.log-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.log-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-log-'+id).classList.add('active'); if(id==='term') cargarTerminados(); if(id==='alq') cargarAlquiler(); if(id==='pat') cargarPatio(); }
 function subNav(id) { document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.cp-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-cp-'+id).classList.add('active'); if(id === 'fot') cargarGaleriaFotos(); }
 function cargarAlquiler() { google.script.run.withSuccessHandler(d => { datosAlq = d; filtrarAlquiler(); }).obtenerLogistica({ tipo: 'ALQUILER' }); }
-function filtrarAlquiler() { const kva = document.getElementById('filtro-kva').value.toLowerCase(); const volt = document.getElementById('filtro-voltaje').value.toLowerCase(); const estadoFiltro = document.getElementById('filtro-estado').value; const t = document.getElementById('tabla-alq'); if(!t) return; t.innerHTML = ''; const filtrados = datosAlq.filter(item => { const matchKVA = kva === "" || item.kva.toString().toLowerCase().includes(kva); const matchVolt = volt === "" || item.voltajes.toString().toLowerCase().includes(volt); const matchEstado = estadoFiltro === "TODOS" || item.estado.toUpperCase().includes(estadoFiltro); return matchKVA && matchVolt && matchEstado; }); if(filtrados.length === 0) { t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>'; return; } filtrados.forEach((r, i) => { const btnFoto = r.foto ? `<a href="${convertirLinkDrive(r.foto)}" target="_blank" class="text-blue-600 flex justify-center"><i data-lucide="image" class="w-5 h-5"></i></a>` : '<span class="text-slate-300">-</span>'; let badgeClass = 'bg-gray-100 text-slate-700'; if (r.estado.includes("DISPONIBLE")) badgeClass = 'bg-green-100 text-green-700'; else if (r.estado === "PRESTADO" || r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700'; else if (r.estado.includes("MANTENIMIENTO")) badgeClass = 'bg-orange-100 text-orange-700'; else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700'; const indexReal = datosAlq.indexOf(r); t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }
+
+// MODIFICACIÓN CRÍTICA: DETECCIÓN DE CARPETAS EN LA TABLA
+function filtrarAlquiler() { 
+    const kva = document.getElementById('filtro-kva').value.toLowerCase(); 
+    const volt = document.getElementById('filtro-voltaje').value.toLowerCase(); 
+    const estadoFiltro = document.getElementById('filtro-estado').value; 
+    const t = document.getElementById('tabla-alq'); 
+    if(!t) return; 
+    t.innerHTML = ''; 
+    const filtrados = datosAlq.filter(item => { 
+        const matchKVA = kva === "" || item.kva.toString().toLowerCase().includes(kva); 
+        const matchVolt = volt === "" || item.voltajes.toString().toLowerCase().includes(volt); 
+        const matchEstado = estadoFiltro === "TODOS" || item.estado.toUpperCase().includes(estadoFiltro); 
+        return matchKVA && matchVolt && matchEstado; 
+    }); 
+    if(filtrados.length === 0) { 
+        t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>'; 
+        return; 
+    } 
+    filtrados.forEach((r, i) => { 
+        const esCarpeta = r.foto && r.foto.includes('/folders/');
+        const urlFinal = esCarpeta ? r.foto : convertirLinkDrive(r.foto);
+        const icono = esCarpeta ? 'folder-open' : 'image';
+        const btnFoto = r.foto ? `<a href="${urlFinal}" target="_blank" class="text-blue-600 flex justify-center hover:text-blue-800 transition-colors"><i data-lucide="${icono}" class="w-5 h-5"></i></a>` : '<span class="text-slate-300">-</span>'; 
+        
+        let badgeClass = 'bg-gray-100 text-slate-700'; 
+        if (r.estado.includes("DISPONIBLE")) badgeClass = 'bg-green-100 text-green-700'; 
+        else if (r.estado === "PRESTADO" || r.estado.includes("PRESTADO")) badgeClass = 'bg-blue-100 text-blue-700'; 
+        else if (r.estado.includes("MANTENIMIENTO")) badgeClass = 'bg-orange-100 text-orange-700'; 
+        else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700'; 
+        
+        const indexReal = datosAlq.indexOf(r); 
+        t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); 
+    }); 
+    if(typeof lucide !== 'undefined') lucide.createIcons(); 
+}
+
 function cargarGaleriaFotos() { const grid = document.getElementById('galeria-fotos-grid'); if(!grid) return; grid.innerHTML = '<div class="col-span-full text-center text-blue-500 py-8"><i data-lucide="loader-2" class="animate-spin w-8 h-8 mx-auto"></i><p class="text-xs mt-2">Sincronizando fotos recientes...</p></div>'; if(typeof lucide !== 'undefined') lucide.createIcons(); google.script.run .withSuccessHandler(fotos => { grid.innerHTML = ''; if(!fotos || fotos.length === 0) { grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-8 bg-slate-50 rounded-lg border border-dashed border-slate-300"><i data-lucide="image-off" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p>Aún no hay fotos registradas.</p></div>'; if(typeof lucide !== 'undefined') lucide.createIcons(); return; } fotos.forEach(f => { const directUrl = convertirLinkDrive(f.url); const card = `<div class="gallery-card relative group bg-white rounded-lg overflow-hidden aspect-square border border-slate-200 shadow-sm hover:shadow-lg transition-all cursor-pointer" onclick="window.open('${directUrl}', '_blank')"> <img src="${directUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-105"> <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3 pt-8"> <span class="text-white font-bold text-sm block shadow-black drop-shadow-md trafo-id">${f.idTrafo}</span> <span class="text-[10px] text-white/90 uppercase font-bold bg-black/30 px-1.5 py-0.5 rounded backdrop-blur-sm etapa-tag">${f.etapa}</span> </div> <div class="absolute top-2 right-2 bg-white/90 text-slate-700 text-[9px] px-2 py-1 rounded-full shadow-sm font-bold border border-slate-100"> ${f.fecha ? f.fecha.split(' ')[0] : 'Hoy'} </div> </div>`; grid.insertAdjacentHTML('beforeend', card); }); }) .withFailureHandler(error => { grid.innerHTML = `<div class="col-span-full text-center text-red-400 py-8"><i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i><p>Error de conexión.</p><button onclick="cargarGaleriaFotos()" class="text-blue-500 underline mt-2">Reintentar</button></div>`; if(typeof lucide !== 'undefined') lucide.createIcons(); }) .obtenerUltimasFotos(); }
 function filtrarFotos() { const idQuery = document.getElementById('filtro-foto-id').value.toUpperCase(); const etapaQuery = document.getElementById('filtro-foto-etapa').value.toUpperCase(); const cards = document.querySelectorAll('.gallery-card'); cards.forEach(card => { const idText = card.querySelector('.trafo-id').innerText.toUpperCase(); const etapaText = card.querySelector('.etapa-tag').innerText.toUpperCase(); const matchId = idText.includes(idQuery); const matchEtapa = etapaQuery === "TODAS" || etapaText.includes(etapaQuery); if(matchId && matchEtapa) { card.classList.remove('hidden'); } else { card.classList.add('hidden'); } }); }
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); if(!dl) return; dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
@@ -730,9 +769,53 @@ function endDraw(e) {
 
 function limpiarFirma() { if(ctx) ctx.clearRect(0,0,canvas.width,canvas.height); }
 function getFirmaBase64() { if(!canvas) return null; const b = document.createElement('canvas'); b.width = canvas.width; b.height = canvas.height; return canvas.toDataURL() === b.toDataURL() ? null : canvas.toDataURL('image/png'); }
-function enviarFormulario(){ const b = document.getElementById('btn-crear'); const txtOriginal = b.innerHTML; b.innerHTML = 'PROCESANDO...'; b.disabled = true; const f = document.getElementById('form-entrada'); const d = new FormData(f); const dt = { empresa: d.get('empresa'), cliente: d.get('cliente'), cedula: d.get('cedula'), contacto: d.get('contacto'), telefono: d.get('telefono'), ciudad: d.get('ciudad'), descripcion: d.get('descripcion'), cantidad: d.get('cantidad'), observaciones: d.get('observaciones'), quienEntrega: d.get('quienEntrega'), quienRecibe: d.get('quienRecibe'), codigo: d.get('codigo'), firmaBase64: getFirmaBase64() }; google.script.run.withSuccessHandler(r => { if(r.exito) { cerrarModalNueva(); b.innerHTML = txtOriginal; b.disabled = false; cargarEntradas(); showToast("Entrada guardada"); } else { alert("Error: " + r.error); b.innerHTML = txtOriginal; b.disabled = false; } }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).registrarEntradaRapida(dt); }
+
+function enviarFormulario(){ 
+    const b = document.getElementById('btn-crear'); 
+    const txtOriginal = b.innerHTML; 
+    b.innerHTML = 'PROCESANDO...'; 
+    b.disabled = true; 
+    const f = document.getElementById('form-entrada'); 
+    const d = new FormData(f); 
+    const dt = { 
+        empresa: d.get('empresa'), 
+        cliente: d.get('cliente'), 
+        cedula: d.get('cedula'), 
+        contacto: d.get('contacto'), 
+        telefono: d.get('telefono'), 
+        ciudad: d.get('ciudad'), 
+        descripcion: d.get('descripcion'), 
+        cantidad: d.get('cantidad'), 
+        observaciones: d.get('observaciones'), 
+        quienEntrega: d.get('quienEntrega'), 
+        quienRecibe: d.get('quienRecibe'), 
+        codigo: d.get('codigo'), 
+        firmaBase64: getFirmaBase64() 
+    }; 
+    
+    google.script.run.withSuccessHandler(r => { 
+        if(r.exito) { 
+            cerrarModalNueva(); 
+            b.innerHTML = txtOriginal; 
+            b.disabled = false; 
+            cargarEntradas(); 
+            cargarProgramacion(); 
+            showToast("Entrada guardada"); 
+        } else { 
+            alert("Error: " + r.error); 
+            b.innerHTML = txtOriginal; 
+            b.disabled = false; 
+        } 
+    }).withFailureHandler(e => { 
+        b.innerHTML = txtOriginal; 
+        b.disabled = false; 
+        showToast("Error: " + e, 'error'); 
+    }).registrarEntradaRapida(dt); 
+}
+
 function cargarEntradas() { const g = document.getElementById('grid-entradas'); if(!g) return; g.innerHTML='<p class="col-span-full text-center py-4">Cargando...</p>'; google.script.run.withSuccessHandler(d => { datosEntradas = d; g.innerHTML = ''; if(d.length === 0) g.innerHTML = '<p class="col-span-full text-center">Sin registros.</p>'; d.forEach(i => renderCardEntrada(i, g, false)); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerDatosEntradas(); }
 function renderCardEntrada(i, c, p){ const cid = `card-${i.id}`; const pdf = (i.urlPdf && i.urlPdf.length > 5) ? `<a href="${i.urlPdf}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>` : `<button id="btn-gen-${i.id}" onclick="genPDF('${i.id}',${i.rowIndex})" class="w-full bg-slate-800 text-white hover:bg-slate-900 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-plus" class="w-4 h-4"></i> GENERAR</button>`; const ziur = `${i.cantidad||1} / ${i.codigo||'S/C'} / ${i.descripcion}`; const h = `<div id="${cid}" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative"><button onclick="copiarTexto('${ziur}')" class="absolute top-4 right-4 text-slate-400 hover:text-blue-600"><i data-lucide="copy" class="w-5 h-5"></i></button><div><div class="flex justify-between mb-2"><span class="font-bold text-lg">#${i.id}</span><span class="text-xs bg-slate-100 px-2 py-1 rounded">${i.fecha}</span></div><div class="bg-blue-50 text-blue-800 text-xs font-mono px-2 py-1 rounded w-fit mb-2">🏷️ ${i.codigo||'---'}</div><h4 class="font-bold text-blue-600 mb-1">${i.cliente}</h4><p class="text-sm text-slate-500 line-clamp-2">${i.descripcion}</p></div><div class="pt-3 border-t mt-4" id="act-${i.id}">${pdf}</div></div>`; if(p) c.insertAdjacentHTML('afterbegin', h); else c.insertAdjacentHTML('beforeend', h); }
+
 function genPDF(id, rix){ 
     if (!id || id === 'undefined') {
         alert("Error de Interfaz: El ID está vacío. Por favor recarga la página.");
@@ -755,6 +838,7 @@ function genPDF(id, rix){
         }).generarPDFBackground({id: id, rowIndex: rix, datos: null}); 
     } 
 }
+
 function showToast(msg, type = 'success') { const container = document.getElementById('toast-container'); if(!container) return; const el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = type === 'success' ? `<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i><span class="font-bold text-sm text-slate-700">${msg}</span>` : `<i data-lucide="alert-circle" class="w-5 h-5 text-red-600"></i><span class="font-bold text-sm text-slate-700">${msg}</span>`; container.appendChild(el); if(typeof lucide !== 'undefined') lucide.createIcons(); setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000); }
 function copiarTexto(t){ navigator.clipboard.writeText(t).then(()=>showToast("Copiado")); }
 function switchTab(t){ document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+t).classList.add('active'); document.getElementById('tab-btn-'+t).classList.add('active'); }
@@ -762,7 +846,7 @@ function cerrarModal() { document.getElementById('modal-detalle').classList.add(
 function cargarTerminados() { google.script.run.withSuccessHandler(d => { const c = document.getElementById('lista-terminados'); if(!c) return; c.innerHTML = ''; if(d.length === 0) c.innerHTML = '<p class="text-center text-slate-400 py-4">Sin pendientes.</p>'; d.forEach(i => { const txt = `ENTRADA: ${i.id} | CLIENTE: ${i.cliente} | EQUIPO: ${i.desc} | ODS: ${i.ods}`; c.insertAdjacentHTML('beforeend', `<div class="bg-white border border-green-200 p-4 rounded-lg shadow-sm flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i data-lucide="check" class="w-6 h-6"></i></div><div><h4 class="font-bold text-slate-700">${i.cliente}</h4><p class="text-xs text-slate-500">${i.desc} (ID: ${i.id})</p></div></div><button onclick="copiarTexto('${txt}')" class="bg-slate-100 text-slate-600 p-2 rounded hover:bg-slate-200"><i data-lucide="copy" class="w-4 h-4"></i></button></div>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerLogistica({ tipo: 'TERMINADOS' }); }
 function cargarPatio() { google.script.run.withSuccessHandler(d => { const t = document.getElementById('tabla-pat'); if(!t) return; t.innerHTML = ''; d.forEach(r => { t.insertAdjacentHTML('beforeend', `<tr class="border-b"><td class="p-3 font-mono text-blue-600">${r.id}</td><td class="p-3">${r.cliente}</td><td class="p-3 text-xs text-red-500">${r.motivo}</td></tr>`); }); }).obtenerLogistica({ tipo: 'PATIO' }); }
 
-// MODIFICACIÓN CRÍTICA: LÓGICA DE INYECCIÓN VISUAL PARA ALQUILER
+// MODIFICACIÓN CRÍTICA: DETECCIÓN VISUAL DE CARPETAS EN MODAL DE ALQUILER
 function editarAlquiler(i) { 
     const d = datosAlq[i]; 
     abrirModalAlq(false); 
@@ -791,18 +875,31 @@ function editarAlquiler(i) {
     document.getElementById('alq-preview-container').innerHTML = ''; 
     document.getElementById('alq-preview-container').classList.add('hidden'); 
     
-    // --- LÓGICA VISUAL INYECTADA ---
+    // --- LÓGICA VISUAL INYECTADA (DETECCIÓN DE CARPETAS) ---
     const fotoContainer = document.getElementById('alq-foto-actual');
     if (d.foto && d.foto.length > 10) {
-        const directUrl = convertirLinkDrive(d.foto);
-        fotoContainer.innerHTML = `
-            <div class="relative w-32 h-32 rounded border border-slate-300 overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="window.open('${directUrl}', '_blank')">
-                <img src="${directUrl}" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <i data-lucide="external-link" class="text-white w-6 h-6"></i>
+        const esCarpeta = d.foto.includes('/folders/');
+        
+        if (esCarpeta) {
+            // Diseño especial para carpetas
+            fotoContainer.innerHTML = `
+                <div class="relative w-full h-32 rounded border border-blue-200 bg-blue-50 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="window.open('${d.foto}', '_blank')">
+                    <i data-lucide="folder-open" class="w-10 h-10 text-blue-500 mb-2"></i>
+                    <span class="text-xs font-bold text-blue-700">VER CARPETA DE FOTOS</span>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            // Diseño original para imágenes únicas
+            const directUrl = convertirLinkDrive(d.foto);
+            fotoContainer.innerHTML = `
+                <div class="relative w-32 h-32 rounded border border-slate-300 overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="window.open('${directUrl}', '_blank')">
+                    <img src="${directUrl}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <i data-lucide="external-link" class="text-white w-6 h-6"></i>
+                    </div>
+                </div>
+            `;
+        }
         if(typeof lucide !== 'undefined') lucide.createIcons();
     } else {
         fotoContainer.innerHTML = '<span class="text-xs text-slate-500 italic">Sin registro fotográfico</span>';
