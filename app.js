@@ -644,10 +644,90 @@ function autocompletarCliente(input){ const val = input.value.toUpperCase(); con
 function abrirModalNuevaEntrada() { document.getElementById('modal-nueva-entrada').classList.remove('hidden'); setTimeout(initCanvas, 100); }
 function cerrarModalNueva() { document.getElementById('modal-nueva-entrada').classList.add('hidden'); document.getElementById('form-entrada').reset(); limpiarFirma(); }
 function filtrarProg() { const q = document.getElementById('searchProg').value.toLowerCase(); const tDesk = document.getElementById('tabla-prog-desktop'); const tMob = document.getElementById('lista-prog-mobile'); tDesk.innerHTML = ''; tMob.innerHTML = ''; const f = datosProg.filter(r => ((r.idJLB || "") + " " + (r.idGroup || "") + " " + (r.cliente || "") + " " + (r.desc || "") + " " + (r.estado || "")).toLowerCase().includes(q)); f.forEach(r => insertarFilaHTML(r, datosProg.indexOf(r), tDesk, tMob)); if(typeof lucide !== 'undefined') lucide.createIcons(); }
-function initCanvas() { canvas = document.getElementById('signature-pad'); if(!canvas) return; ctx = canvas.getContext('2d'); const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#000'; canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', endDraw); canvas.addEventListener('mouseout', endDraw); canvas.addEventListener('touchstart', (e)=>{e.preventDefault();startDraw(e.touches[0])}); canvas.addEventListener('touchmove', (e)=>{e.preventDefault();draw(e.touches[0])}); canvas.addEventListener('touchend', (e)=>{e.preventDefault();endDraw()}); }
-function startDraw(e) { isDrawing = true; const r = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo((e.clientX||e.pageX)-r.left, (e.clientY||e.pageY)-r.top); }
-function draw(e) { if(!isDrawing)return; const r = canvas.getBoundingClientRect(); ctx.lineTo((e.clientX||e.pageX)-r.left, (e.clientY||e.pageY)-r.top); ctx.stroke(); }
-function endDraw() { isDrawing = false; }
+
+// =========================================================================
+// MOTOR DE CANVAS HD RECONSTRUIDO: SOPORTE PARA S-PEN Y ESCALADO DE PÍXELES
+// =========================================================================
+
+function initCanvas() { 
+    canvas = document.getElementById('signature-pad'); 
+    if(!canvas) return; 
+    
+    ctx = canvas.getContext('2d'); 
+    
+    // Obtener dimensiones reales del contenedor HTML
+    const rect = canvas.parentElement.getBoundingClientRect(); 
+    
+    // Obtener la densidad de píxeles de la pantalla (S23 Ultra = ~3.0)
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Configurar el tamaño interno (memoria) multiplicando por la densidad
+    canvas.width = rect.width * dpr; 
+    canvas.height = rect.height * dpr; 
+    
+    // Configurar el tamaño físico (CSS) para que no se deforme
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
+    
+    // Escalar el contexto gráfico para que los trazos coincidan con CSS
+    ctx.scale(dpr, dpr);
+    
+    ctx.lineWidth = 2; 
+    ctx.lineCap = 'round'; 
+    ctx.strokeStyle = '#000'; 
+
+    // Limpiar eventos anteriores para evitar duplicados si se abre el modal varias veces
+    canvas.removeEventListener('pointerdown', startDraw);
+    canvas.removeEventListener('pointermove', draw);
+    canvas.removeEventListener('pointerup', endDraw);
+    canvas.removeEventListener('pointerout', endDraw);
+    canvas.removeEventListener('pointercancel', endDraw);
+    
+    // Asignar API moderna de Punteros (Detecta Mouse, Dedo y S-Pen con precisión)
+    canvas.addEventListener('pointerdown', startDraw); 
+    canvas.addEventListener('pointermove', draw); 
+    canvas.addEventListener('pointerup', endDraw); 
+    canvas.addEventListener('pointerout', endDraw); 
+    canvas.addEventListener('pointercancel', endDraw);
+    
+    // Desactivar comportamientos táctiles predeterminados (Scroll/Zoom) sobre el lienzo
+    canvas.style.touchAction = 'none';
+}
+
+function startDraw(e) { 
+    e.preventDefault(); // Evitar scroll
+    isDrawing = true; 
+    const r = canvas.getBoundingClientRect(); 
+    
+    // Calcular coordenadas relativas al lienzo exacto en pantalla CSS
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    
+    ctx.beginPath(); 
+    ctx.moveTo(x, y); 
+}
+
+function draw(e) { 
+    if(!isDrawing) return; 
+    e.preventDefault(); // Evitar scroll
+    const r = canvas.getBoundingClientRect(); 
+    
+    // Calcular coordenadas relativas
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    
+    ctx.lineTo(x, y); 
+    ctx.stroke(); 
+}
+
+function endDraw(e) { 
+    if (e) e.preventDefault();
+    isDrawing = false; 
+    ctx.closePath(); // Cortar el trazo para que la próxima letra no se una a la anterior
+}
+
+// =========================================================================
+
 function limpiarFirma() { if(ctx) ctx.clearRect(0,0,canvas.width,canvas.height); }
 function getFirmaBase64() { if(!canvas) return null; const b = document.createElement('canvas'); b.width = canvas.width; b.height = canvas.height; return canvas.toDataURL() === b.toDataURL() ? null : canvas.toDataURL('image/png'); }
 function enviarFormulario(){ const b = document.getElementById('btn-crear'); const txtOriginal = b.innerHTML; b.innerHTML = 'PROCESANDO...'; b.disabled = true; const f = document.getElementById('form-entrada'); const d = new FormData(f); const dt = { empresa: d.get('empresa'), cliente: d.get('cliente'), cedula: d.get('cedula'), contacto: d.get('contacto'), telefono: d.get('telefono'), ciudad: d.get('ciudad'), descripcion: d.get('descripcion'), cantidad: d.get('cantidad'), observaciones: d.get('observaciones'), quienEntrega: d.get('quienEntrega'), quienRecibe: d.get('quienRecibe'), codigo: d.get('codigo'), firmaBase64: getFirmaBase64() }; google.script.run.withSuccessHandler(r => { if(r.exito) { cerrarModalNueva(); b.innerHTML = txtOriginal; b.disabled = false; cargarEntradas(); showToast("Entrada guardada"); } else { alert("Error: " + r.error); b.innerHTML = txtOriginal; b.disabled = false; } }).withFailureHandler(e => { b.innerHTML = txtOriginal; b.disabled = false; showToast("Error: " + e, 'error'); }).registrarEntradaRapida(dt); }
