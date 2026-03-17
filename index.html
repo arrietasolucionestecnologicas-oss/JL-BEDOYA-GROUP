@@ -17,7 +17,6 @@
           navigator.serviceWorker.register('sw.js')
             .then(reg => {
                 console.log('SW registrado', reg);
-                // Forzar actualización si hay una nueva versión esperando
                 reg.onupdatefound = () => {
                     const installingWorker = reg.installing;
                     installingWorker.onstatechange = () => {
@@ -256,6 +255,7 @@
                                     <option value="COMPRA">COMPRA (STOCK JLB)</option>
                                     <option value="DEVOLUCION">DEVOLUCIÓN (NO AUTORIZADO)</option>
                                     <option value="GARANTIA">GARANTIA</option>
+                                    <option value="OTROS">OTROS</option>
                                 </select>
                             </div>
 
