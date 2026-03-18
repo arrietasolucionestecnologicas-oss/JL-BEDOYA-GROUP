@@ -69,7 +69,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V41.1 | Fechas & Cert</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V41.2 | Fechas Blindadas</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -110,7 +110,7 @@
             <div class="card p-4">
                 <h6 class="text-muted fw-bold border-bottom pb-2 mb-3">DATOS GENERALES (Edición)</h6>
                 <div class="row g-3">
-                    <div class="col-md-4 col-6"><label class="label-mini">ENTRADA</label><input id="edit_entrada" class="form-control fw-bold bg-light" readonly></div><div class="col-md-4 col-6"><label class="label-mini">KVA</label><input id="edit_kva" type="number" class="form-control"></div><div class="col-md-4 col-12"><label class="label-mini">CLIENTE</label><input id="edit_cliente" class="form-control"></div>
+                    <div class="col-md-4 col-6"><label class="label-mini">ENTRADA (NO EDITABLE)</label><input id="edit_entrada" class="form-control fw-bold bg-light" readonly></div><div class="col-md-4 col-6"><label class="label-mini">KVA</label><input id="edit_kva" type="number" class="form-control"></div><div class="col-md-4 col-12"><label class="label-mini">CLIENTE</label><input id="edit_cliente" class="form-control"></div>
                     <div class="col-md-3 col-6"><label class="label-mini">MARCA</label><input id="edit_marca" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">SERIE</label><input id="edit_serie" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">V.PRIM</label><input id="edit_vp" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">V.SEC</label><input id="edit_vs" type="number" class="form-control"></div>
                     <div class="col-md-3 col-6"><label class="label-mini">FASES</label><select id="edit_fases" class="form-select"><option value="3">3</option><option value="1">1</option></select></div><div class="col-md-3 col-6"><label class="label-mini">GRUPO</label><input id="edit_grupo" class="form-control" placeholder="Dyn5"></div><div class="col-md-3 col-6"><label class="label-mini">AÑO</label><input id="edit_anio" type="number" class="form-control"></div><div class="col-md-3 col-6"><label class="label-mini">TIPO</label><select id="edit_tipo" class="form-select"><option>Sumergido</option><option>Seco</option></select></div>
                     <div class="col-12 border-top mt-2 pt-2"><h6 class="small fw-bold text-muted">DETALLES FÍSICOS DE PLACA</h6></div><div class="col-md-4 col-6"><label class="label-mini">PESO (Kg)</label><input id="edit_peso" type="number" class="form-control"></div><div class="col-md-4 col-6"><label class="label-mini">ACEITE (L)</label><input id="edit_aceite" type="number" class="form-control"></div><div class="col-md-4 col-12"><label class="label-mini text-danger">DERIVACIONES</label><select id="edit_deriv" class="form-select fw-bold text-danger border-danger"><option value="+2">+2</option><option value="+1">+1</option><option value="0">0</option></select></div>
@@ -306,7 +306,7 @@
     }
 
     function formatearFechaDato(d) {
-        if(!d) return "Sin registro previo";
+        if(!d || d === "" || d === "undefined") return "Sin registro previo";
         try {
             let dateObj = new Date(d);
             if(isNaN(dateObj)) return d; 
@@ -614,9 +614,23 @@
         document.getElementById('form_'+mod).classList.remove('d-none'); 
         document.querySelectorAll('.lbl-deriv').forEach(e=>e.innerText=DATA.derivaciones); 
         monitorCambios(mod); 
+        
         let saved = (mod === 'ini') ? DATA.saved_ini : DATA.saved_fin; 
+        let originalDb = saved ? {...saved} : null; // Clonar BD original
+        
         let localData = localStorage.getItem('backup_' + DATA.entrada); 
-        if(localData) { try { saved = JSON.parse(localData); Swal.fire({toast:true, position:'top-end', icon:'warning', title:'Borrador local recuperado', timer:2000}); } catch(e){} } 
+        if(localData) { 
+            try { 
+                saved = JSON.parse(localData); 
+                // Preservar metadatos de BD
+                if(originalDb) {
+                    saved.fecha_registro = originalDb.fecha_registro;
+                    saved.estado_cert = originalDb.estado_cert;
+                }
+                Swal.fire({toast:true, position:'top-end', icon:'warning', title:'Borrador local recuperado', timer:2000}); 
+            } catch(e){} 
+        } 
+        
         let taps=5; 
         let hTTR='<thead><tr><th>T</th><th>U-V</th>'+(DATA.fases==3?'<th>V-W</th><th>W-U</th>':'')+'<th>%Err</th></tr></thead><tbody>'; 
         let hRes='<thead><tr><th>T</th><th>U-V</th>'+(DATA.fases==3?'<th>V-W</th><th>W-U</th>':'')+'<th>%Desb</th></tr></thead><tbody>'; 
