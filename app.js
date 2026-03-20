@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V24.8 - FIX INTEGRAL FOTOS, FLUJO EXTERNO) */
+/* JLB OPERACIONES - APP.JS (V25.0 - SUPER OFFLINE & OOM SHIELD) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -40,16 +40,82 @@ class GasRunner {
 const google = { script: { get run() { return new GasRunner(); } } };
 
 // =============================================================
-// 3. LÓGICA DE NEGOCIO
+// 3. LÓGICA DE NEGOCIO & BASE DE DATOS OFFLINE
 // =============================================================
+
+// --- MOTOR INDEXEDDB (SUPER OFFLINE) ---
+const DB_NAME = 'JLB_OfflineDB';
+const DB_VERSION = 1;
+const STORE_FOTOS = 'fotos_pendientes';
+
+function initOfflineDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onerror = (e) => reject(e.target.error);
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_FOTOS)) {
+                db.createObjectStore(STORE_FOTOS, { keyPath: 'id', autoIncrement: true });
+            }
+        };
+    });
+}
+
+async function guardarFotoOffline(payload) {
+    try {
+        const db = await initOfflineDB();
+        const tx = db.transaction(STORE_FOTOS, 'readwrite');
+        tx.objectStore(STORE_FOTOS).add({ timestamp: Date.now(), payload: payload });
+        return new Promise((resolve, reject) => {
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch(e) { console.error("Error IndexedDB", e); }
+}
+
+async function syncFotosOffline() {
+    if (!navigator.onLine) return;
+    try {
+        const db = await initOfflineDB();
+        const tx = db.transaction(STORE_FOTOS, 'readonly');
+        const store = tx.objectStore(STORE_FOTOS);
+        const request = store.getAll();
+        
+        request.onsuccess = async () => {
+            const pendientes = request.result;
+            if(pendientes.length === 0) return;
+            
+            showToast(`Sincronizando ${pendientes.length} fotos en cola...`, 'info');
+            
+            for(const item of pendientes) {
+                try {
+                    await new Promise((resolve, reject) => {
+                        google.script.run.withSuccessHandler(res => {
+                            if(res.exito) resolve(); else reject(res.error);
+                        }).withFailureHandler(reject).subirFotoProceso(item.payload);
+                    });
+                    
+                    const txDel = db.transaction(STORE_FOTOS, 'readwrite');
+                    txDel.objectStore(STORE_FOTOS).delete(item.id);
+                } catch(e) { console.error("Fallo al sincronizar", e); }
+            }
+            showToast("Sincronización offline completada");
+            cargarGaleriaFotos(); 
+        };
+    } catch(e) { console.error("Error leyendo IndexedDB", e); }
+}
+
+// Listeners de Red
+window.addEventListener('online', syncFotosOffline);
 
 let datosProg=[], datosEntradas=[], datosAlq=[], dbClientes = [], tareasCache = [];
 let alqFotosNuevas = []; 
-let listaReqTemp = []; // Lista editable (Borrador)
+let listaReqTemp = []; 
 let historialReqCache = []; 
 let canvas, ctx, isDrawing=false, indiceActual=-1;
 
-// VARIABLES PARA EL ROBOT DE FOTOS
+// VARIABLES PARA EL ROBOT DE FOTOS (Legacy, reemplazado funcionalmente por IndexedDB)
 let COLA_FOTOS = [];
 let PROCESANDO_COLA = false;
 
@@ -58,6 +124,7 @@ window.onload = function() {
     if(document.getElementById('wrapper-operaciones')) {
         nav('programacion');
         google.script.run.withSuccessHandler(d => { dbClientes = d; actualizarDatalistClientes(); }).obtenerClientesDB();
+        setTimeout(syncFotosOffline, 3000); // Intento de vaciado de cola al iniciar la app
     }
 };
 
@@ -95,7 +162,6 @@ function fechaParaInput(f){
 
 function convertirLinkDrive(url) {
     if (!url) return "";
-    // Si detectamos que es una carpeta, no intentamos hacer miniatura
     if (url.includes('/folders/')) return url; 
     
     try {
@@ -191,7 +257,6 @@ function abrirModal(i){
 
     renderPasosSeguimiento(d);
     
-    // --- LÓGICA DE CARGA INTELIGENTE ---
     listaReqTemp = [];
     historialReqCache = [];
     document.getElementById('req-cant').value = "1";
@@ -199,7 +264,6 @@ function abrirModal(i){
     document.getElementById('req-edit-index').value = "-1";
     toggleEditMode(false);
     
-    // Limpiamos listas visuales
     renderListaReqTemp();
     document.getElementById('lista-reqs').innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs">Cargando historial...</div>';
 
@@ -227,11 +291,9 @@ function renderPasosSeguimiento(d) {
     const tipoServ = (d.tipo || "").toUpperCase();
     const desc = (d.desc || "").toUpperCase();
     
-    // --- LÓGICA DE FILTROS VISUALES ---
     const esSoloAceite = tipoServ.includes("ACEITE") || desc.includes("ACEITE");
-    const esSoloPruebas = tipoServ.includes("PRUEBA") || tipoServ.includes("DIAGNOSTICO"); // <--- DETECTAMOS PRUEBAS
+    const esSoloPruebas = tipoServ.includes("PRUEBA") || tipoServ.includes("DIAGNOSTICO"); 
     
-    // Lista completa por defecto (Mantenimiento General)
     let ps = [
         {id:'pruebas_ini',l:'1. Pruebas Ini'}, 
         {id:'desencube',l:'2. Desencube'}, 
@@ -245,7 +307,6 @@ function renderPasosSeguimiento(d) {
         {id:'listo',l:'10. Listo'}
     ]; 
     
-    // Caso 1: Aceites
     if(esSoloAceite) {
         ps = [
             {id:'pruebas_ini',l:'1. Inicial'}, 
@@ -253,17 +314,15 @@ function renderPasosSeguimiento(d) {
             {id:'listo',l:'3. Listo'}
         ];
     }
-    // Caso 2: Solo Pruebas / Diagnóstico
     else if (esSoloPruebas) {
         ps = [
             {id:'pruebas_ini',l:'1. Recepción / Diag.'},
-            {id:'pruebas_fin',l:'2. Protocolo Final'}, // Saltamos reparación
-            {id:'pintura',l:'3. Adec. Estética'}, // A veces pintan o limpian
+            {id:'pruebas_fin',l:'2. Protocolo Final'},
+            {id:'pintura',l:'3. Adec. Estética'},
             {id:'listo',l:'4. Listo para Entrega'}
         ];
     }
     
-    // Caso 3: Externo (Manda sobre los demás)
     if (esExterno) {
         ps = ps.filter(p => ['pruebas_ini','pruebas_fin','pintura','listo'].includes(p.id));
     }
@@ -473,30 +532,26 @@ function renderListaReqTemp() {
 function cargarRequerimientos(idTrafo) {
     const divHistory = document.getElementById('lista-reqs');
     
-    // Limpiamos visualmente antes de cargar
     divHistory.innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs">Cargando historial...</div>';
     
     google.script.run.withSuccessHandler(list => {
         divHistory.innerHTML = '';
         historialReqCache = []; 
-        listaReqTemp = []; // Reiniciamos el borrador local para llenarlo con lo del servidor
+        listaReqTemp = [];
 
         if(!list || list.length === 0) {
             divHistory.innerHTML = '<div class="text-center py-4 text-slate-300 text-xs">No hay historial.</div>';
-            renderListaReqTemp(); // Actualiza contador a 0
+            renderListaReqTemp(); 
             return;
         }
         
         list.forEach(r => {
             const textoMostrado = r.texto || r.descripcion || "Sin detalle";
             
-            // LÓGICA DE SEPARACIÓN
             if (r.estado === "PENDIENTE") {
-                // Es un borrador -> Lo recuperamos a la lista editable
                 let cant = "1";
                 let desc = textoMostrado;
                 
-                // Intentamos parsear "(5) TORNILLOS"
                 const match = textoMostrado.match(/^\((\d+)\)\s*(.*)/);
                 if (match) {
                     cant = match[1];
@@ -506,7 +561,6 @@ function cargarRequerimientos(idTrafo) {
                 listaReqTemp.push({ cant: cant, desc: desc });
 
             } else {
-                // Es historial (Enviado, Comprado, etc) -> Lo mostramos abajo solo lectura
                 let color = "text-green-600";
                 let icon = "check-circle";
                 
@@ -531,9 +585,7 @@ function cargarRequerimientos(idTrafo) {
             }
         });
 
-        // Actualizamos la visualización del borrador con lo recuperado
         renderListaReqTemp();
-        
         if(typeof lucide !== 'undefined') lucide.createIcons();
 
     }).withFailureHandler(e => {
@@ -550,8 +602,6 @@ function guardarTodoReq() {
     
     if (!idTrafo) { alert("Error: No hay ID de Trafo"); return; }
     
-    // Permitimos guardar lista vacía (para borrar todo el borrador si se desea)
-    
     const btn = document.getElementById('btn-save-reqs');
     const txtOriginal = btn.innerHTML;
     btn.disabled = true; 
@@ -560,7 +610,7 @@ function guardarTodoReq() {
 
     const payload = {
         idTrafo: idTrafo,
-        items: listaReqTemp, // Enviamos toda la lista
+        items: listaReqTemp, 
         autor: "Producción"
     };
 
@@ -570,7 +620,6 @@ function guardarTodoReq() {
             btn.innerHTML = txtOriginal;
             if (res.success) {
                 showToast("✅ Borrador sincronizado");
-                // Recargamos para verificar que se guardó bien
                 cargarRequerimientos(idTrafo);
             } else {
                 alert("Error al guardar: " + res.error);
@@ -581,14 +630,14 @@ function guardarTodoReq() {
             btn.innerHTML = txtOriginal;
             alert("Error de red: " + e);
         })
-        .guardarBorradorMasivo(payload); // Llamamos a la nueva función masiva
+        .guardarBorradorMasivo(payload); 
 }
 
 // ========================================================
 // ENVIAR A ALMACÉN (API)
 // ========================================================
 function enviarAlmacenAPI() {
-    const pendientes = listaReqTemp; // Usamos la lista local que está sincronizada
+    const pendientes = listaReqTemp; 
     if (pendientes.length === 0) {
         alert("⚠️ No hay items en el borrador para enviar.\nAgrega items a la lista primero.");
         return;
@@ -596,7 +645,6 @@ function enviarAlmacenAPI() {
 
     if (!confirm(`¿Confirmar envío de ${pendientes.length} items a Almacén?`)) return;
 
-    // Primero aseguramos que esté guardado (Auto-Save antes de enviar)
     const d = datosProg[indiceActual];
     const idTrafo = d.idJLB || d.idGroup;
     const cliente = d.cliente;
@@ -604,7 +652,6 @@ function enviarAlmacenAPI() {
 
     showToast("Procesando envío...", "info");
 
-    // Paso 1: Guardamos el borrador actual por seguridad
     const payloadGuardar = {
         idTrafo: idTrafo,
         items: listaReqTemp,
@@ -613,7 +660,6 @@ function enviarAlmacenAPI() {
 
     google.script.run.withSuccessHandler(resGuardar => {
         if(resGuardar.success) {
-            // Paso 2: Si guardó bien, disparamos el envío
             const payloadEnviar = {
                 idTrafo: idTrafo,
                 cliente: cliente,
@@ -623,7 +669,7 @@ function enviarAlmacenAPI() {
             google.script.run.withSuccessHandler(resEnvio => {
                 if (resEnvio.success) {
                     showToast("🚀 " + resEnvio.msg);
-                    cargarRequerimientos(idTrafo); // Esto moverá todo a historial
+                    cargarRequerimientos(idTrafo); 
                 } else {
                     alert("Error Almacén: " + resEnvio.error);
                 }
@@ -635,12 +681,11 @@ function enviarAlmacenAPI() {
     }).guardarBorradorMasivo(payloadGuardar);
 }
 
-// RESTO DE FUNCIONES (Logística, Fotos, Tareas, etc.) - Sin cambios
+// RESTO DE FUNCIONES (Logística, Fotos, Tareas, etc.)
 function subLog(id) { document.querySelectorAll('.log-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.log-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-log-'+id).classList.add('active'); if(id==='term') cargarTerminados(); if(id==='alq') cargarAlquiler(); if(id==='pat') cargarPatio(); }
 function subNav(id) { document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.cp-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-cp-'+id).classList.add('active'); if(id === 'fot') cargarGaleriaFotos(); }
 function cargarAlquiler() { google.script.run.withSuccessHandler(d => { datosAlq = d; filtrarAlquiler(); }).obtenerLogistica({ tipo: 'ALQUILER' }); }
 
-// MODIFICACIÓN CRÍTICA: DETECCIÓN DE CARPETAS EN LA TABLA
 function filtrarAlquiler() { 
     const kva = document.getElementById('filtro-kva').value.toLowerCase(); 
     const volt = document.getElementById('filtro-voltaje').value.toLowerCase(); 
@@ -694,51 +739,42 @@ function initCanvas() {
     
     ctx = canvas.getContext('2d'); 
     
-    // Obtener dimensiones reales del contenedor HTML
     const rect = canvas.parentElement.getBoundingClientRect(); 
     
-    // Obtener la densidad de píxeles de la pantalla (S23 Ultra = ~3.0)
     const dpr = window.devicePixelRatio || 1;
     
-    // Configurar el tamaño interno (memoria) multiplicando por la densidad
     canvas.width = rect.width * dpr; 
     canvas.height = rect.height * dpr; 
     
-    // Configurar el tamaño físico (CSS) para que no se deforme
     canvas.style.width = `${rect.width}px`;
     canvas.style.height = `${rect.height}px`;
     
-    // Escalar el contexto gráfico para que los trazos coincidan con CSS
     ctx.scale(dpr, dpr);
     
     ctx.lineWidth = 2; 
     ctx.lineCap = 'round'; 
     ctx.strokeStyle = '#000'; 
 
-    // Limpiar eventos anteriores para evitar duplicados si se abre el modal varias veces
     canvas.removeEventListener('pointerdown', startDraw);
     canvas.removeEventListener('pointermove', draw);
     canvas.removeEventListener('pointerup', endDraw);
     canvas.removeEventListener('pointerout', endDraw);
     canvas.removeEventListener('pointercancel', endDraw);
     
-    // Asignar API moderna de Punteros (Detecta Mouse, Dedo y S-Pen con precisión)
     canvas.addEventListener('pointerdown', startDraw); 
     canvas.addEventListener('pointermove', draw); 
     canvas.addEventListener('pointerup', endDraw); 
     canvas.addEventListener('pointerout', endDraw); 
     canvas.addEventListener('pointercancel', endDraw);
     
-    // Desactivar comportamientos táctiles predeterminados (Scroll/Zoom) sobre el lienzo
     canvas.style.touchAction = 'none';
 }
 
 function startDraw(e) { 
-    e.preventDefault(); // Evitar scroll
+    e.preventDefault(); 
     isDrawing = true; 
     const r = canvas.getBoundingClientRect(); 
     
-    // Calcular coordenadas relativas al lienzo exacto en pantalla CSS
     const x = e.clientX - r.left;
     const y = e.clientY - r.top;
     
@@ -748,10 +784,9 @@ function startDraw(e) {
 
 function draw(e) { 
     if(!isDrawing) return; 
-    e.preventDefault(); // Evitar scroll
+    e.preventDefault(); 
     const r = canvas.getBoundingClientRect(); 
     
-    // Calcular coordenadas relativas
     const x = e.clientX - r.left;
     const y = e.clientY - r.top;
     
@@ -762,11 +797,11 @@ function draw(e) {
 function endDraw(e) { 
     if (e) e.preventDefault();
     isDrawing = false; 
-    ctx.closePath(); // Cortar el trazo para que la próxima letra no se una a la anterior
+    ctx.closePath(); 
 }
 
 // =========================================================================
-// COMPRESIÓN DE FIRMA: CONVIERTE EL CANVAS GIGANTE EN UN JPEG LIGERO (15 KB)
+// COMPRESIÓN DE FIRMA
 // =========================================================================
 
 function limpiarFirma() { if(ctx) ctx.clearRect(0,0,canvas.width,canvas.height); }
@@ -774,24 +809,21 @@ function limpiarFirma() { if(ctx) ctx.clearRect(0,0,canvas.width,canvas.height);
 function getFirmaBase64() { 
     if(!canvas) return null; 
     
-    // Verificar si el lienzo está en blanco
     const blank = document.createElement('canvas'); 
     blank.width = canvas.width; 
     blank.height = canvas.height; 
     if(canvas.toDataURL() === blank.toDataURL()) return null; 
     
-    // Crear un lienzo temporal para encoger la firma y quitarle peso
     const tempCanvas = document.createElement('canvas');
     const rect = canvas.parentElement.getBoundingClientRect();
     tempCanvas.width = rect.width; 
     tempCanvas.height = rect.height; 
     
     const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.fillStyle = "#ffffff"; // Fondo blanco para JPEG
+    tempCtx.fillStyle = "#ffffff"; 
     tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
     tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
     
-    // Exportar como JPEG al 60% de calidad (Súper liviano y no colapsa a Google)
     return tempCanvas.toDataURL('image/jpeg', 0.6); 
 }
 
@@ -841,7 +873,6 @@ function enviarFormulario(){
 function cargarEntradas() { const g = document.getElementById('grid-entradas'); if(!g) return; g.innerHTML='<p class="col-span-full text-center py-4">Cargando...</p>'; google.script.run.withSuccessHandler(d => { datosEntradas = d; g.innerHTML = ''; if(d.length === 0) g.innerHTML = '<p class="col-span-full text-center">Sin registros.</p>'; d.forEach(i => renderCardEntrada(i, g, false)); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerDatosEntradas(); }
 function renderCardEntrada(i, c, p){ const cid = `card-${i.id}`; const pdf = (i.urlPdf && i.urlPdf.length > 5) ? `<a href="${i.urlPdf}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>` : `<button id="btn-gen-${i.id}" onclick="genPDF('${i.id}',${i.rowIndex})" class="w-full bg-slate-800 text-white hover:bg-slate-900 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-plus" class="w-4 h-4"></i> GENERAR</button>`; const ziur = `${i.cantidad||1} / ${i.codigo||'S/C'} / ${i.descripcion}`; const h = `<div id="${cid}" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative"><button onclick="copiarTexto('${ziur}')" class="absolute top-4 right-4 text-slate-400 hover:text-blue-600"><i data-lucide="copy" class="w-5 h-5"></i></button><div><div class="flex justify-between mb-2"><span class="font-bold text-lg">#${i.id}</span><span class="text-xs bg-slate-100 px-2 py-1 rounded">${i.fecha}</span></div><div class="bg-blue-50 text-blue-800 text-xs font-mono px-2 py-1 rounded w-fit mb-2">🏷️ ${i.codigo||'---'}</div><h4 class="font-bold text-blue-600 mb-1">${i.cliente}</h4><p class="text-sm text-slate-500 line-clamp-2">${i.descripcion}</p></div><div class="pt-3 border-t mt-4" id="act-${i.id}">${pdf}</div></div>`; if(p) c.insertAdjacentHTML('afterbegin', h); else c.insertAdjacentHTML('beforeend', h); }
 
-// MODIFICACIÓN CRÍTICA: INYECCIÓN DE ESCUDO CONTRA TIMEOUT DE GOOGLE
 function genPDF(id, rix){ 
     if (!id || id === 'undefined') {
         alert("Error de Interfaz: El ID está vacío. Por favor recarga la página.");
@@ -879,7 +910,6 @@ function cerrarModal() { document.getElementById('modal-detalle').classList.add(
 function cargarTerminados() { google.script.run.withSuccessHandler(d => { const c = document.getElementById('lista-terminados'); if(!c) return; c.innerHTML = ''; if(d.length === 0) c.innerHTML = '<p class="text-center text-slate-400 py-4">Sin pendientes.</p>'; d.forEach(i => { const txt = `ENTRADA: ${i.id} | CLIENTE: ${i.cliente} | EQUIPO: ${i.desc} | ODS: ${i.ods}`; c.insertAdjacentHTML('beforeend', `<div class="bg-white border border-green-200 p-4 rounded-lg shadow-sm flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i data-lucide="check" class="w-6 h-6"></i></div><div><h4 class="font-bold text-slate-700">${i.cliente}</h4><p class="text-xs text-slate-500">${i.desc} (ID: ${i.id})</p></div></div><button onclick="copiarTexto('${txt}')" class="bg-slate-100 text-slate-600 p-2 rounded hover:bg-slate-200"><i data-lucide="copy" class="w-4 h-4"></i></button></div>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerLogistica({ tipo: 'TERMINADOS' }); }
 function cargarPatio() { google.script.run.withSuccessHandler(d => { const t = document.getElementById('tabla-pat'); if(!t) return; t.innerHTML = ''; d.forEach(r => { t.insertAdjacentHTML('beforeend', `<tr class="border-b"><td class="p-3 font-mono text-blue-600">${r.id}</td><td class="p-3">${r.cliente}</td><td class="p-3 text-xs text-red-500">${r.motivo}</td></tr>`); }); }).obtenerLogistica({ tipo: 'PATIO' }); }
 
-// MODIFICACIÓN CRÍTICA: DETECCIÓN VISUAL DE CARPETAS EN MODAL DE ALQUILER
 function editarAlquiler(i) { 
     const d = datosAlq[i]; 
     abrirModalAlq(false); 
@@ -908,13 +938,11 @@ function editarAlquiler(i) {
     document.getElementById('alq-preview-container').innerHTML = ''; 
     document.getElementById('alq-preview-container').classList.add('hidden'); 
     
-    // --- LÓGICA VISUAL INYECTADA (DETECCIÓN DE CARPETAS) ---
     const fotoContainer = document.getElementById('alq-foto-actual');
     if (d.foto && d.foto.length > 10) {
         const esCarpeta = d.foto.includes('/folders/');
         
         if (esCarpeta) {
-            // Diseño especial para carpetas
             fotoContainer.innerHTML = `
                 <div class="relative w-full h-32 rounded border border-blue-200 bg-blue-50 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="window.open('${d.foto}', '_blank')">
                     <i data-lucide="folder-open" class="w-10 h-10 text-blue-500 mb-2"></i>
@@ -922,7 +950,6 @@ function editarAlquiler(i) {
                 </div>
             `;
         } else {
-            // Diseño original para imágenes únicas
             const directUrl = convertirLinkDrive(d.foto);
             fotoContainer.innerHTML = `
                 <div class="relative w-32 h-32 rounded border border-slate-300 overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="window.open('${directUrl}', '_blank')">
@@ -952,7 +979,6 @@ function abrirModalAlq(nuevo) {
         document.getElementById('alq-preview-container').innerHTML = ''; 
         document.getElementById('alq-preview-container').classList.add('hidden'); 
         
-        // Resetear contenedor foto actual si es nuevo registro
         document.getElementById('alq-foto-actual').innerHTML = '<span class="text-xs text-slate-500 italic">Sin registro fotográfico</span>';
     } 
 }
@@ -972,7 +998,11 @@ function guardarTarea() { const datos = { rowIndex: document.getElementById('tas
 function moverTarea(ix, est) { google.script.run.withSuccessHandler((listaActualizada) => { tareasCache = listaActualizada; renderizarTareas(listaActualizada); }).actualizarEstadoActividad({ index: ix, estado: est }); }
 function renderizarTareas(d) { ['pendiente', 'proceso', 'terminado'].forEach(k => { const col = document.getElementById('col-' + k); if(col) col.innerHTML = ''; }); d.forEach((t, index) => { const colName = t.estado === 'PENDIENTE' ? 'pendiente' : (t.estado === 'EN PROCESO' ? 'proceso' : 'terminado'); const col = document.getElementById('col-' + colName); if(!col) return; let botonAvance = ''; if(t.estado === 'PENDIENTE') { botonAvance = `<button onclick="moverTarea(${t.rowIndex},'EN PROCESO')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 p-1.5 rounded-full shadow-sm" title="Iniciar Tarea"><i data-lucide="play" class="w-3 h-3"></i></button>`; } else if (t.estado === 'EN PROCESO') { botonAvance = `<button onclick="moverTarea(${t.rowIndex},'TERMINADO')" class="bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 p-1.5 rounded-full shadow-sm" title="Finalizar Tarea"><i data-lucide="check" class="w-3 h-3"></i></button>`; } const html = `<div class="task-card relative group bg-white p-3 rounded shadow-sm border border-slate-200 hover:shadow-md transition-all"><div class="text-[10px] text-slate-400 mb-1 flex justify-between font-mono"><span>${t.fecha}</span><span class="font-bold text-slate-600 bg-slate-100 px-1 rounded">${t.idTrafo||'S/N'}</span></div><p class="font-bold text-slate-800 text-sm mb-2 leading-tight pr-6">${t.actividad}</p><div class="absolute top-2 right-2">${botonAvance}</div><div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100"><div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700 border border-blue-200">${t.responsable ? t.responsable.charAt(0) : '?'}</div><span class="text-xs text-slate-500 font-medium truncate max-w-[100px]">${t.responsable}</span><div class="ml-auto flex gap-1 items-center">${t.prioridad === 'Alta' ? '<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">ALTA</span>' : ''}<button onclick="editarTarea(${index})" class="p-1 text-slate-400 hover:text-blue-600"><i data-lucide="pencil" class="w-3 h-3"></i></button><button onclick="borrarTarea(${t.rowIndex})" class="p-1 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button></div></div></div>`; col.insertAdjacentHTML('beforeend', html); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }
 
-function procesarFotosInmediato(input) {
+// =========================================================================
+// PROCESADOR DE FOTOS (ESCUDO OOM + SUPER OFFLINE)
+// =========================================================================
+
+async function procesarFotosInmediato(input) {
     const idTrafo = document.getElementById('foto-trafo').value;
     if (!idTrafo) {
         alert("¡Escribe primero el ID del Trafo!");
@@ -983,126 +1013,105 @@ function procesarFotosInmediato(input) {
         const statusDiv = document.getElementById('status-fotos');
         const listaDiv = document.getElementById('lista-fotos');
         const etapa = document.getElementById('foto-etapa').value;
-        statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Iniciando carga inteligente...</span>';
+        statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Optimizando e inicializando motor offline...</span>';
         const archivos = Array.from(input.files);
 
-        (async () => {
-            for (const file of archivos) {
-                const divPreview = document.createElement('div');
-                divPreview.className = "bg-white p-2 rounded border flex justify-between items-center opacity-50 mb-1";
-                divPreview.innerHTML = `<span class="text-xs truncate font-bold w-2/3">${file.name}</span><span class="text-xs text-blue-500">Optimizando...</span>`;
-                listaDiv.prepend(divPreview);
+        for (const file of archivos) {
+            const divPreview = document.createElement('div');
+            divPreview.className = "bg-white p-2 rounded border flex justify-between items-center mb-1 shadow-sm";
+            divPreview.innerHTML = `<span class="text-xs truncate font-bold w-1/2">${file.name}</span><span class="text-xs text-blue-500 font-bold estado-txt">Optimizando...</span>`;
+            listaDiv.prepend(divPreview);
 
-                try {
-                    // 1. LECTURA Y COMPRESIÓN INTELIGENTE
-                    const base64 = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            const img = new Image();
-                            img.onload = () => {
-                                const canvas = document.createElement('canvas');
-                                let width = img.width;
-                                let height = img.height;
-                                
-                                // Configuración Inicial: Calidad Alta (Informes Técnicos)
-                                let quality = 0.75;
-                                let targetWidth = 1600;
+            try {
+                // 1. ESCUDO OOM KILL: Decodificación fuera del hilo principal para S23 Ultra
+                const bitmap = await createImageBitmap(file);
+                const canvas = document.createElement('canvas');
+                let width = bitmap.width;
+                let height = bitmap.height;
+                
+                let quality = 0.75;
+                let targetWidth = 1600;
 
-                                console.log(`[IMG] Original: ${(file.size / 1024 / 1024).toFixed(2)} MB | Res: ${width}x${height}`);
-
-                                // Paso 1: Redimensionar inicial (Max 1600px)
-                                if (width > targetWidth) {
-                                    height = Math.round(height * (targetWidth / width));
-                                    width = targetWidth;
-                                }
-
-                                canvas.width = width;
-                                canvas.height = height;
-                                const ctx = canvas.getContext('2d');
-                                ctx.drawImage(img, 0, 0, width, height);
-
-                                // Generar primer candidato
-                                let dataUrl = canvas.toDataURL('image/jpeg', quality);
-                                let sizeKB = dataUrl.length / 1024;
-
-                                // Paso 2: Si pesa > 500KB, bajar calidad a 0.7
-                                if (sizeKB > 500) {
-                                    quality = 0.7;
-                                    console.log(`[IMG] > 500KB (${sizeKB.toFixed(0)}KB). Recomprimiendo a Q=${quality}...`);
-                                    dataUrl = canvas.toDataURL('image/jpeg', quality);
-                                    sizeKB = dataUrl.length / 1024;
-                                }
-
-                                // Paso 3: Si AÚN pesa > 500KB, bajar resolución a 1400px
-                                if (sizeKB > 500) {
-                                    targetWidth = 1400;
-                                    console.log(`[IMG] Aún > 500KB. Redimensionando a ${targetWidth}px...`);
-                                    
-                                    // Limpiar y redibujar más pequeño
-                                    let newHeight = Math.round(img.height * (targetWidth / img.width));
-                                    canvas.width = targetWidth;
-                                    canvas.height = newHeight;
-                                    ctx.drawImage(img, 0, 0, targetWidth, newHeight);
-                                    
-                                    dataUrl = canvas.toDataURL('image/jpeg', quality); // Mantiene 0.7
-                                    sizeKB = dataUrl.length / 1024;
-                                    width = targetWidth;
-                                    height = newHeight;
-                                }
-
-                                console.log(`[IMG] Res Final: ${width}x${height} | Tamaño Final: ${sizeKB.toFixed(2)} KB`);
-                                console.log("Imagen lista para envío");
-
-                                // Liberar memoria
-                                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                                canvas.width = 0;
-                                canvas.height = 0;
-
-                                resolve(dataUrl);
-                            };
-                            img.onerror = (err) => reject(err);
-                            img.src = e.target.result;
-                        };
-                        reader.onerror = (err) => reject(err);
-                        reader.readAsDataURL(file);
-                    });
-
-                    divPreview.querySelector('span.text-blue-500').innerText = "Subiendo...";
-
-                    // 2. ENVÍO AL SERVIDOR (FLUJO ORIGINAL)
-                    await new Promise((resolve, reject) => {
-                        google.script.run.withSuccessHandler(res => {
-                            if (res.exito) {
-                                divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200 mb-1";
-                                divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800 w-2/3">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`;
-                                if (typeof lucide !== 'undefined') lucide.createIcons();
-                                resolve();
-                            } else {
-                                divPreview.className = "bg-red-50 p-2 rounded border border-red-200 mb-1";
-                                divPreview.innerHTML = `<span class="text-xs text-red-600">Error: ${res.error}</span>`;
-                                reject(res.error);
-                            }
-                        }).withFailureHandler(err => {
-                            divPreview.innerHTML = `<span class="text-xs text-red-600">Error Red: ${err}</span>`;
-                            reject(err);
-                        }).subirFotoProceso({
-                            base64: base64,
-                            idTrafo: idTrafo,
-                            etapa: etapa
-                        });
-                    });
-
-                } catch (error) {
-                    console.error("Error procesando foto:", error);
-                    divPreview.innerHTML = `<span class="text-xs text-red-600">Fallo Crítico</span>`;
+                if (width > targetWidth) {
+                    height = Math.round(height * (targetWidth / width));
+                    width = targetWidth;
                 }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(bitmap, 0, 0, width, height);
+                
+                // Liberar memoria RAM masiva inmediatamente
+                bitmap.close(); 
+
+                let base64 = canvas.toDataURL('image/jpeg', quality);
+                let sizeKB = base64.length / 1024;
+
+                if (sizeKB > 500) {
+                    quality = 0.7;
+                    base64 = canvas.toDataURL('image/jpeg', quality);
+                    sizeKB = base64.length / 1024;
+                }
+
+                if (sizeKB > 500) {
+                    targetWidth = 1400;
+                    let newHeight = Math.round(height * (targetWidth / width));
+                    canvas.width = targetWidth;
+                    canvas.height = newHeight;
+                    
+                    const bitmap2 = await createImageBitmap(file);
+                    ctx.drawImage(bitmap2, 0, 0, targetWidth, newHeight);
+                    bitmap2.close();
+                    
+                    base64 = canvas.toDataURL('image/jpeg', quality);
+                }
+
+                // Destruir canvas en RAM
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.width = 0; canvas.height = 0;
+
+                const payload = { base64: base64, idTrafo: idTrafo, etapa: etapa };
+
+                // 2. ENRUTADOR SUPER OFFLINE
+                if (!navigator.onLine) {
+                    await guardarFotoOffline(payload);
+                    divPreview.className = "bg-orange-50 p-2 rounded border border-orange-200 mb-1";
+                    divPreview.querySelector('.estado-txt').innerHTML = `<span class="text-orange-600"><i data-lucide="wifi-off" class="w-4 h-4 inline"></i> En Cola Local</span>`;
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                } else {
+                    divPreview.querySelector('.estado-txt').innerText = "Subiendo...";
+                    try {
+                        await new Promise((resolve, reject) => {
+                            google.script.run.withSuccessHandler(res => {
+                                if (res.exito) {
+                                    divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200 mb-1";
+                                    divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800 w-2/3">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`;
+                                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                                    resolve();
+                                } else {
+                                    reject(res.error);
+                                }
+                            }).withFailureHandler(reject).subirFotoProceso(payload);
+                        });
+                    } catch (err) {
+                        // Falsa conexión o timeout, enviar a IndexedDB
+                        await guardarFotoOffline(payload);
+                        divPreview.className = "bg-orange-50 p-2 rounded border border-orange-200 mb-1";
+                        divPreview.querySelector('.estado-txt').innerHTML = `<span class="text-orange-600"><i data-lucide="wifi-off" class="w-4 h-4 inline"></i> Cola Local (Fallo Red)</span>`;
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    }
+                }
+
+            } catch (error) {
+                console.error("Error procesando foto:", error);
+                divPreview.className = "bg-red-50 p-2 rounded border border-red-200 mb-1";
+                divPreview.innerHTML = `<span class="text-xs truncate font-bold text-red-800 w-2/3">${file.name}</span><span class="text-xs text-red-600 font-bold">Error Memoria</span>`;
             }
-            statusDiv.innerHTML = '<span class="text-green-600 font-bold">¡Carga completa!</span>';
-            setTimeout(() => {
-                statusDiv.innerHTML = '';
-            }, 3000);
-            input.value = "";
-        })();
+        }
+        statusDiv.innerHTML = '<span class="text-green-600 font-bold">Captura completada</span>';
+        setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
+        input.value = "";
     }
 }
 
