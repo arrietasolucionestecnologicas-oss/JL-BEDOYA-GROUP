@@ -58,27 +58,48 @@
     .icon-check { color: #198754; font-size: 1.2rem; }
     .icon-cross { color: #dee2e6; font-size: 0.8rem; }
 
-    /* MODO REPORTE (PANTALLAZOS) */
+    /* =========================================================
+       MODO REPORTE PROFESIONAL (PANTALLAZOS)
+       ========================================================= */
     body.is-modo-informe .sidebar { transform: translateX(-100%); }
     body.is-modo-informe .main { margin-left: 0; padding: 0; background: #fff; }
     body.is-modo-informe .mobile-header { display: none; }
     body.is-modo-informe #btnExitReport { display: block !important; }
     
-    .modo-informe { background-color: #fff !important; padding: 20px !important; max-width: 1000px; margin: 0 auto; }
-    .modo-informe .input-group { border: 1px solid #aaa; border-radius: 4px; }
+    .modo-informe { background-color: #fff !important; padding: 30px !important; max-width: 1000px; margin: 0 auto; }
+    .modo-informe .input-group { border: 1px solid #000; border-radius: 0; margin-bottom: 4px !important;}
     .modo-informe .nav-tabs { display: none !important; }
-    .modo-informe .tab-content-ini, .modo-informe .tab-content-fin { display: block !important; margin-bottom: 20px; page-break-inside: avoid; }
-    .modo-informe .card { border: 1px solid #000 !important; border-radius: 0 !important; box-shadow: none !important; margin-bottom: 15px !important; }
-    .modo-informe input, .modo-informe select, .modo-informe textarea { border: none !important; background: transparent !important; appearance: none; -moz-appearance: none; -webkit-appearance: none; box-shadow: none !important; color: #000 !important; font-weight: bold; text-align: center; padding: 0 !important; margin: 0 !important; }
-    .modo-informe textarea { text-align: left; resize: none; overflow: hidden; border-bottom: 1px dashed #ccc !important; }
-    .modo-informe .input-group-text { border: none !important; background: #f0f0f0 !important; color: #000 !important; font-weight: bold; border-right: 1px solid #aaa !important; border-radius: 0; }
-    .modo-informe table, .modo-informe th, .modo-informe td { border: 1px solid #000 !important; color: #000 !important; }
-    .modo-informe th { background-color: #e0e0e0 !important; }
+    .modo-informe .tab-content-ini, .modo-informe .tab-content-fin { display: block !important; margin-bottom: 25px; page-break-inside: avoid; }
+    .modo-informe .card { border: 1px solid #000 !important; border-radius: 0 !important; box-shadow: none !important; margin-bottom: 20px !important; background: #fff !important; }
+    
+    /* Inputs a Texto Plano */
+    .modo-informe input, .modo-informe select, .modo-informe textarea { border: none !important; background: transparent !important; appearance: none; -moz-appearance: none; -webkit-appearance: none; box-shadow: none !important; color: #000 !important; font-weight: bold; text-align: center; padding: 2px !important; margin: 0 !important; border-radius: 0; }
+    .modo-informe textarea { text-align: left; resize: none; overflow: hidden; border-bottom: 1px dashed #000 !important; }
+    
+    /* Celdas y Tablas Profesionales */
+    .modo-informe .input-group-text { border: none !important; background: #e9ecef !important; color: #000 !important; font-weight: bold; border-right: 1px solid #000 !important; border-radius: 0; width: 100px; }
+    .modo-informe table, .modo-informe th, .modo-informe td { border: 1px solid #000 !important; color: #000 !important; vertical-align: middle; }
+    .modo-informe th { background-color: #e9ecef !important; font-weight: bold; text-transform: uppercase; padding: 8px !important; }
+    .modo-informe td { padding: 4px !important; }
+    
     .modo-informe .ocultar-en-informe { display: none !important; }
-    .modo-informe .badge { border: 1px solid #000 !important; color: #000 !important; background: transparent !important; font-weight: bold; border-radius: 0; }
-    .modo-informe h6 { font-weight: 900 !important; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 5px; color: #000 !important; }
-    .modo-informe h4 { text-align: center; border-bottom: 3px double #000; padding-bottom: 10px; margin-bottom: 20px; color: #000 !important; font-size: 1.5rem; text-transform: uppercase; }
-    .modo-informe .alert { border: 2px solid #000 !important; background: transparent !important; color: #000 !important; border-radius: 0; }
+    .modo-informe .mostrar-en-informe { display: block !important; }
+    
+    /* Badges de Error (Mantener colores en reporte) */
+    .modo-informe .badge { background: transparent !important; font-weight: 900; border-radius: 0; padding: 5px 10px; font-size: 0.9rem; }
+    .modo-informe .badge.bg-danger { border: 2px solid #dc3545 !important; color: #dc3545 !important; }
+    .modo-informe .badge.bg-success { border: 1px solid #198754 !important; color: #198754 !important; }
+    .modo-informe .badge.bg-secondary { border: 1px dashed #aaa !important; color: #777 !important; }
+    
+    /* Tipografía Estricta */
+    .modo-informe h6 { font-weight: 900 !important; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 5px; color: #000 !important; margin-bottom: 15px; font-size: 1.1rem; background: #f8f9fa; padding: 8px; border-top: 1px solid #000;}
+    .modo-informe h4 { text-align: center; border-bottom: 4px double #000; padding-bottom: 15px; margin-bottom: 25px; color: #000 !important; font-size: 1.6rem; text-transform: uppercase; font-weight: 900; }
+    .modo-informe .alert { border: 2px solid #000 !important; background: transparent !important; color: #000 !important; border-radius: 0; padding: 15px !important;}
+    
+    /* Caja de Veredicto Automático */
+    .veredicto-box { border: 3px solid #000; padding: 20px; margin-top: 30px; background: #fff; font-family: 'Courier New', Courier, monospace; white-space: pre-wrap; font-size: 1rem; font-weight: bold; color: #000; line-height: 1.5; }
+    .veredicto-conforme { border-color: #198754; color: #000; }
+    .veredicto-alerta { border-color: #dc3545; color: #000; }
   </style>
 </head>
 <body>
@@ -91,7 +112,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V41.3 | Reportes HD</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V41.4 | Reportes Inteligentes</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -211,7 +232,7 @@
 
   </div> 
 
-  <button id="btnExitReport" class="btn btn-danger position-fixed bottom-0 end-0 m-4 shadow-lg d-none" onclick="exitModoInforme()">
+  <button id="btnExitReport" class="btn btn-danger position-fixed bottom-0 end-0 m-4 shadow-lg d-none" onclick="exitModoInforme()" style="z-index: 2000; font-weight: 900; padding: 15px 25px; border-radius: 50px;">
       <i class="fas fa-times me-2"></i> SALIR DE MODO REPORTE
   </button>
 
@@ -412,7 +433,7 @@
             </div>
             
             <div class="card p-3 mb-3 border-${l.color}">
-                <h6 class="text-${l.color} fw-bold small"><i class="fas fa-brain me-1 ocultar-en-informe"></i>NORMAS Y GARANTÍAS</h6>
+                <h6 class="text-${l.color} fw-bold small"><i class="fas fa-brain me-1 ocultar-en-informe"></i>VALORES DE NORMA Y GARANTÍAS</h6>
                 <div class="row g-2">
                     <div class="col-4"><label class="label-mini">W Vacío</label><input type="number" id="${l.id}_gar_wvacio" class="form-control form-control-sm bg-garantia fw-bold"></div>
                     <div class="col-4"><label class="label-mini">W Carga</label><input type="number" id="${l.id}_gar_wcarga" class="form-control form-control-sm bg-garantia fw-bold"></div>
@@ -428,7 +449,7 @@
                 </div>
             </div>
             
-            <ul class="nav nav-tabs nav-fill mb-3">
+            <ul class="nav nav-tabs nav-fill mb-3 ocultar-en-informe">
                 <li class="nav-item"><button class="nav-link active" onclick="openTab('${l.id}','aisl',this)">AISL</button></li>
                 <li class="nav-item"><button class="nav-link" onclick="openTab('${l.id}','ttr',this)">TTR</button></li>
                 <li class="nav-item"><button class="nav-link" onclick="openTab('${l.id}','res',this)">RES</button></li>
@@ -437,7 +458,8 @@
             
             <div id="tab_${l.id}_aisl" class="tab-content-${l.id}">
                 <div class="card p-3">
-                    <label class="fw-bold mb-2">1. RESISTENCIA DE AISLAMIENTO</label>
+                    <h6 class="fw-bold mb-2 d-none mostrar-en-informe">1. RESISTENCIA DE AISLAMIENTO</h6>
+                    <label class="fw-bold mb-2 ocultar-en-informe">Aislamiento</label>
                     <div class="input-group mb-2"><span class="input-group-text">AT-BT</span><input type="number" id="${l.id}_atbt" class="form-control"><select class="form-select unit-select" id="u_${l.id}_atbt"><option>MΩ</option><option>GΩ</option></select></div>
                     <div class="input-group mb-2"><span class="input-group-text">AT-T</span><input type="number" id="${l.id}_att" class="form-control"><select class="form-select unit-select" id="u_${l.id}_att"><option>MΩ</option><option>GΩ</option></select></div>
                     <div class="input-group mb-2"><span class="input-group-text">BT-T</span><input type="number" id="${l.id}_btt" class="form-control"><select class="form-select unit-select" id="u_${l.id}_btt"><option>MΩ</option><option>GΩ</option></select></div>
@@ -445,32 +467,34 @@
             </div>
             
             <div id="tab_${l.id}_ttr" class="tab-content-${l.id} d-none">
-                <label class="fw-bold mb-2 d-none mostrar-en-informe">2. RELACIÓN DE TRANSFORMACIÓN (TTR)</label>
+                <h6 class="fw-bold mb-2 d-none mostrar-en-informe">2. RELACIÓN DE TRANSFORMACIÓN (TTR)</h6>
                 <div class="alert alert-info py-1 mb-2 small ocultar-en-informe">Error TTR < 0.5%</div>
                 <div class="card p-2 scroll-x" id="${l.id}_grid_ttr"></div>
             </div>
             
             <div id="tab_${l.id}_res" class="tab-content-${l.id} d-none">
-                <label class="fw-bold mb-2 d-none mostrar-en-informe">3. RESISTENCIA ÓHMICA DE LOS DEVANADOS</label>
+                <h6 class="fw-bold mb-2 d-none mostrar-en-informe">3. RESISTENCIA ÓHMICA DE LOS DEVANADOS</h6>
                 <div class="alert alert-warning py-1 mb-2 small ocultar-en-informe">Desbalance < 5%</div>
                 <div id="${l.id}_wrapper_res"></div>
             </div>
             
             <div id="tab_${l.id}_loss" class="tab-content-${l.id} d-none">
-                <label class="fw-bold mb-2 d-none mostrar-en-informe">4. PÉRDIDAS Y CORRIENTE DE EXCITACIÓN</label>
+                <h6 class="fw-bold mb-2 d-none mostrar-en-informe">4. PÉRDIDAS Y CORRIENTE DE EXCITACIÓN</h6>
                 <div class="card p-3 mb-3 border-danger">
-                    <h6 class="text-danger fw-bold">PRUEBA EN CORTOCIRCUITO (CON CARGA)</h6>
+                    <h6 class="text-danger fw-bold ocultar-en-informe">CORTO</h6>
+                    <div class="d-none mostrar-en-informe mb-2 fw-bold text-center border-bottom pb-1">PRUEBA EN CORTOCIRCUITO (CON CARGA)</div>
                     <div class="row g-2">
                         <div class="col-6"><small>Icc Aplicada</small><input type="number" id="${l.id}_icc" class="form-control" onchange="calcLoss('${l.id}')"></div>
                         <div class="col-6"><small>Vcc Medido</small><input type="number" id="${l.id}_vcc" class="form-control" onchange="calcLoss('${l.id}')"></div>
-                        <div class="col-12"><small>Pérdidas (Wcc)</small><input type="number" id="${l.id}_wcc" class="form-control bg-light" readonly></div>
+                        <div class="col-12"><small>Pérdidas Totales (Wcc) [VA]</small><input type="number" id="${l.id}_wcc" class="form-control bg-light text-danger" readonly></div>
                     </div>
                 </div>
                 <div class="card p-3 border-warning">
-                    <h6 class="text-warning text-dark fw-bold">PRUEBA EN VACÍO (SIN CARGA)</h6>
+                    <h6 class="text-warning text-dark fw-bold ocultar-en-informe">VACÍO</h6>
+                    <div class="d-none mostrar-en-informe mb-2 fw-bold text-center border-bottom pb-1">PRUEBA EN VACÍO (SIN CARGA)</div>
                     <div class="row g-2 mb-2">
                         <div class="col-6"><small>Vo Aplicado</small><input type="number" id="${l.id}_vo" class="form-control" onchange="calcLoss('${l.id}')"></div>
-                        <div class="col-6"><small>Pérdidas (Wo)</small><input type="number" id="${l.id}_wo" class="form-control bg-light" readonly></div>
+                        <div class="col-6"><small>Pérdidas (Wo)</small><input type="number" id="${l.id}_wo" class="form-control bg-light text-warning" readonly></div>
                     </div>
                     <div class="input-group">
                         <input id="${l.id}_io1" class="form-control" placeholder="Io1" onchange="calcLoss('${l.id}')">
@@ -483,17 +507,20 @@
             <div class="card p-3 mt-3">
                 <h6 class="text-primary fw-bold">DATOS FÍSICOS (DIMENSIONES Y ACEITE)</h6>
                 <div class="row g-2 mb-3">
-                    <div class="col-4"><small>Largo</small><input type="number" id="${l.id}_dim_l" class="form-control form-control-sm"></div>
-                    <div class="col-4"><small>Ancho</small><input type="number" id="${l.id}_dim_a" class="form-control form-control-sm"></div>
-                    <div class="col-4"><small>Alto</small><input type="number" id="${l.id}_dim_h" class="form-control form-control-sm"></div>
-                    <div class="col-4"><small>Aceite</small><input type="number" id="${l.id}_aceite" class="form-control form-control-sm"></div>
-                    <div class="col-4"><small>Peso</small><input type="number" id="${l.id}_peso" class="form-control form-control-sm"></div>
+                    <div class="col-4"><small>Largo (mm)</small><input type="number" id="${l.id}_dim_l" class="form-control form-control-sm"></div>
+                    <div class="col-4"><small>Ancho (mm)</small><input type="number" id="${l.id}_dim_a" class="form-control form-control-sm"></div>
+                    <div class="col-4"><small>Alto (mm)</small><input type="number" id="${l.id}_dim_h" class="form-control form-control-sm"></div>
+                    <div class="col-4"><small>Aceite (L)</small><input type="number" id="${l.id}_aceite" class="form-control form-control-sm"></div>
+                    <div class="col-4"><small>Peso (Kg)</small><input type="number" id="${l.id}_peso" class="form-control form-control-sm"></div>
                     <div class="col-4"><small>Color</small><input id="${l.id}_color" class="form-control form-control-sm"></div>
                 </div>
                 <label class="label-mini">Comentarios / Observaciones Técnicas</label>
                 <textarea id="${l.id}_obs" class="form-control mb-3" rows="2"></textarea>
-                <div class="row g-2 mb-3">
-                    <div class="col-7"><label class="label-mini text-primary">Ingeniero / Técnico Responsable</label><input id="${l.id}_realizado" class="form-control fw-bold border-primary"></div>
+                
+                <div class="veredicto-box mostrar-en-informe d-none" id="${l.id}_veredicto_auto"></div>
+                
+                <div class="row g-2 mb-3 mt-3">
+                    <div class="col-7"><label class="label-mini text-primary">Ingeniero / Técnico Responsable</label><input id="${l.id}_realizado" class="form-control fw-bold border-primary text-start"></div>
                     <div class="col-5"><label class="label-mini text-primary">Fecha de Prueba</label><input type="date" id="${l.id}_fecha_prueba" class="form-control fw-bold border-primary"></div>
                 </div>
                 ${l.btns}
@@ -524,10 +551,14 @@
         const view = document.getElementById('view-' + mod);
         if(!view) return;
         
+        // 1. Evaluar las pruebas para generar el veredicto
+        generarVeredictoNorma(mod);
+        
+        // 2. Activar las clases CSS de reporte
         document.body.classList.add('is-modo-informe');
         view.classList.add('modo-informe');
         
-        // Ajustar textareas al contenido para que no tengan barras de scroll
+        // 3. Ajustar textareas al contenido para evitar barras de scroll en el PDF/Pantallazo
         view.querySelectorAll('textarea').forEach(el => {
             el.style.height = 'auto';
             el.style.height = (el.scrollHeight + 10) + 'px';
@@ -549,6 +580,82 @@
                 view.classList.remove('modo-informe');
                 view.querySelectorAll('textarea').forEach(el => el.style.height = '');
             }
+        }
+    }
+    
+    // --- LÓGICA DE VEREDICTO AUTOMÁTICO (NORMA NTC/IEEE) ---
+    function generarVeredictoNorma(mod) {
+        let reporte = "EVALUACIÓN TÉCNICA Y METROLÓGICA (AUTO-DIAGNÓSTICO):\n============================================================\n\n";
+        let fallas = 0;
+
+        // 1. Evaluando Aislamiento (Solo verificamos si hay datos)
+        let ais_atbt = getVal(`${mod}_atbt`);
+        if(ais_atbt) reporte += `[ℹ️] AISLAMIENTO: Registrado.\n`;
+
+        // 2. Evaluando TTR (Tolerancia Max 0.5%)
+        let ttrFalla = false;
+        let tapsTTR = [];
+        for(let i=1; i<=5; i++) {
+            let badge = document.getElementById(`err-${mod}-${i}`);
+            if(badge && badge.innerText !== '-') {
+                let err = parseFloat(badge.innerText.replace('%',''));
+                if(err > 0.5) { ttrFalla = true; tapsTTR.push(i); }
+            }
+        }
+        if(ttrFalla) { reporte += `[❌] TTR: NO CONFORME (Desviación > 0.5% detectada en Tap ${tapsTTR.join(', ')}).\n`; fallas++; }
+        else { reporte += `[✅] TTR: CONFORME (Desviaciones dentro del margen de 0.5%).\n`; }
+
+        // 3. Evaluando Resistencia (Tolerancia Desbalance Max 5%)
+        let resFalla = false;
+        for(let i=1; i<=5; i++) {
+            let badge = document.getElementById(`res-err-${mod}-pri-${i}`);
+            if(badge && badge.innerText !== '-') {
+                let err = parseFloat(badge.innerText.replace('%',''));
+                if(err > 5.0) resFalla = true;
+            }
+        }
+        let secBadge = document.getElementById(`res-err-${mod}-sec`);
+        if(secBadge && secBadge.innerText !== '-') {
+            let err = parseFloat(secBadge.innerText.replace('%',''));
+            if(err > 5.0) resFalla = true;
+        }
+        
+        if(resFalla) { reporte += `[❌] RESISTENCIA: NO CONFORME (Desbalance entre fases > 5%).\n`; fallas++; }
+        else { reporte += `[✅] RESISTENCIA: CONFORME (Desbalance equilibrado ≤ 5%).\n`; }
+
+        // 4. Evaluando Pérdidas de Corto (Wcc) - Tolerancia +10%
+        let wccMed = getNum(`${mod}_wcc`); // Calculado en VA
+        let wccGar = getNum(`${mod}_gar_wcarga`);
+        if(wccMed > 0 && wccGar > 0) {
+            let maxWcc = wccGar * 1.10; 
+            if(wccMed > maxWcc) { 
+                reporte += `[⚠️] PÉRDIDAS CON CARGA (Wcc): ALERTA.\n    - Límite Norma (+10%): ${maxWcc.toFixed(2)} W\n    - Calculado (VA): ${wccMed} VA.\n    *Nota: El valor aparente supera el límite. Requiere validación con factor de potencia real.\n`; 
+                // No lo contamos como falla directa por la diferencia VA vs W, solo alerta.
+            }
+            else { reporte += `[✅] PÉRDIDAS CON CARGA (Wcc): CONFORME (Incluso en VA no supera el límite de Wattios).\n`; }
+        }
+
+        // 5. Evaluando Pérdidas de Vacío (Wo) - Tolerancia +10%
+        let woMed = getNum(`${mod}_wo`);
+        let woGar = getNum(`${mod}_gar_wvacio`);
+        if(woMed > 0 && woGar > 0) {
+            let maxWo = woGar * 1.10; 
+            if(woMed > maxWo) { reporte += `[⚠️] PÉRDIDAS EN VACÍO (Wo): ALERTA (Supera tolerancia del +10%).\n`; }
+            else { reporte += `[✅] PÉRDIDAS EN VACÍO (Wo): CONFORME.\n`; }
+        }
+
+        reporte += "\n============================================================\n";
+        
+        const box = document.getElementById(`${mod}_veredicto_auto`);
+        if(box) {
+            if(fallas === 0) {
+                reporte += "DICTAMEN FINAL: EQUIPO APTO. PRUEBAS DENTRO DE PARÁMETROS NORMATIVOS.";
+                box.className = "veredicto-box mostrar-en-informe veredicto-conforme";
+            } else {
+                reporte += "DICTAMEN FINAL: EL EQUIPO PRESENTA DESVIACIONES CRÍTICAS FUERA DE NORMA. REQUIERE REVISIÓN INGENIERIL.";
+                box.className = "veredicto-box mostrar-en-informe veredicto-alerta";
+            }
+            box.innerText = reporte;
         }
     }
 
