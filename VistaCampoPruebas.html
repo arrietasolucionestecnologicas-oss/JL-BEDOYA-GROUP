@@ -57,6 +57,28 @@
     .table-historial td { font-size: 0.9rem; vertical-align: middle; }
     .icon-check { color: #198754; font-size: 1.2rem; }
     .icon-cross { color: #dee2e6; font-size: 0.8rem; }
+
+    /* MODO REPORTE (PANTALLAZOS) */
+    body.is-modo-informe .sidebar { transform: translateX(-100%); }
+    body.is-modo-informe .main { margin-left: 0; padding: 0; background: #fff; }
+    body.is-modo-informe .mobile-header { display: none; }
+    body.is-modo-informe #btnExitReport { display: block !important; }
+    
+    .modo-informe { background-color: #fff !important; padding: 20px !important; max-width: 1000px; margin: 0 auto; }
+    .modo-informe .input-group { border: 1px solid #aaa; border-radius: 4px; }
+    .modo-informe .nav-tabs { display: none !important; }
+    .modo-informe .tab-content-ini, .modo-informe .tab-content-fin { display: block !important; margin-bottom: 20px; page-break-inside: avoid; }
+    .modo-informe .card { border: 1px solid #000 !important; border-radius: 0 !important; box-shadow: none !important; margin-bottom: 15px !important; }
+    .modo-informe input, .modo-informe select, .modo-informe textarea { border: none !important; background: transparent !important; appearance: none; -moz-appearance: none; -webkit-appearance: none; box-shadow: none !important; color: #000 !important; font-weight: bold; text-align: center; padding: 0 !important; margin: 0 !important; }
+    .modo-informe textarea { text-align: left; resize: none; overflow: hidden; border-bottom: 1px dashed #ccc !important; }
+    .modo-informe .input-group-text { border: none !important; background: #f0f0f0 !important; color: #000 !important; font-weight: bold; border-right: 1px solid #aaa !important; border-radius: 0; }
+    .modo-informe table, .modo-informe th, .modo-informe td { border: 1px solid #000 !important; color: #000 !important; }
+    .modo-informe th { background-color: #e0e0e0 !important; }
+    .modo-informe .ocultar-en-informe { display: none !important; }
+    .modo-informe .badge { border: 1px solid #000 !important; color: #000 !important; background: transparent !important; font-weight: bold; border-radius: 0; }
+    .modo-informe h6 { font-weight: 900 !important; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 5px; color: #000 !important; }
+    .modo-informe h4 { text-align: center; border-bottom: 3px double #000; padding-bottom: 10px; margin-bottom: 20px; color: #000 !important; font-size: 1.5rem; text-transform: uppercase; }
+    .modo-informe .alert { border: 2px solid #000 !important; background: transparent !important; color: #000 !important; border-radius: 0; }
   </style>
 </head>
 <body>
@@ -69,7 +91,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V41.2 | Fechas Blindadas</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V41.3 | Reportes HD</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -189,6 +211,10 @@
 
   </div> 
 
+  <button id="btnExitReport" class="btn btn-danger position-fixed bottom-0 end-0 m-4 shadow-lg d-none" onclick="exitModoInforme()">
+      <i class="fas fa-times me-2"></i> SALIR DE MODO REPORTE
+  </button>
+
   <div class="modal fade" id="modalAgenda" tabindex="-1">
     <div class="modal-dialog modal-fullscreen-sm-down modal-lg">
         <div class="modal-content">
@@ -226,6 +252,7 @@
     let modalCrear = null;
     let modalAgenda = null;
     let CRITERIO_FILTRO_ACTUAL = 'all';
+    let currentReportMod = null;
 
     class GasRunner {
         constructor() {
@@ -316,7 +343,7 @@
 
     function buildLabViews() {
       const botonesFin = `
-        <div class="row g-2">
+        <div class="row g-2 ocultar-en-informe">
             <div class="col-6">
                 <button class="btn btn-secondary w-100 fw-bold small-text p-2" onclick="guardarLab('fin', true, false)">
                     <i class="fas fa-save me-1"></i> GUARDAR
@@ -327,15 +354,20 @@
                     <i class="fas fa-check-double me-1"></i> CERTIFICAR
                 </button>
             </div>
-            <div class="col-12 mt-2">
+            <div class="col-6 mt-2">
                 <button class="btn btn-dark w-100 fw-bold small-text p-2" onclick="verProtocolo('fin')">
-                    <i class="fas fa-eye me-1"></i> VER PROTOCOLO
+                    <i class="fas fa-eye me-1"></i> VER PDF
+                </button>
+            </div>
+            <div class="col-6 mt-2">
+                <button class="btn btn-outline-dark w-100 fw-bold small-text p-2" onclick="toggleModoInforme('fin')">
+                    <i class="fas fa-camera me-1"></i> PANTALLAZO
                 </button>
             </div>
         </div>`;
 
       const botonesIni = `
-        <div class="row g-2">
+        <div class="row g-2 ocultar-en-informe">
             <div class="col-6">
                 <button class="btn btn-secondary w-100 fw-bold small-text p-2" onclick="guardarLab('ini', true, false)">
                     <i class="fas fa-save me-1"></i> GUARDAR
@@ -346,9 +378,14 @@
                     <i class="fas fa-check-double me-1"></i> CERTIFICAR
                 </button>
             </div>
-            <div class="col-12 mt-2">
+            <div class="col-6 mt-2">
                 <button class="btn btn-dark w-100 fw-bold small-text p-2" onclick="verProtocolo('ini')">
-                    <i class="fas fa-eye me-1"></i> VER PROTOCOLO
+                    <i class="fas fa-eye me-1"></i> VER PDF
+                </button>
+            </div>
+            <div class="col-6 mt-2">
+                <button class="btn btn-outline-dark w-100 fw-bold small-text p-2" onclick="toggleModoInforme('ini')">
+                    <i class="fas fa-camera me-1"></i> PANTALLAZO
                 </button>
             </div>
         </div>`;
@@ -356,7 +393,113 @@
       const labs = [{id:'ini',title:'Pruebas Iniciales',color:'warning',icon:'flask', btns: botonesIni}, {id:'fin',title:'Pruebas Finales',color:'primary',icon:'check-circle', btns: botonesFin}];
       let html = '';
       labs.forEach(l => {
-        html += `<div id="view-${l.id}" class="view"><h4 class="mb-3 fw-bold text-${l.color}"><i class="fas ${l.icon} me-2"></i>${l.title}</h4><div class="card p-3"><div class="input-group"><input type="number" id="search_${l.id}" class="form-control fw-bold" placeholder="Entrada..." list="list_${l.id}"><button class="btn btn-${l.color}" onclick="buscar('${l.id}')">Validar</button></div></div><div id="form_${l.id}" class="d-none"><div class="alert alert-${l.color} ${l.id==='ini'?'text-dark':'text-white'} py-2 mb-3 text-center"><div class="row"><div class="col-4 border-end"><small>ENTRADA</small><div class="fw-bold lbl-entrada"></div></div><div class="col-4 border-end"><small>KVA</small><div class="fw-bold lbl-kva"></div></div><div class="col-4"><small>DERIV.</small><div class="fw-bold lbl-deriv"></div></div></div><hr class="my-1"><div class="d-flex justify-content-between px-2 small"><span>I.Prim: <strong class="lbl-ip"></strong> A</span><span>I.Sec: <strong class="lbl-is"></strong> A</span></div><div class="row mt-2 pt-2 border-top"><div class="col-12"><small>ESTADO DEL REGISTRO</small><div class="fw-bold mt-1" id="lbl-fecha-${l.id}">--/--/----</div></div></div></div><div class="card p-3 mb-3 border-${l.color}"><h6 class="text-${l.color} fw-bold small"><i class="fas fa-brain me-1"></i>NORMAS Y GARANTÍAS</h6><div class="row g-2"><div class="col-4"><label class="label-mini">W Vacío</label><input type="number" id="${l.id}_gar_wvacio" class="form-control form-control-sm bg-garantia fw-bold"></div><div class="col-4"><label class="label-mini">W Carga</label><input type="number" id="${l.id}_gar_wcarga" class="form-control form-control-sm bg-garantia fw-bold"></div><div class="col-4"><label class="label-mini">% Uz</label><input type="number" id="${l.id}_gar_uz" class="form-control form-control-sm bg-garantia fw-bold"></div></div></div><div class="card p-2 mb-3 border-${l.color}"><div class="row g-2 align-items-center"><div class="col-4"><label class="label-mini">Temp. Amb</label><input type="number" id="${l.id}_temp" class="form-control form-control-sm fw-bold text-center" value="30"></div><div class="col-4"><label class="label-mini">Mat. Prim</label><select id="${l.id}_mat_pri" class="form-select form-select-sm"><option value="Cu">Cobre</option><option value="Al">Aluminio</option></select></div><div class="col-4"><label class="label-mini">Mat. Sec</label><select id="${l.id}_mat_sec" class="form-select form-select-sm"><option value="Cu">Cobre</option><option value="Al">Aluminio</option></select></div></div></div><ul class="nav nav-tabs nav-fill mb-3"><li class="nav-item"><button class="nav-link active" onclick="openTab('${l.id}','aisl',this)">AISL</button></li><li class="nav-item"><button class="nav-link" onclick="openTab('${l.id}','ttr',this)">TTR</button></li><li class="nav-item"><button class="nav-link" onclick="openTab('${l.id}','res',this)">RES</button></li><li class="nav-item"><button class="nav-link" onclick="openTab('${l.id}','loss',this)">LOSS</button></li></ul><div id="tab_${l.id}_aisl" class="tab-content-${l.id}"><div class="card p-3"><label class="fw-bold mb-2">Aislamiento</label><div class="input-group mb-2"><span class="input-group-text">AT-BT</span><input type="number" id="${l.id}_atbt" class="form-control"><select class="form-select unit-select" id="u_${l.id}_atbt"><option>MΩ</option><option>GΩ</option></select></div><div class="input-group mb-2"><span class="input-group-text">AT-T</span><input type="number" id="${l.id}_att" class="form-control"><select class="form-select unit-select" id="u_${l.id}_att"><option>MΩ</option><option>GΩ</option></select></div><div class="input-group mb-2"><span class="input-group-text">BT-T</span><input type="number" id="${l.id}_btt" class="form-control"><select class="form-select unit-select" id="u_${l.id}_btt"><option>MΩ</option><option>GΩ</option></select></div></div></div><div id="tab_${l.id}_ttr" class="tab-content-${l.id} d-none"><div class="alert alert-info py-1 mb-2 small">Error TTR < 0.5%</div><div class="card p-2 scroll-x" id="${l.id}_grid_ttr"></div></div><div id="tab_${l.id}_res" class="tab-content-${l.id} d-none"><div class="alert alert-warning py-1 mb-2 small">Desbalance < 5%</div><div id="${l.id}_wrapper_res"></div></div><div id="tab_${l.id}_loss" class="tab-content-${l.id} d-none"><div class="card p-3 mb-3 border-danger"><h6 class="text-danger fw-bold">CORTO</h6><div class="row g-2"><div class="col-6"><small>Icc</small><input type="number" id="${l.id}_icc" class="form-control" onchange="calcLoss('${l.id}')"></div><div class="col-6"><small>Vcc</small><input type="number" id="${l.id}_vcc" class="form-control" onchange="calcLoss('${l.id}')"></div><div class="col-12"><small>Wcc</small><input type="number" id="${l.id}_wcc" class="form-control bg-light" readonly></div></div></div><div class="card p-3 border-warning"><h6 class="text-warning text-dark fw-bold">VACÍO</h6><div class="row g-2 mb-2"><div class="col-6"><small>Vo</small><input type="number" id="${l.id}_vo" class="form-control" onchange="calcLoss('${l.id}')"></div><div class="col-6"><small>Wo</small><input type="number" id="${l.id}_wo" class="form-control bg-light" readonly></div></div><div class="input-group"><input id="${l.id}_io1" class="form-control" placeholder="Io1" onchange="calcLoss('${l.id}')"><input id="${l.id}_io2" class="form-control" placeholder="Io2" onchange="calcLoss('${l.id}')"><input id="${l.id}_io3" class="form-control" placeholder="Io3" onchange="calcLoss('${l.id}')"></div></div></div><div class="card p-3 mt-3"><h6 class="text-primary fw-bold">DATOS FÍSICOS</h6><div class="row g-2 mb-3"><div class="col-4"><small>Largo</small><input type="number" id="${l.id}_dim_l" class="form-control form-control-sm"></div><div class="col-4"><small>Ancho</small><input type="number" id="${l.id}_dim_a" class="form-control form-control-sm"></div><div class="col-4"><small>Alto</small><input type="number" id="${l.id}_dim_h" class="form-control form-control-sm"></div><div class="col-4"><small>Aceite</small><input type="number" id="${l.id}_aceite" class="form-control form-control-sm"></div><div class="col-4"><small>Peso</small><input type="number" id="${l.id}_peso" class="form-control form-control-sm"></div><div class="col-4"><small>Color</small><input id="${l.id}_color" class="form-control form-control-sm"></div></div><label class="label-mini">Observaciones</label><textarea id="${l.id}_obs" class="form-control mb-3" rows="2"></textarea><div class="row g-2 mb-3"><div class="col-7"><label class="label-mini text-primary">Realizado Por</label><input id="${l.id}_realizado" class="form-control fw-bold border-primary"></div><div class="col-5"><label class="label-mini text-primary">Fecha Prueba</label><input type="date" id="${l.id}_fecha_prueba" class="form-control fw-bold border-primary"></div></div>${l.btns}</div></div></div>`;
+        html += `<div id="view-${l.id}" class="view">
+        <h4 class="mb-3 fw-bold text-${l.color} ocultar-en-informe"><i class="fas ${l.icon} me-2"></i>${l.title}</h4>
+        <h4 class="mb-3 fw-bold text-dark d-none mostrar-en-informe"><i class="fas fa-file-signature me-2"></i>REPORTE TÉCNICO DE ${l.title}</h4>
+        
+        <div class="card p-3 ocultar-en-informe"><div class="input-group"><input type="number" id="search_${l.id}" class="form-control fw-bold" placeholder="Entrada..." list="list_${l.id}"><button class="btn btn-${l.color}" onclick="buscar('${l.id}')">Validar</button></div></div>
+        
+        <div id="form_${l.id}" class="d-none">
+            <div class="alert alert-${l.color} ${l.id==='ini'?'text-dark':'text-white'} py-2 mb-3 text-center">
+                <div class="row">
+                    <div class="col-4 border-end"><small>ENTRADA</small><div class="fw-bold lbl-entrada"></div></div>
+                    <div class="col-4 border-end"><small>KVA</small><div class="fw-bold lbl-kva"></div></div>
+                    <div class="col-4"><small>DERIV.</small><div class="fw-bold lbl-deriv"></div></div>
+                </div>
+                <hr class="my-1">
+                <div class="d-flex justify-content-between px-2 small"><span>I.Prim: <strong class="lbl-ip"></strong> A</span><span>I.Sec: <strong class="lbl-is"></strong> A</span></div>
+                <div class="row mt-2 pt-2 border-top"><div class="col-12"><small>ESTADO DEL REGISTRO</small><div class="fw-bold mt-1" id="lbl-fecha-${l.id}">--/--/----</div></div></div>
+            </div>
+            
+            <div class="card p-3 mb-3 border-${l.color}">
+                <h6 class="text-${l.color} fw-bold small"><i class="fas fa-brain me-1 ocultar-en-informe"></i>NORMAS Y GARANTÍAS</h6>
+                <div class="row g-2">
+                    <div class="col-4"><label class="label-mini">W Vacío</label><input type="number" id="${l.id}_gar_wvacio" class="form-control form-control-sm bg-garantia fw-bold"></div>
+                    <div class="col-4"><label class="label-mini">W Carga</label><input type="number" id="${l.id}_gar_wcarga" class="form-control form-control-sm bg-garantia fw-bold"></div>
+                    <div class="col-4"><label class="label-mini">% Uz</label><input type="number" id="${l.id}_gar_uz" class="form-control form-control-sm bg-garantia fw-bold"></div>
+                </div>
+            </div>
+            
+            <div class="card p-2 mb-3 border-${l.color}">
+                <div class="row g-2 align-items-center">
+                    <div class="col-4"><label class="label-mini">Temp. Amb</label><input type="number" id="${l.id}_temp" class="form-control form-control-sm fw-bold text-center" value="30"></div>
+                    <div class="col-4"><label class="label-mini">Mat. Prim</label><select id="${l.id}_mat_pri" class="form-select form-select-sm"><option value="Cu">Cobre</option><option value="Al">Aluminio</option></select></div>
+                    <div class="col-4"><label class="label-mini">Mat. Sec</label><select id="${l.id}_mat_sec" class="form-select form-select-sm"><option value="Cu">Cobre</option><option value="Al">Aluminio</option></select></div>
+                </div>
+            </div>
+            
+            <ul class="nav nav-tabs nav-fill mb-3">
+                <li class="nav-item"><button class="nav-link active" onclick="openTab('${l.id}','aisl',this)">AISL</button></li>
+                <li class="nav-item"><button class="nav-link" onclick="openTab('${l.id}','ttr',this)">TTR</button></li>
+                <li class="nav-item"><button class="nav-link" onclick="openTab('${l.id}','res',this)">RES</button></li>
+                <li class="nav-item"><button class="nav-link" onclick="openTab('${l.id}','loss',this)">LOSS</button></li>
+            </ul>
+            
+            <div id="tab_${l.id}_aisl" class="tab-content-${l.id}">
+                <div class="card p-3">
+                    <label class="fw-bold mb-2">1. RESISTENCIA DE AISLAMIENTO</label>
+                    <div class="input-group mb-2"><span class="input-group-text">AT-BT</span><input type="number" id="${l.id}_atbt" class="form-control"><select class="form-select unit-select" id="u_${l.id}_atbt"><option>MΩ</option><option>GΩ</option></select></div>
+                    <div class="input-group mb-2"><span class="input-group-text">AT-T</span><input type="number" id="${l.id}_att" class="form-control"><select class="form-select unit-select" id="u_${l.id}_att"><option>MΩ</option><option>GΩ</option></select></div>
+                    <div class="input-group mb-2"><span class="input-group-text">BT-T</span><input type="number" id="${l.id}_btt" class="form-control"><select class="form-select unit-select" id="u_${l.id}_btt"><option>MΩ</option><option>GΩ</option></select></div>
+                </div>
+            </div>
+            
+            <div id="tab_${l.id}_ttr" class="tab-content-${l.id} d-none">
+                <label class="fw-bold mb-2 d-none mostrar-en-informe">2. RELACIÓN DE TRANSFORMACIÓN (TTR)</label>
+                <div class="alert alert-info py-1 mb-2 small ocultar-en-informe">Error TTR < 0.5%</div>
+                <div class="card p-2 scroll-x" id="${l.id}_grid_ttr"></div>
+            </div>
+            
+            <div id="tab_${l.id}_res" class="tab-content-${l.id} d-none">
+                <label class="fw-bold mb-2 d-none mostrar-en-informe">3. RESISTENCIA ÓHMICA DE LOS DEVANADOS</label>
+                <div class="alert alert-warning py-1 mb-2 small ocultar-en-informe">Desbalance < 5%</div>
+                <div id="${l.id}_wrapper_res"></div>
+            </div>
+            
+            <div id="tab_${l.id}_loss" class="tab-content-${l.id} d-none">
+                <label class="fw-bold mb-2 d-none mostrar-en-informe">4. PÉRDIDAS Y CORRIENTE DE EXCITACIÓN</label>
+                <div class="card p-3 mb-3 border-danger">
+                    <h6 class="text-danger fw-bold">PRUEBA EN CORTOCIRCUITO (CON CARGA)</h6>
+                    <div class="row g-2">
+                        <div class="col-6"><small>Icc Aplicada</small><input type="number" id="${l.id}_icc" class="form-control" onchange="calcLoss('${l.id}')"></div>
+                        <div class="col-6"><small>Vcc Medido</small><input type="number" id="${l.id}_vcc" class="form-control" onchange="calcLoss('${l.id}')"></div>
+                        <div class="col-12"><small>Pérdidas (Wcc)</small><input type="number" id="${l.id}_wcc" class="form-control bg-light" readonly></div>
+                    </div>
+                </div>
+                <div class="card p-3 border-warning">
+                    <h6 class="text-warning text-dark fw-bold">PRUEBA EN VACÍO (SIN CARGA)</h6>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6"><small>Vo Aplicado</small><input type="number" id="${l.id}_vo" class="form-control" onchange="calcLoss('${l.id}')"></div>
+                        <div class="col-6"><small>Pérdidas (Wo)</small><input type="number" id="${l.id}_wo" class="form-control bg-light" readonly></div>
+                    </div>
+                    <div class="input-group">
+                        <input id="${l.id}_io1" class="form-control" placeholder="Io1" onchange="calcLoss('${l.id}')">
+                        <input id="${l.id}_io2" class="form-control" placeholder="Io2" onchange="calcLoss('${l.id}')">
+                        <input id="${l.id}_io3" class="form-control" placeholder="Io3" onchange="calcLoss('${l.id}')">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card p-3 mt-3">
+                <h6 class="text-primary fw-bold">DATOS FÍSICOS (DIMENSIONES Y ACEITE)</h6>
+                <div class="row g-2 mb-3">
+                    <div class="col-4"><small>Largo</small><input type="number" id="${l.id}_dim_l" class="form-control form-control-sm"></div>
+                    <div class="col-4"><small>Ancho</small><input type="number" id="${l.id}_dim_a" class="form-control form-control-sm"></div>
+                    <div class="col-4"><small>Alto</small><input type="number" id="${l.id}_dim_h" class="form-control form-control-sm"></div>
+                    <div class="col-4"><small>Aceite</small><input type="number" id="${l.id}_aceite" class="form-control form-control-sm"></div>
+                    <div class="col-4"><small>Peso</small><input type="number" id="${l.id}_peso" class="form-control form-control-sm"></div>
+                    <div class="col-4"><small>Color</small><input id="${l.id}_color" class="form-control form-control-sm"></div>
+                </div>
+                <label class="label-mini">Comentarios / Observaciones Técnicas</label>
+                <textarea id="${l.id}_obs" class="form-control mb-3" rows="2"></textarea>
+                <div class="row g-2 mb-3">
+                    <div class="col-7"><label class="label-mini text-primary">Ingeniero / Técnico Responsable</label><input id="${l.id}_realizado" class="form-control fw-bold border-primary"></div>
+                    <div class="col-5"><label class="label-mini text-primary">Fecha de Prueba</label><input type="date" id="${l.id}_fecha_prueba" class="form-control fw-bold border-primary"></div>
+                </div>
+                ${l.btns}
+            </div>
+        </div>
+      </div>`;
       });
       document.getElementById('template-lab').innerHTML = html;
     }
@@ -375,6 +518,40 @@
       if(viewId === 'hist') cargarHistorial();
     }
     
+    // --- LÓGICA DE MODO REPORTE (PANTALLAZO) ---
+    function toggleModoInforme(mod) {
+        currentReportMod = mod;
+        const view = document.getElementById('view-' + mod);
+        if(!view) return;
+        
+        document.body.classList.add('is-modo-informe');
+        view.classList.add('modo-informe');
+        
+        // Ajustar textareas al contenido para que no tengan barras de scroll
+        view.querySelectorAll('textarea').forEach(el => {
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight + 10) + 'px';
+        });
+        
+        Swal.fire({
+            toast: true, position: 'top', icon: 'success', 
+            title: 'Modo Pantallazo Activo', 
+            text: 'Toma tu captura. Usa el botón rojo flotante para salir.', 
+            timer: 4000, showConfirmButton: false
+        });
+    }
+
+    function exitModoInforme() {
+        document.body.classList.remove('is-modo-informe');
+        if(currentReportMod) {
+            const view = document.getElementById('view-' + currentReportMod);
+            if(view) {
+                view.classList.remove('modo-informe');
+                view.querySelectorAll('textarea').forEach(el => el.style.height = '');
+            }
+        }
+    }
+
     function verProtocolo(mod) {
         if(!DATA.entrada) return Swal.fire('Error','Seleccione una entrada','warning');
         loading(true);
@@ -616,13 +793,12 @@
         monitorCambios(mod); 
         
         let saved = (mod === 'ini') ? DATA.saved_ini : DATA.saved_fin; 
-        let originalDb = saved ? {...saved} : null; // Clonar BD original
+        let originalDb = saved ? {...saved} : null; 
         
         let localData = localStorage.getItem('backup_' + DATA.entrada); 
         if(localData) { 
             try { 
                 saved = JSON.parse(localData); 
-                // Preservar metadatos de BD
                 if(originalDb) {
                     saved.fecha_registro = originalDb.fecha_registro;
                     saved.estado_cert = originalDb.estado_cert;
