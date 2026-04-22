@@ -77,7 +77,10 @@
                 
                 <section id="programacion" class="view-section active">
                     <div class="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-3">
-                          <div class="flex-1 w-full"><input type="text" id="searchProg" onkeyup="filtrarProg()" placeholder="Buscar cliente, ID o estado..." class="w-full px-4 py-3 border border-slate-300 rounded-xl shadow-sm outline-none focus:ring-2 ring-blue-500 text-base"></div>
+                          <div class="flex-1 w-full relative">
+                              <input type="text" id="searchProg" onkeyup="filtrarProg()" placeholder="Buscar cliente, ID o estado..." class="w-full px-4 py-3 border border-slate-300 rounded-xl shadow-sm outline-none focus:ring-2 ring-blue-500 text-base pr-24">
+                              <button id="btn-filtro-ods" onclick="toggleFiltroSinODS()" class="absolute right-2 top-2 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-colors bg-white text-slate-500 border-slate-200 hover:bg-slate-50">SIN ODS</button>
+                          </div>
                           <button onclick="abrirModalHistorico()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow active:scale-95 transition-transform"><i data-lucide="archive"></i> Cargar Histórico</button>
                     </div>
                     <div class="hidden md:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -214,7 +217,7 @@
             
             <div class="flex border-b border-slate-200 bg-white sticky top-[80px] z-10">
                 <button onclick="switchTab('seg')" id="tab-btn-seg" class="tab-btn flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent active">SEGUIMIENTO</button>
-                <button onclick="switchTab('dat')" id="tab-btn-dat" class="tab-btn flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent">DATOS</button>
+                <button onclick="switchTab('dat')" id="tab-btn-dat" class="tab-btn flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent">DATOS / OFERTA</button>
                 <button onclick="switchTab('req')" id="tab-btn-req" class="tab-btn flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent">REQ</button>
             </div>
 
@@ -227,21 +230,35 @@
 
                 <div id="view-dat" class="tab-content hidden space-y-4">
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="text-[10px] font-bold text-slate-400">F. OFERTA</label><input type="date" id="date-f-oferta" class="w-full border rounded p-2 text-sm font-bold"></div>
-                        <div><label class="text-[10px] font-bold text-slate-400 text-blue-600">F. AUTORIZACIÓN</label><input type="date" id="date-f-aut" class="w-full border rounded p-2 text-sm font-bold border-blue-200 bg-blue-50"></div>
-                        <div class="col-span-2"><label class="text-[10px] font-bold text-slate-400">OBSERVACIÓN PROG.</label><textarea id="input-obs-prog" class="w-full border rounded p-2 text-sm h-20"></textarea></div>
-                        <div><label class="text-[10px] font-bold text-slate-400">REMISIÓN</label><input type="text" id="input-remision-prog" class="w-full border rounded p-2 text-sm"></div>
-                        <div><label class="text-[10px] font-bold text-slate-400">F. ENTREGA</label><input type="date" id="date-entrega" class="w-full border rounded p-2 text-sm"></div>
+                        <div class="p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between col-span-2 md:col-span-1">
+                            <div><label class="text-[10px] font-bold text-blue-400 uppercase">Oferta Realizada</label><p class="text-[10px] text-blue-300">Marcar si ya se envió</p></div>
+                            <input type="checkbox" id="check-oferta" class="w-6 h-6 rounded border-blue-300 text-blue-600 focus:ring-blue-500">
+                        </div>
+                        <div><label class="text-[10px] font-bold text-slate-400 uppercase">F. OFERTA</label><input type="date" id="date-f-oferta" class="w-full border rounded p-2 text-sm font-bold"></div>
+                        
+                        <div class="col-span-2 p-1 border-t border-slate-100 my-2"></div>
+
+                        <div><label class="text-[10px] font-bold text-slate-400 text-blue-600 uppercase">F. AUTORIZACIÓN</label><input type="date" id="date-f-aut" class="w-full border rounded p-2 text-sm font-bold border-blue-200 bg-blue-50"></div>
+                        <div><label class="text-[10px] font-bold text-slate-400 uppercase">F. ENTREGA</label><input type="date" id="date-entrega" class="w-full border rounded p-2 text-sm"></div>
+                        
+                        <div class="col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">OBSERVACIÓN PROG.</label><textarea id="input-obs-prog" class="w-full border rounded p-2 text-sm h-20"></textarea></div>
+                        <div><label class="text-[10px] font-bold text-slate-400 uppercase">REMISIÓN</label><input type="text" id="input-remision-prog" class="w-full border rounded p-2 text-sm"></div>
+                        <div>
+                             <label class="text-[10px] font-bold text-slate-400 uppercase">ODS (Orden de Serv.)</label>
+                             <div class="flex gap-2">
+                                 <input type="text" id="in-ods" placeholder="ODS" class="flex-1 border p-2 text-sm rounded font-bold">
+                                 <button onclick="marcarODSNoAplica()" class="bg-slate-100 text-slate-500 px-3 py-1 rounded text-[10px] font-black border border-slate-200 hover:bg-slate-200 transition-colors uppercase">N/A</button>
+                             </div>
+                        </div>
                     </div>
                     <div class="bg-slate-50 p-3 rounded border border-slate-200 mt-4">
-                        <h6 class="font-bold text-xs text-slate-500 mb-2">EDICIÓN CRÍTICA DE DATOS</h6>
+                        <h6 class="font-bold text-xs text-slate-500 mb-2">EDICIÓN CRÍTICA DE DATOS TÉCNICOS</h6>
                         <div class="grid grid-cols-2 gap-2">
                             <input id="in-idgroup" placeholder="ID Group" class="border p-1 text-xs rounded">
                             <input id="in-serie" placeholder="Serie" class="border p-1 text-xs rounded">
-                            <input id="in-ods" placeholder="ODS" class="border p-1 text-xs rounded">
                             
                             <div class="col-span-2">
-                                <label class="text-[10px] font-bold text-slate-400 block mb-1">TIPO SERVICIO FINAL</label>
+                                <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">TIPO SERVICIO FINAL</label>
                                 <select id="in-tipo" class="w-full border p-2 text-xs rounded font-bold bg-white outline-none focus:ring-1 focus:ring-blue-500">
                                     <option value="">-- SELECCIONAR --</option>
                                     <option value="MANTENIMIENTO GENERAL">MANTENIMIENTO GENERAL</option>
@@ -300,7 +317,7 @@
                         
                         <div class="bg-slate-50 p-4 border border-slate-200 rounded-xl mt-3">
                             <div class="flex justify-between items-center mb-3">
-                                <label class="text-xs font-bold text-slate-500">PRIORIDAD:</label>
+                                <label class="text-xs font-bold text-slate-500 uppercase">PRIORIDAD:</label>
                                 <select id="req-prioridad-envio" class="bg-white border border-slate-300 rounded px-2 py-1 text-xs font-bold outline-none">
                                     <option value="Media">Media 🟡</option>
                                     <option value="Alta">Alta 🟠</option>
@@ -341,13 +358,13 @@
     <div id="modal-nueva-entrada" class="fixed inset-0 bg-slate-900/90 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl h-full md:h-auto md:max-h-[90vh] flex flex-col">
             <div class="p-4 border-b flex justify-between items-center bg-slate-50 rounded-t-xl">
-                <h3 class="font-black text-slate-800">Nueva Entrada</h3>
+                <h3 class="font-black text-slate-800 uppercase">Nueva Entrada</h3>
                 <button onclick="cerrarModalNueva()" class="p-2 hover:bg-slate-200 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <form id="form-entrada" class="p-6 overflow-y-auto flex-1 space-y-4 custom-scrollbar">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="label-form">Empresa</label>
+                        <label class="label-form uppercase">Empresa</label>
                         <select name="empresa" class="input-form font-bold">
                             <option value="JLB">JLB</option>
                             <option value="GROUP">GROUP</option>
@@ -355,40 +372,40 @@
                         </select>
                     </div>
                     <div>
-                        <label class="label-form">Fecha</label>
+                        <label class="label-form uppercase">Fecha</label>
                         <input type="text" class="input-form bg-slate-50" value="Automático" disabled>
                     </div>
                 </div>
                 <div class="relative">
-                    <label class="label-form">Cliente</label>
+                    <label class="label-form uppercase">Cliente</label>
                     <input list="lista-clientes" name="cliente" class="input-form uppercase font-bold" placeholder="Buscar cliente..." onchange="autocompletarCliente(this)" required>
                     <datalist id="lista-clientes"></datalist>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="label-form">NIT/CC</label><input name="cedula" id="in-cedula-ent" class="input-form"></div>
-                    <div><label class="label-form">Teléfono</label><input name="telefono" id="in-telefono-ent" class="input-form"></div>
+                    <div><label class="label-form uppercase">NIT/CC</label><input name="cedula" id="in-cedula-ent" class="input-form"></div>
+                    <div><label class="label-form uppercase">Teléfono</label><input name="telefono" id="in-telefono-ent" class="input-form"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="label-form">Contacto</label><input name="contacto" id="in-contacto-ent" class="input-form"></div>
-                    <div><label class="label-form">Ciudad</label><input name="ciudad" id="in-ciudad-ent" class="input-form"></div>
+                    <div><label class="label-form uppercase">Contacto</label><input name="contacto" id="in-contacto-ent" class="input-form"></div>
+                    <div><label class="label-form uppercase">Ciudad</label><input name="ciudad" id="in-ciudad-ent" class="input-form"></div>
                 </div>
                 <div>
-                    <label class="label-form">Descripción Equipo</label>
+                    <label class="label-form uppercase">Descripción Equipo</label>
                     <input name="descripcion" class="input-form font-bold" placeholder="Ej: 75KVA 13200/220..." required>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="label-form">Cantidad</label><input type="number" name="cantidad" value="1" class="input-form font-bold"></div>
-                    <div><label class="label-form">Placa / Serie (Opcional)</label><input name="codigo" class="input-form font-bold" placeholder="N° Serie"></div>
+                    <div><label class="label-form uppercase">Cantidad</label><input type="number" name="cantidad" value="1" class="input-form font-bold"></div>
+                    <div><label class="label-form uppercase">Placa / Serie (Opcional)</label><input name="codigo" class="input-form font-bold" placeholder="N° Serie"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="label-form">Recibe (JLB)</label><input name="quienRecibe" value="Gerson Arrieta" class="input-form"></div>
-                    <div><label class="label-form">Entrega (Cliente)</label><input name="quienEntrega" class="input-form"></div>
+                    <div><label class="label-form uppercase">Recibe (JLB)</label><input name="quienRecibe" value="Gerson Arrieta" class="input-form"></div>
+                    <div><label class="label-form uppercase">Entrega (Cliente)</label><input name="quienEntrega" class="input-form"></div>
                 </div>
-                <div><label class="label-form">Observaciones</label><textarea name="observaciones" class="input-form h-20"></textarea></div>
+                <div><label class="label-form uppercase">Observaciones</label><textarea name="observaciones" class="input-form h-20"></textarea></div>
                 <div class="border rounded-lg p-2 bg-slate-50">
-                    <label class="label-form mb-2 block">Firma Quien Entrega</label>
+                    <label class="label-form mb-2 block uppercase">Firma Quien Entrega</label>
                     <canvas id="signature-pad" class="w-full h-32 bg-white border border-slate-300 rounded shadow-sm touch-none"></canvas>
-                    <button type="button" onclick="limpiarFirma()" class="text-xs text-red-500 font-bold mt-1 underline">Borrar Firma</button>
+                    <button type="button" onclick="limpiarFirma()" class="text-xs text-red-500 font-bold mt-1 underline uppercase">Borrar Firma</button>
                 </div>
             </form>
             <div class="p-4 border-t bg-slate-50 rounded-b-xl">
@@ -402,7 +419,7 @@
     <div id="modal-alq" class="fixed inset-0 bg-slate-900/90 z-[60] hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
             <div class="p-4 border-b bg-slate-50 rounded-t-xl flex justify-between items-center">
-                <h3 id="title-modal-alq" class="font-black text-slate-800">Alquiler</h3>
+                <h3 id="title-modal-alq" class="font-black text-slate-800 uppercase">Alquiler</h3>
                 <button onclick="cerrarModalAlq()"><i data-lucide="x" class="text-slate-400"></i></button>
             </div>
             <form id="form-alq" class="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
@@ -415,30 +432,30 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="label-form">Código</label><input id="alq-codigo" class="input-form font-bold"></div>
-                    <div><label class="label-form">KVA</label><input id="alq-kva" type="number" class="input-form"></div>
+                    <div><label class="label-form uppercase">Código</label><input id="alq-codigo" class="input-form font-bold"></div>
+                    <div><label class="label-form uppercase">KVA</label><input id="alq-kva" type="number" class="input-form"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="label-form">Marca</label><input id="alq-marca" class="input-form"></div>
-                    <div><label class="label-form">Voltajes</label><input id="alq-volt" class="input-form"></div>
+                    <div><label class="label-form uppercase">Marca</label><input id="alq-marca" class="input-form"></div>
+                    <div><label class="label-form uppercase">Voltajes</label><input id="alq-volt" class="input-form"></div>
                 </div>
-                <div><label class="label-form">Estado</label><select id="alq-estado-manual" class="input-form"><option value="DISPONIBLE">DISPONIBLE</option><option value="PRESTADO">PRESTADO</option><option value="MANTENIMIENTO">MANTENIMIENTO</option><option value="REPARACION">REPARACION</option></select></div>
-                <div><label class="label-form">Cliente Actual</label><input id="alq-cliente" class="input-form uppercase"></div>
+                <div><label class="label-form uppercase">Estado</label><select id="alq-estado-manual" class="input-form"><option value="DISPONIBLE">DISPONIBLE</option><option value="PRESTADO">PRESTADO</option><option value="MANTENIMIENTO">MANTENIMIENTO</option><option value="REPARACION">REPARACION</option></select></div>
+                <div><label class="label-form uppercase">Cliente Actual</label><input id="alq-cliente" class="input-form uppercase"></div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="label-form">F. Salida</label><input type="date" id="alq-salida" class="input-form"></div>
-                    <div><label class="label-form">F. Regreso</label><input type="date" id="alq-regreso" class="input-form"></div>
+                    <div><label class="label-form uppercase">F. Salida</label><input type="date" id="alq-salida" class="input-form"></div>
+                    <div><label class="label-form uppercase">F. Regreso</label><input type="date" id="alq-regreso" class="input-form"></div>
                 </div>
                 <div class="bg-slate-50 p-3 rounded border">
                     <label class="flex items-center justify-center gap-2 bg-white border border-slate-300 py-2 rounded cursor-pointer hover:bg-slate-100">
-                        <i data-lucide="camera" class="w-4 h-4 text-slate-500"></i> <span class="text-xs font-bold">AGREGAR FOTOS</span>
+                        <i data-lucide="camera" class="w-4 h-4 text-slate-500"></i> <span class="text-xs font-bold uppercase">AGREGAR FOTOS</span>
                         <input type="file" multiple accept="image/*" class="hidden" onchange="previewAlqFoto(this)">
                     </label>
                     <div id="alq-preview-container" class="grid grid-cols-3 gap-2 mt-2 hidden"></div>
-                    <button type="button" id="btn-limpiar-fotos" onclick="limpiarFotosAlq()" class="text-xs text-red-500 underline mt-2 hidden w-full text-center">Limpiar fotos</button>
+                    <button type="button" id="btn-limpiar-fotos" onclick="limpiarFotosAlq()" class="text-xs text-red-500 underline mt-2 hidden w-full text-center uppercase">Limpiar fotos</button>
                 </div>
             </form>
             <div class="p-4 border-t">
-                <button id="btn-alq-save" onclick="guardarAlquiler()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700">GUARDAR</button>
+                <button id="btn-alq-save" onclick="guardarAlquiler()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 uppercase">GUARDAR</button>
             </div>
         </div>
     </div>
@@ -446,27 +463,27 @@
     <div id="modal-tarea" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
              <div class="bg-slate-800 p-5 text-white flex justify-between items-center safe-top">
-                 <h3 class="text-lg font-bold" id="title-modal-tarea">Nueva Actividad</h3>
+                 <h3 class="text-lg font-bold uppercase" id="title-modal-tarea">Nueva Actividad</h3>
                  <button onclick="cerrarModalTarea()"><i data-lucide="x"></i></button>
              </div>
              <form id="form-tarea" class="p-6 space-y-4">
                  <input type="hidden" id="task-rowIndex" value="">
-                 <div><label class="text-xs font-bold text-slate-500">Descripción</label><textarea id="task-desc" class="w-full border rounded p-3 h-20 text-sm font-medium focus:outline-none focus:border-slate-500"></textarea></div>
+                 <div><label class="text-xs font-bold text-slate-500 uppercase">Descripción</label><textarea id="task-desc" class="w-full border rounded p-3 h-20 text-sm font-medium focus:outline-none focus:border-slate-500"></textarea></div>
                  <div class="grid grid-cols-2 gap-4">
-                     <div><label class="text-xs font-bold text-slate-500">Responsable</label><select id="task-resp" onchange="verificarNuevoResponsable(this)" class="w-full border rounded p-3 bg-white text-sm"><option>Cargando...</option></select></div>
-                     <div><label class="text-xs font-bold text-slate-500">Trafo ID</label><input type="text" id="task-trafo" class="w-full border rounded p-3 text-sm"></div>
+                     <div><label class="text-xs font-bold text-slate-500 uppercase">Responsable</label><select id="task-resp" onchange="verificarNuevoResponsable(this)" class="w-full border rounded p-3 bg-white text-sm"><option>Cargando...</option></select></div>
+                     <div><label class="text-xs font-bold text-slate-500 uppercase">Trafo ID</label><input type="text" id="task-trafo" class="w-full border rounded p-3 text-sm"></div>
                  </div>
-                 <div><label class="text-xs font-bold text-slate-500">Prioridad</label><select id="task-prio" class="w-full border rounded p-3 text-sm"><option value="Alta">Alta 🔴</option><option value="Media" selected>Media 🟡</option><option value="Baja">Baja 🟢</option></select></div>
+                 <div><label class="text-xs font-bold text-slate-500 uppercase">Prioridad</label><select id="task-prio" class="w-full border rounded p-3 text-sm"><option value="Alta">Alta 🔴</option><option value="Media" selected>Media 🟡</option><option value="Baja">Baja 🟢</option></select></div>
              </form>
              <div class="p-4 bg-slate-50 flex justify-end">
-                 <button onclick="guardarTarea()" class="bg-slate-900 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-slate-800">GUARDAR</button>
+                 <button onclick="guardarTarea()" class="bg-slate-900 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-slate-800 uppercase">GUARDAR</button>
              </div>
         </div>
     </div>
 
     <div id="modal-historico" class="fixed inset-0 bg-slate-900/90 z-[70] hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl p-6 space-y-4">
-             <h3 class="font-black text-xl">Cargar Histórico Manual</h3>
+             <h3 class="font-black text-xl uppercase">Cargar Histórico Manual</h3>
              <div class="grid grid-cols-2 gap-3">
                  <input id="hist-idjlb" placeholder="ID JLB" class="border p-2 rounded">
                  <input id="hist-idgroup" placeholder="ID Group" class="border p-2 rounded">
@@ -478,8 +495,8 @@
                  <input id="hist-serie" placeholder="Serie" class="border p-2 rounded">
                  <input id="hist-estado" placeholder="Estado (ej: ENTREGADO)" class="border p-2 rounded">
              </div>
-             <button onclick="guardarHistorico()" class="w-full bg-orange-600 text-white font-bold py-3 rounded hover:bg-orange-700">CARGAR AL SISTEMA</button>
-             <button onclick="document.getElementById('modal-historico').classList.add('hidden')" class="w-full text-slate-400 text-xs font-bold mt-2">CANCELAR</button>
+             <button onclick="guardarHistorico()" class="w-full bg-orange-600 text-white font-bold py-3 rounded hover:bg-orange-700 uppercase">CARGAR AL SISTEMA</button>
+             <button onclick="document.getElementById('modal-historico').classList.add('hidden')" class="w-full text-slate-400 text-xs font-bold mt-2 uppercase">CANCELAR</button>
         </div>
     </div>
 
