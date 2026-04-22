@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V25.0 - SUPER OFFLINE & OOM SHIELD) */
+/* JLB OPERACIONES - APP.JS (V26.0 - FILTROS ODS & CHECK OFERTAS) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -114,8 +114,9 @@ let alqFotosNuevas = [];
 let listaReqTemp = []; 
 let historialReqCache = []; 
 let canvas, ctx, isDrawing=false, indiceActual=-1;
+let filtroSoloSinODS = false; // Estado global del filtro de ODS
 
-// VARIABLES PARA EL ROBOT DE FOTOS (Legacy, reemplazado funcionalmente por IndexedDB)
+// VARIABLES PARA EL ROBOT DE FOTOS
 let COLA_FOTOS = [];
 let PROCESANDO_COLA = false;
 
@@ -189,8 +190,8 @@ function recargarActual() {
 function cargarProgramacion(){ 
     const tDesk = document.getElementById('tabla-prog-desktop'); 
     const tMob = document.getElementById('lista-prog-mobile');
-    if(tDesk) tDesk.innerHTML='<tr><td colspan="5" class="text-center py-8 text-slate-500">Cargando...</td></tr>'; 
-    if(tMob) tMob.innerHTML='<div class="text-center py-8 text-slate-500">Cargando...</div>';
+    if(tDesk) tDesk.innerHTML='<tr><td colspan="5" class="text-center py-8 text-slate-500 uppercase">Cargando...</td></tr>'; 
+    if(tMob) tMob.innerHTML='<div class="text-center py-8 text-slate-500 uppercase">Cargando...</div>';
 
     google.script.run.withSuccessHandler(d => { 
         datosProg = d; 
@@ -204,16 +205,39 @@ function renderTablaProg() {
     if(!tDesk || !tMob) return;
 
     tDesk.innerHTML = ''; tMob.innerHTML = '';
+    const q = document.getElementById('searchProg').value.toLowerCase();
     
-    if(datosProg.length === 0) { 
-        const empty = '<div class="text-center py-4 text-slate-400">No hay datos recientes.</div>'; 
+    // Filtro unificado (Búsqueda + ODS)
+    const filtrados = datosProg.filter(r => {
+        const matchBusqueda = ((r.idJLB || "") + " " + (r.idGroup || "") + " " + (r.cliente || "") + " " + (r.desc || "") + " " + (r.estado || "")).toLowerCase().includes(q);
+        const matchODS = filtroSoloSinODS ? (!r.ods || String(r.ods).trim() === "") : true;
+        return matchBusqueda && matchODS;
+    });
+    
+    if(filtrados.length === 0) { 
+        const empty = '<div class="text-center py-4 text-slate-400 uppercase">No hay datos que coincidan.</div>'; 
         tDesk.innerHTML = `<tr><td colspan="5">${empty}</td></tr>`; 
         tMob.innerHTML = empty; 
         return; 
     } 
 
-    datosProg.forEach((r, i) => insertarFilaHTML(r, i, tDesk, tMob)); 
+    filtrados.forEach((r, i) => insertarFilaHTML(r, datosProg.indexOf(r), tDesk, tMob)); 
     if(typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function toggleFiltroSinODS() {
+    filtroSoloSinODS = !filtroSoloSinODS;
+    const btn = document.getElementById('btn-filtro-ods');
+    if (filtroSoloSinODS) {
+        btn.classList.replace('text-slate-500', 'text-white');
+        btn.classList.replace('bg-white', 'bg-red-600');
+        btn.classList.replace('border-slate-200', 'border-red-700');
+    } else {
+        btn.classList.replace('text-white', 'text-slate-500');
+        btn.classList.replace('bg-red-600', 'bg-white');
+        btn.classList.replace('border-red-700', 'border-slate-200');
+    }
+    renderTablaProg();
 }
 
 function insertarFilaHTML(r, i, tDesk, tMob) {
@@ -228,10 +252,10 @@ function insertarFilaHTML(r, i, tDesk, tMob) {
     let b = `<span class="font-mono font-bold text-slate-700">${r.idJLB||'--'}</span>`; 
     if(r.idGroup) b += `<br><span class="bg-orange-100 text-orange-800 px-1 rounded text-[10px] font-bold">G:${r.idGroup}</span>`; 
     
-    const tr = `<tr id="tr-${i}" class="border-b ${c} hover:bg-slate-50"><td class="px-6 py-4">${b}</td><td class="px-6 py-4 text-xs font-mono text-slate-600">${r.fecha||'S/F'}</td><td class="px-6 py-4 font-medium">${r.cliente}</td><td class="px-6 py-4"><span class="text-xs font-bold px-2 py-1 rounded ${badgeColor}">${r.estado}</span></td><td class="px-6 py-4 text-center"><button onclick="abrirModal(${i})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`;
+    const tr = `<tr id="tr-${i}" class="border-b ${c} hover:bg-slate-50"><td class="px-6 py-4">${b}</td><td class="px-6 py-4 text-xs font-mono text-slate-600">${r.fecha||'S/F'}</td><td class="px-6 py-4 font-medium uppercase">${r.cliente}</td><td class="px-6 py-4"><span class="text-xs font-bold px-2 py-1 rounded ${badgeColor} uppercase">${r.estado}</span></td><td class="px-6 py-4 text-center"><button onclick="abrirModal(${i})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`;
     tDesk.insertAdjacentHTML('beforeend', tr); 
 
-    const card = `<div id="mob-${i}" class="mobile-card relative ${c} p-4" onclick="abrirModal(${i})"><div class="flex justify-between items-start mb-2"><div><span class="font-black text-lg text-slate-800">#${r.idJLB || r.idGroup}</span><span class="text-xs text-slate-500 block">${r.fecha}</span></div><span class="text-[10px] font-bold px-2 py-1 rounded ${badgeColor} uppercase tracking-wide">${r.estado}</span></div><h4 class="font-bold text-blue-900 text-base mb-1">${r.cliente}</h4><p class="text-sm text-slate-600 truncate">${r.desc}</p><div class="mt-3 pt-2 border-t border-slate-200/50 flex justify-end"><button class="text-blue-600 text-xs font-bold flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-blue-100 shadow-sm"><i data-lucide="pencil" class="w-3 h-3"></i> EDITAR / VER</button></div></div>`;
+    const card = `<div id="mob-${i}" class="mobile-card relative ${c} p-4" onclick="abrirModal(${i})"><div class="flex justify-between items-start mb-2"><div><span class="font-black text-lg text-slate-800 uppercase">#${r.idJLB || r.idGroup}</span><span class="text-xs text-slate-500 block">${r.fecha}</span></div><span class="text-[10px] font-bold px-2 py-1 rounded ${badgeColor} uppercase tracking-wide">${r.estado}</span></div><h4 class="font-bold text-blue-900 text-base mb-1 uppercase">${r.cliente}</h4><p class="text-sm text-slate-600 truncate uppercase">${r.desc}</p><div class="mt-3 pt-2 border-t border-slate-200/50 flex justify-end"><button class="text-blue-600 text-xs font-bold flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-blue-100 shadow-sm uppercase"><i data-lucide="pencil" class="w-3 h-3"></i> EDITAR / VER</button></div></div>`;
     tMob.insertAdjacentHTML('beforeend', card);
 }
 
@@ -251,9 +275,11 @@ function abrirModal(i){
     document.getElementById('in-ods').value = d.ods; 
     document.getElementById('in-desc').value = d.desc; 
     
+    // Nuevos campos
+    document.getElementById('check-oferta').checked = (d.oferta_check === true || d.oferta_check === 'TRUE');
+
     const selTipo = document.getElementById('in-tipo');
     selTipo.value = d.tipo; 
-    if(selTipo.value === "") { } 
 
     renderPasosSeguimiento(d);
     
@@ -265,7 +291,7 @@ function abrirModal(i){
     toggleEditMode(false);
     
     renderListaReqTemp();
-    document.getElementById('lista-reqs').innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs">Cargando historial...</div>';
+    document.getElementById('lista-reqs').innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs uppercase">Cargando historial...</div>';
 
     const idUnico = d.idJLB || d.idGroup;
     if(idUnico) {
@@ -273,19 +299,24 @@ function abrirModal(i){
     }
 }
 
+function marcarODSNoAplica() {
+    document.getElementById('in-ods').value = "N/A";
+    showToast("Marcado como No Requiere ODS");
+}
+
 function renderPasosSeguimiento(d) {
     const stepsContainer = document.getElementById('steps-container'); 
     stepsContainer.innerHTML = ''; 
 
     const esExterno = d.tipo_ejecucion === 'EXTERNA';
-    const htmlEjecucion = `<div class="col-span-full bg-slate-50 p-3 rounded border mb-4 border-slate-300"><h6 class="font-bold text-xs text-slate-500 mb-2 uppercase flex items-center gap-2"><i data-lucide="settings-2" class="w-3 h-3"></i> Configuración de Ejecución</h6><div class="grid grid-cols-2 gap-4"><div><label class="text-[10px] font-bold text-slate-600 block mb-1">TIPO EJECUCIÓN</label><select id="sel-ejecucion" class="w-full border rounded p-2 text-sm bg-white font-bold text-slate-700 outline-none" onchange="toggleProveedor(this.value)"><option value="INTERNA" ${!esExterno?'selected':''}>🏠 INTERNA</option><option value="EXTERNA" ${esExterno?'selected':''}>🚚 EXTERNA</option></select></div><div><label class="text-[10px] font-bold text-slate-600 block mb-1">PROVEEDOR</label><input id="in-proveedor-dyn" class="w-full border rounded p-2 text-sm" value="${d.proveedor_ext||''}" ${!esExterno?'disabled':''} placeholder="Nombre..."></div></div></div>`;
+    const htmlEjecucion = `<div class="col-span-full bg-slate-50 p-3 rounded border mb-4 border-slate-300"><h6 class="font-bold text-xs text-slate-500 mb-2 uppercase flex items-center gap-2"><i data-lucide="settings-2" class="w-3 h-3"></i> Configuración de Ejecución</h6><div class="grid grid-cols-2 gap-4"><div><label class="text-[10px] font-bold text-slate-600 block mb-1 uppercase">TIPO EJECUCIÓN</label><select id="sel-ejecucion" class="w-full border rounded p-2 text-sm bg-white font-bold text-slate-700 outline-none" onchange="toggleProveedor(this.value)"><option value="INTERNA" ${!esExterno?'selected':''}>🏠 INTERNA</option><option value="EXTERNA" ${esExterno?'selected':''}>🚚 EXTERNA</option></select></div><div><label class="text-[10px] font-bold text-slate-600 block mb-1 uppercase">PROVEEDOR</label><input id="in-proveedor-dyn" class="w-full border rounded p-2 text-sm" value="${d.proveedor_ext||''}" ${!esExterno?'disabled':''} placeholder="Nombre..."></div></div></div>`;
     stepsContainer.insertAdjacentHTML('beforeend', htmlEjecucion);
 
     const estado = (d.estado || "").toUpperCase().trim();
     if(estado === "SIN INGRESAR A SISTEMA" || estado === "PENDIENTE" || estado === "") {
-        stepsContainer.insertAdjacentHTML('beforeend', `<div class="col-span-full mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-orange-800 font-bold text-sm uppercase">⚠️ Equipo pendiente de ingreso</p><button onclick="avanzarEstado('INGRESO', 'CONFIRMAR_ZIUR')" class="bg-orange-600 text-white px-6 py-2 rounded-lg font-bold shadow text-xs">✅ CONFIRMAR INGRESO</button></div>`);
+        stepsContainer.insertAdjacentHTML('beforeend', `<div class="col-span-full mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-orange-800 font-bold text-sm uppercase">⚠️ Equipo pendiente de ingreso</p><button onclick="avanzarEstado('INGRESO', 'CONFIRMAR_ZIUR')" class="bg-orange-600 text-white px-6 py-2 rounded-lg font-bold shadow text-xs uppercase">✅ CONFIRMAR INGRESO</button></div>`);
     } else if (estado === "EN PROVEEDOR / EXTERNO" && esExterno) {
-        stepsContainer.insertAdjacentHTML('beforeend', `<div class="col-span-full mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-blue-800 font-bold text-sm uppercase">🚚 Equipo en Proveedor Externo</p><button onclick="avanzarEstado('PRUEBAS FINALES', 'REGRESO_EXTERNO')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow text-xs transition-colors">📥 CONFIRMAR REGRESO A PLANTA</button></div>`);
+        stepsContainer.insertAdjacentHTML('beforeend', `<div class="col-span-full mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-col items-center justify-center gap-2"><p class="text-blue-800 font-bold text-sm uppercase">🚚 Equipo en Proveedor Externo</p><button onclick="avanzarEstado('PRUEBAS FINALES', 'REGRESO_EXTERNO')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow text-xs transition-colors uppercase">📥 CONFIRMAR REGRESO A PLANTA</button></div>`);
     }
 
     const tipoServ = (d.tipo || "").toUpperCase();
@@ -348,6 +379,7 @@ function guardarCambios(){
     
     const c = { 
         f_oferta: document.getElementById('date-f-oferta').value, 
+        oferta_check: document.getElementById('check-oferta').checked,
         f_autorizacion: document.getElementById('date-f-aut').value, 
         observacion: document.getElementById('input-obs-prog').value, 
         remision: document.getElementById('input-remision-prog').value, 
@@ -377,9 +409,13 @@ function guardarCambios(){
     else if(c.tipo_ejecucion === 'EXTERNA' && (nuevoEstado === "INGRESO" || nuevoEstado === "PENDIENTE" || nuevoEstado === "SIN INGRESAR A SISTEMA" || nuevoEstado === "" || nuevoEstado === "EN PROVEEDOR / EXTERNO")) nuevoEstado = "EN PROVEEDOR / EXTERNO";
     
     const item = datosProg[indiceActual];
+    // Sincronizar objeto local con cambios para UI inmediata
     item.estado = nuevoEstado;
+    item.ods = c.ods;
+    item.oferta_check = c.oferta_check;
     item.cliente = document.getElementById('m-cliente').innerText; 
     item.desc = c.desc;
+    
     actualizarFilaDOM(indiceActual, item);
 
     google.script.run.withSuccessHandler(() => { 
@@ -401,13 +437,15 @@ function actualizarFilaDOM(i, r) {
         else if(s.includes("PENDIENTE") || s.includes("INGRESO")) badgeColor = "bg-orange-100 text-orange-700";
         if (r.tipo_ejecucion === 'EXTERNA') badgeColor = "bg-purple-100 text-purple-700 border border-purple-200";
         const tds = tr.getElementsByTagName('td');
-        if(tds[3]) tds[3].innerHTML = `<span class="text-xs font-bold px-2 py-1 rounded ${badgeColor}">${r.estado}</span>`;
+        if(tds[3]) tds[3].innerHTML = `<span class="text-xs font-bold px-2 py-1 rounded ${badgeColor} uppercase">${r.estado}</span>`;
     }
     const card = document.getElementById(`mob-${i}`);
     if(card) {
         const badge = card.querySelector('span.rounded');
-        if(badge) { badge.innerText = r.estado; badge.className = `text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide`; }
+        if(badge) { badge.innerText = r.estado; badge.className = `text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide uppercase`; }
     }
+    // Si el filtro de ODS está activo, re-renderizar para ocultar si ahora tiene ODS
+    if (filtroSoloSinODS) renderTablaProg();
 }
 
 function avanzarEstado(nuevoEstado, accion) {
@@ -526,13 +564,9 @@ function renderListaReqTemp() {
     if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-// ========================================================
-// CARGAR REQUERIMIENTOS: CLASIFICACIÓN BORRADOR / HISTORIAL
-// ========================================================
 function cargarRequerimientos(idTrafo) {
     const divHistory = document.getElementById('lista-reqs');
-    
-    divHistory.innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs">Cargando historial...</div>';
+    divHistory.innerHTML = '<div class="text-center py-4 text-slate-400 italic text-xs uppercase">Cargando historial...</div>';
     
     google.script.run.withSuccessHandler(list => {
         divHistory.innerHTML = '';
@@ -540,7 +574,7 @@ function cargarRequerimientos(idTrafo) {
         listaReqTemp = [];
 
         if(!list || list.length === 0) {
-            divHistory.innerHTML = '<div class="text-center py-4 text-slate-300 text-xs">No hay historial.</div>';
+            divHistory.innerHTML = '<div class="text-center py-4 text-slate-300 text-xs uppercase">No hay historial.</div>';
             renderListaReqTemp(); 
             return;
         }
@@ -557,7 +591,6 @@ function cargarRequerimientos(idTrafo) {
                     cant = match[1];
                     desc = match[2];
                 }
-                
                 listaReqTemp.push({ cant: cant, desc: desc });
 
             } else {
@@ -572,8 +605,8 @@ function cargarRequerimientos(idTrafo) {
                 divHistory.innerHTML += `
                     <div class="bg-white border border-slate-100 p-3 rounded-xl shadow-sm flex justify-between items-center mb-2">
                         <div class="flex-1">
-                            <p class="text-sm font-bold text-slate-700">${textoMostrado}</p>
-                            <p class="text-[10px] text-slate-400 mt-1">${r.fecha} - ${r.autor}</p>
+                            <p class="text-sm font-bold text-slate-700 uppercase">${textoMostrado}</p>
+                            <p class="text-[10px] text-slate-400 mt-1 uppercase">${r.fecha} - ${r.autor}</p>
                         </div>
                         <div class="flex flex-col items-end">
                             <span class="font-bold ${color} text-[10px] uppercase bg-slate-50 px-2 py-1 rounded flex items-center gap-1">
@@ -589,13 +622,10 @@ function cargarRequerimientos(idTrafo) {
         if(typeof lucide !== 'undefined') lucide.createIcons();
 
     }).withFailureHandler(e => {
-        divHistory.innerHTML = `<div class="text-center py-4 text-red-400 text-xs">Error de conexión: ${e}</div>`;
+        divHistory.innerHTML = `<div class="text-center py-4 text-red-400 text-xs uppercase">Error de conexión: ${e}</div>`;
     }).obtenerRequerimientos(idTrafo);
 }
 
-// ========================================================
-// GUARDAR BORRADOR (MASIVO)
-// ========================================================
 function guardarTodoReq() {
     const d = datosProg[indiceActual];
     const idTrafo = d.idJLB || d.idGroup;
@@ -633,9 +663,6 @@ function guardarTodoReq() {
         .guardarBorradorMasivo(payload); 
 }
 
-// ========================================================
-// ENVIAR A ALMACÉN (API)
-// ========================================================
 function enviarAlmacenAPI() {
     const pendientes = listaReqTemp; 
     if (pendientes.length === 0) {
@@ -681,7 +708,6 @@ function enviarAlmacenAPI() {
     }).guardarBorradorMasivo(payloadGuardar);
 }
 
-// RESTO DE FUNCIONES (Logística, Fotos, Tareas, etc.)
 function subLog(id) { document.querySelectorAll('.log-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.log-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-log-'+id).classList.add('active'); if(id==='term') cargarTerminados(); if(id==='alq') cargarAlquiler(); if(id==='pat') cargarPatio(); }
 function subNav(id) { document.querySelectorAll('.cp-view').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.cp-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('btn-cp-'+id).classList.add('active'); if(id === 'fot') cargarGaleriaFotos(); }
 function cargarAlquiler() { google.script.run.withSuccessHandler(d => { datosAlq = d; filtrarAlquiler(); }).obtenerLogistica({ tipo: 'ALQUILER' }); }
@@ -700,7 +726,7 @@ function filtrarAlquiler() {
         return matchKVA && matchVolt && matchEstado; 
     }); 
     if(filtrados.length === 0) { 
-        t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">No hay coincidencias.</td></tr>'; 
+        t.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400 uppercase">No hay coincidencias.</td></tr>'; 
         return; 
     } 
     filtrados.forEach((r, i) => { 
@@ -716,22 +742,18 @@ function filtrarAlquiler() {
         else if (r.estado.includes("REPARACION")) badgeClass = 'bg-red-100 text-red-700'; 
         
         const indexReal = datosAlq.indexOf(r); 
-        t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold">${r.codigo}</td><td class="p-3 text-xs">${r.equipo}<br><span class="text-slate-400">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs">${r.cliente}</td><td class="p-3 text-xs">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); 
+        t.insertAdjacentHTML('beforeend', `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-bold uppercase">${r.codigo}</td><td class="p-3 text-xs uppercase">${r.equipo}<br><span class="text-slate-400 uppercase">${r.voltajes}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold uppercase ${badgeClass}">${r.estado}</span></td><td class="p-3 text-xs uppercase">${r.cliente}</td><td class="p-3 text-xs uppercase">${r.fechas}</td><td class="p-3 text-center">${btnFoto}</td><td class="p-3 text-center"><button onclick="editarAlquiler(${indexReal})" class="text-blue-600 hover:bg-blue-100 p-2 rounded-full"><i data-lucide="pencil" class="w-4 h-4"></i></button></td></tr>`); 
     }); 
     if(typeof lucide !== 'undefined') lucide.createIcons(); 
 }
 
-function cargarGaleriaFotos() { const grid = document.getElementById('galeria-fotos-grid'); if(!grid) return; grid.innerHTML = '<div class="col-span-full text-center text-blue-500 py-8"><i data-lucide="loader-2" class="animate-spin w-8 h-8 mx-auto"></i><p class="text-xs mt-2">Sincronizando fotos recientes...</p></div>'; if(typeof lucide !== 'undefined') lucide.createIcons(); google.script.run .withSuccessHandler(fotos => { grid.innerHTML = ''; if(!fotos || fotos.length === 0) { grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-8 bg-slate-50 rounded-lg border border-dashed border-slate-300"><i data-lucide="image-off" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p>Aún no hay fotos registradas.</p></div>'; if(typeof lucide !== 'undefined') lucide.createIcons(); return; } fotos.forEach(f => { const directUrl = convertirLinkDrive(f.url); const card = `<div class="gallery-card relative group bg-white rounded-lg overflow-hidden aspect-square border border-slate-200 shadow-sm hover:shadow-lg transition-all cursor-pointer" onclick="window.open('${directUrl}', '_blank')"> <img src="${directUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-105"> <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3 pt-8"> <span class="text-white font-bold text-sm block shadow-black drop-shadow-md trafo-id">${f.idTrafo}</span> <span class="text-[10px] text-white/90 uppercase font-bold bg-black/30 px-1.5 py-0.5 rounded backdrop-blur-sm etapa-tag">${f.etapa}</span> </div> <div class="absolute top-2 right-2 bg-white/90 text-slate-700 text-[9px] px-2 py-1 rounded-full shadow-sm font-bold border border-slate-100"> ${f.fecha ? f.fecha.split(' ')[0] : 'Hoy'} </div> </div>`; grid.insertAdjacentHTML('beforeend', card); }); }) .withFailureHandler(error => { grid.innerHTML = `<div class="col-span-full text-center text-red-400 py-8"><i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i><p>Error de conexión.</p><button onclick="cargarGaleriaFotos()" class="text-blue-500 underline mt-2">Reintentar</button></div>`; if(typeof lucide !== 'undefined') lucide.createIcons(); }) .obtenerUltimasFotos(); }
+function cargarGaleriaFotos() { const grid = document.getElementById('galeria-fotos-grid'); if(!grid) return; grid.innerHTML = '<div class="col-span-full text-center text-blue-500 py-8"><i data-lucide="loader-2" class="animate-spin w-8 h-8 mx-auto"></i><p class="text-xs mt-2 uppercase">Sincronizando fotos recientes...</p></div>'; if(typeof lucide !== 'undefined') lucide.createIcons(); google.script.run .withSuccessHandler(fotos => { grid.innerHTML = ''; if(!fotos || fotos.length === 0) { grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-8 bg-slate-50 rounded-lg border border-dashed border-slate-300 uppercase"><i data-lucide="image-off" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p>Aún no hay fotos registradas.</p></div>'; if(typeof lucide !== 'undefined') lucide.createIcons(); return; } fotos.forEach(f => { const directUrl = convertirLinkDrive(f.url); const card = `<div class="gallery-card relative group bg-white rounded-lg overflow-hidden aspect-square border border-slate-200 shadow-sm hover:shadow-lg transition-all cursor-pointer" onclick="window.open('${directUrl}', '_blank')"> <img src="${directUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-105"> <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3 pt-8"> <span class="text-white font-bold text-sm block shadow-black drop-shadow-md trafo-id uppercase">${f.idTrafo}</span> <span class="text-[10px] text-white/90 uppercase font-bold bg-black/30 px-1.5 py-0.5 rounded backdrop-blur-sm etapa-tag uppercase">${f.etapa}</span> </div> <div class="absolute top-2 right-2 bg-white/90 text-slate-700 text-[9px] px-2 py-1 rounded-full shadow-sm font-bold border border-slate-100 uppercase"> ${f.fecha ? f.fecha.split(' ')[0] : 'Hoy'} </div> </div>`; grid.insertAdjacentHTML('beforeend', card); }); }) .withFailureHandler(error => { grid.innerHTML = `<div class="col-span-full text-center text-red-400 py-8 uppercase"><i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i><p>Error de conexión.</p><button onclick="cargarGaleriaFotos()" class="text-blue-500 underline mt-2 uppercase">Reintentar</button></div>`; if(typeof lucide !== 'undefined') lucide.createIcons(); }) .obtenerUltimasFotos(); }
 function filtrarFotos() { const idQuery = document.getElementById('filtro-foto-id').value.toUpperCase(); const etapaQuery = document.getElementById('filtro-foto-etapa').value.toUpperCase(); const cards = document.querySelectorAll('.gallery-card'); cards.forEach(card => { const idText = card.querySelector('.trafo-id').innerText.toUpperCase(); const etapaText = card.querySelector('.etapa-tag').innerText.toUpperCase(); const matchId = idText.includes(idQuery); const matchEtapa = etapaQuery === "TODAS" || etapaText.includes(etapaQuery); if(matchId && matchEtapa) { card.classList.remove('hidden'); } else { card.classList.add('hidden'); } }); }
 function actualizarDatalistClientes(){ const dl = document.getElementById('lista-clientes'); if(!dl) return; dl.innerHTML = ''; dbClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c.nombre; dl.appendChild(opt); }); }
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
 function abrirModalNuevaEntrada() { document.getElementById('modal-nueva-entrada').classList.remove('hidden'); setTimeout(initCanvas, 100); }
 function cerrarModalNueva() { document.getElementById('modal-nueva-entrada').classList.add('hidden'); document.getElementById('form-entrada').reset(); limpiarFirma(); }
-function filtrarProg() { const q = document.getElementById('searchProg').value.toLowerCase(); const tDesk = document.getElementById('tabla-prog-desktop'); const tMob = document.getElementById('lista-prog-mobile'); tDesk.innerHTML = ''; tMob.innerHTML = ''; const f = datosProg.filter(r => ((r.idJLB || "") + " " + (r.idGroup || "") + " " + (r.cliente || "") + " " + (r.desc || "") + " " + (r.estado || "")).toLowerCase().includes(q)); f.forEach(r => insertarFilaHTML(r, datosProg.indexOf(r), tDesk, tMob)); if(typeof lucide !== 'undefined') lucide.createIcons(); }
-
-// =========================================================================
-// MOTOR DE CANVAS HD RECONSTRUIDO: SOPORTE PARA S-PEN Y ESCALADO DE PÍXELES
-// =========================================================================
+function filtrarProg() { renderTablaProg(); } // Centralizado en renderTablaProg para admitir filtros múltiples
 
 function initCanvas() { 
     canvas = document.getElementById('signature-pad'); 
@@ -800,10 +822,6 @@ function endDraw(e) {
     ctx.closePath(); 
 }
 
-// =========================================================================
-// COMPRESIÓN DE FIRMA
-// =========================================================================
-
 function limpiarFirma() { if(ctx) ctx.clearRect(0,0,canvas.width,canvas.height); }
 
 function getFirmaBase64() { 
@@ -870,8 +888,8 @@ function enviarFormulario(){
     }).registrarEntradaRapida(dt); 
 }
 
-function cargarEntradas() { const g = document.getElementById('grid-entradas'); if(!g) return; g.innerHTML='<p class="col-span-full text-center py-4">Cargando...</p>'; google.script.run.withSuccessHandler(d => { datosEntradas = d; g.innerHTML = ''; if(d.length === 0) g.innerHTML = '<p class="col-span-full text-center">Sin registros.</p>'; d.forEach(i => renderCardEntrada(i, g, false)); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerDatosEntradas(); }
-function renderCardEntrada(i, c, p){ const cid = `card-${i.id}`; const pdf = (i.urlPdf && i.urlPdf.length > 5) ? `<a href="${i.urlPdf}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>` : `<button id="btn-gen-${i.id}" onclick="genPDF('${i.id}',${i.rowIndex})" class="w-full bg-slate-800 text-white hover:bg-slate-900 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-plus" class="w-4 h-4"></i> GENERAR</button>`; const ziur = `${i.cantidad||1} / ${i.codigo||'S/C'} / ${i.descripcion}`; const h = `<div id="${cid}" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative"><button onclick="copiarTexto('${ziur}')" class="absolute top-4 right-4 text-slate-400 hover:text-blue-600"><i data-lucide="copy" class="w-5 h-5"></i></button><div><div class="flex justify-between mb-2"><span class="font-bold text-lg">#${i.id}</span><span class="text-xs bg-slate-100 px-2 py-1 rounded">${i.fecha}</span></div><div class="bg-blue-50 text-blue-800 text-xs font-mono px-2 py-1 rounded w-fit mb-2">🏷️ ${i.codigo||'---'}</div><h4 class="font-bold text-blue-600 mb-1">${i.cliente}</h4><p class="text-sm text-slate-500 line-clamp-2">${i.descripcion}</p></div><div class="pt-3 border-t mt-4" id="act-${i.id}">${pdf}</div></div>`; if(p) c.insertAdjacentHTML('afterbegin', h); else c.insertAdjacentHTML('beforeend', h); }
+function cargarEntradas() { const g = document.getElementById('grid-entradas'); if(!g) return; g.innerHTML='<p class="col-span-full text-center py-4 uppercase">Cargando...</p>'; google.script.run.withSuccessHandler(d => { datosEntradas = d; g.innerHTML = ''; if(d.length === 0) g.innerHTML = '<p class="col-span-full text-center uppercase">Sin registros.</p>'; d.forEach(i => renderCardEntrada(i, g, false)); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerDatosEntradas(); }
+function renderCardEntrada(i, c, p){ const cid = `card-${i.id}`; const pdf = (i.urlPdf && i.urlPdf.length > 5) ? `<a href="${i.urlPdf}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2 uppercase"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>` : `<button id="btn-gen-${i.id}" onclick="genPDF('${i.id}',${i.rowIndex})" class="w-full bg-slate-800 text-white hover:bg-slate-900 py-2 rounded text-xs font-bold flex justify-center gap-2 uppercase"><i data-lucide="file-plus" class="w-4 h-4"></i> GENERAR</button>`; const ziur = `${i.cantidad||1} / ${i.codigo||'S/C'} / ${i.descripcion}`; const h = `<div id="${cid}" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative"><button onclick="copiarTexto('${ziur}')" class="absolute top-4 right-4 text-slate-400 hover:text-blue-600"><i data-lucide="copy" class="w-5 h-5"></i></button><div><div class="flex justify-between mb-2"><span class="font-bold text-lg uppercase">#${i.id}</span><span class="text-xs bg-slate-100 px-2 py-1 rounded uppercase">${i.fecha}</span></div><div class="bg-blue-50 text-blue-800 text-xs font-mono px-2 py-1 rounded w-fit mb-2 uppercase">🏷️ ${i.codigo||'---'}</div><h4 class="font-bold text-blue-600 mb-1 uppercase">${i.cliente}</h4><p class="text-sm text-slate-500 line-clamp-2 uppercase">${i.descripcion}</p></div><div class="pt-3 border-t mt-4" id="act-${i.id}">${pdf}</div></div>`; if(p) c.insertAdjacentHTML('afterbegin', h); else c.insertAdjacentHTML('beforeend', h); }
 
 function genPDF(id, rix){ 
     if (!id || id === 'undefined') {
@@ -886,7 +904,7 @@ function genPDF(id, rix){
         google.script.run
         .withSuccessHandler(r => { 
             if(r.exito) { 
-                b.parentElement.innerHTML = `<a href="${r.url}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>`; 
+                b.parentElement.innerHTML = `<a href="${r.url}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2 uppercase"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>`; 
                 if(typeof lucide !== 'undefined') lucide.createIcons(); 
             } else { 
                 alert("Error del Servidor: " + r.error); 
@@ -903,12 +921,12 @@ function genPDF(id, rix){
     } 
 }
 
-function showToast(msg, type = 'success') { const container = document.getElementById('toast-container'); if(!container) return; const el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = type === 'success' ? `<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i><span class="font-bold text-sm text-slate-700">${msg}</span>` : `<i data-lucide="alert-circle" class="w-5 h-5 text-red-600"></i><span class="font-bold text-sm text-slate-700">${msg}</span>`; container.appendChild(el); if(typeof lucide !== 'undefined') lucide.createIcons(); setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000); }
+function showToast(msg, type = 'success') { const container = document.getElementById('toast-container'); if(!container) return; const el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = type === 'success' ? `<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i><span class="font-bold text-sm text-slate-700 uppercase">${msg}</span>` : `<i data-lucide="alert-circle" class="w-5 h-5 text-red-600"></i><span class="font-bold text-sm text-slate-700 uppercase">${msg}</span>`; container.appendChild(el); if(typeof lucide !== 'undefined') lucide.createIcons(); setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000); }
 function copiarTexto(t){ navigator.clipboard.writeText(t).then(()=>showToast("Copiado")); }
 function switchTab(t){ document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active')); document.getElementById('view-'+t).classList.add('active'); document.getElementById('tab-btn-'+t).classList.add('active'); }
 function cerrarModal() { document.getElementById('modal-detalle').classList.add('hidden'); }
-function cargarTerminados() { google.script.run.withSuccessHandler(d => { const c = document.getElementById('lista-terminados'); if(!c) return; c.innerHTML = ''; if(d.length === 0) c.innerHTML = '<p class="text-center text-slate-400 py-4">Sin pendientes.</p>'; d.forEach(i => { const txt = `ENTRADA: ${i.id} | CLIENTE: ${i.cliente} | EQUIPO: ${i.desc} | ODS: ${i.ods}`; c.insertAdjacentHTML('beforeend', `<div class="bg-white border border-green-200 p-4 rounded-lg shadow-sm flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i data-lucide="check" class="w-6 h-6"></i></div><div><h4 class="font-bold text-slate-700">${i.cliente}</h4><p class="text-xs text-slate-500">${i.desc} (ID: ${i.id})</p></div></div><button onclick="copiarTexto('${txt}')" class="bg-slate-100 text-slate-600 p-2 rounded hover:bg-slate-200"><i data-lucide="copy" class="w-4 h-4"></i></button></div>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerLogistica({ tipo: 'TERMINADOS' }); }
-function cargarPatio() { google.script.run.withSuccessHandler(d => { const t = document.getElementById('tabla-pat'); if(!t) return; t.innerHTML = ''; d.forEach(r => { t.insertAdjacentHTML('beforeend', `<tr class="border-b"><td class="p-3 font-mono text-blue-600">${r.id}</td><td class="p-3">${r.cliente}</td><td class="p-3 text-xs text-red-500">${r.motivo}</td></tr>`); }); }).obtenerLogistica({ tipo: 'PATIO' }); }
+function cargarTerminados() { google.script.run.withSuccessHandler(d => { const c = document.getElementById('lista-terminados'); if(!c) return; c.innerHTML = ''; if(d.length === 0) c.innerHTML = '<p class="text-center text-slate-400 py-4 uppercase">Sin pendientes.</p>'; d.forEach(i => { const txt = `ENTRADA: ${i.id} | CLIENTE: ${i.cliente} | EQUIPO: ${i.desc} | ODS: ${i.ods}`; c.insertAdjacentHTML('beforeend', `<div class="bg-white border border-green-200 p-4 rounded-lg shadow-sm flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i data-lucide="check" class="w-6 h-6"></i></div><div><h4 class="font-bold text-slate-700 uppercase">${i.cliente}</h4><p class="text-xs text-slate-500 uppercase">${i.desc} (ID: ${i.id})</p></div></div><button onclick="copiarTexto('${txt}')" class="bg-slate-100 text-slate-600 p-2 rounded hover:bg-slate-200"><i data-lucide="copy" class="w-4 h-4"></i></button></div>`); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }).obtenerLogistica({ tipo: 'TERMINADOS' }); }
+function cargarPatio() { google.script.run.withSuccessHandler(d => { const t = document.getElementById('tabla-pat'); if(!t) return; t.innerHTML = ''; d.forEach(r => { t.insertAdjacentHTML('beforeend', `<tr class="border-b"><td class="p-3 font-mono text-blue-600 uppercase">${r.id}</td><td class="p-3 uppercase">${r.cliente}</td><td class="p-3 text-xs text-red-500 uppercase">${r.motivo}</td></tr>`); }); }).obtenerLogistica({ tipo: 'PATIO' }); }
 
 function editarAlquiler(i) { 
     const d = datosAlq[i]; 
@@ -944,15 +962,15 @@ function editarAlquiler(i) {
         
         if (esCarpeta) {
             fotoContainer.innerHTML = `
-                <div class="relative w-full h-32 rounded border border-blue-200 bg-blue-50 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="window.open('${d.foto}', '_blank')">
+                <div class="relative w-full h-32 rounded border border-blue-200 bg-blue-50 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer uppercase" onclick="window.open('${d.foto}', '_blank')">
                     <i data-lucide="folder-open" class="w-10 h-10 text-blue-500 mb-2"></i>
-                    <span class="text-xs font-bold text-blue-700">VER CARPETA DE FOTOS</span>
+                    <span class="text-xs font-bold text-blue-700 uppercase">VER CARPETA DE FOTOS</span>
                 </div>
             `;
         } else {
             const directUrl = convertirLinkDrive(d.foto);
             fotoContainer.innerHTML = `
-                <div class="relative w-32 h-32 rounded border border-slate-300 overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="window.open('${directUrl}', '_blank')">
+                <div class="relative w-32 h-32 rounded border border-slate-300 overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer uppercase" onclick="window.open('${directUrl}', '_blank')">
                     <img src="${directUrl}" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                         <i data-lucide="external-link" class="text-white w-6 h-6"></i>
@@ -962,7 +980,7 @@ function editarAlquiler(i) {
         }
         if(typeof lucide !== 'undefined') lucide.createIcons();
     } else {
-        fotoContainer.innerHTML = '<span class="text-xs text-slate-500 italic">Sin registro fotográfico</span>';
+        fotoContainer.innerHTML = '<span class="text-xs text-slate-500 italic uppercase">Sin registro fotográfico</span>';
     }
 }
 
@@ -979,7 +997,7 @@ function abrirModalAlq(nuevo) {
         document.getElementById('alq-preview-container').innerHTML = ''; 
         document.getElementById('alq-preview-container').classList.add('hidden'); 
         
-        document.getElementById('alq-foto-actual').innerHTML = '<span class="text-xs text-slate-500 italic">Sin registro fotográfico</span>';
+        document.getElementById('alq-foto-actual').innerHTML = '<span class="text-xs text-slate-500 italic uppercase">Sin registro fotográfico</span>';
     } 
 }
 
@@ -996,7 +1014,7 @@ function borrarTarea(rowIndex) { if(confirm("¿Eliminar esta actividad?")) { goo
 function cerrarModalTarea() { document.getElementById('modal-tarea').classList.add('hidden'); document.getElementById('form-tarea').reset(); }
 function guardarTarea() { const datos = { rowIndex: document.getElementById('task-rowIndex').value, actividad: document.getElementById('task-desc').value, responsable: document.getElementById('task-resp').value, idTrafo: document.getElementById('task-trafo').value, prioridad: document.getElementById('task-prio').value }; const btn = document.querySelector('#modal-tarea button:last-child'); const txtOriginal = btn.innerText; btn.innerText = "Guardando..."; btn.disabled = true; google.script.run.withSuccessHandler((listaActualizada) => { cerrarModalTarea(); tareasCache = listaActualizada; renderizarTareas(listaActualizada); showToast(datos.rowIndex ? "Tarea actualizada" : "Tarea creada"); btn.innerText = txtOriginal; btn.disabled = false; }).crearNuevaActividad(datos); }
 function moverTarea(ix, est) { google.script.run.withSuccessHandler((listaActualizada) => { tareasCache = listaActualizada; renderizarTareas(listaActualizada); }).actualizarEstadoActividad({ index: ix, estado: est }); }
-function renderizarTareas(d) { ['pendiente', 'proceso', 'terminado'].forEach(k => { const col = document.getElementById('col-' + k); if(col) col.innerHTML = ''; }); d.forEach((t, index) => { const colName = t.estado === 'PENDIENTE' ? 'pendiente' : (t.estado === 'EN PROCESO' ? 'proceso' : 'terminado'); const col = document.getElementById('col-' + colName); if(!col) return; let botonAvance = ''; if(t.estado === 'PENDIENTE') { botonAvance = `<button onclick="moverTarea(${t.rowIndex},'EN PROCESO')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 p-1.5 rounded-full shadow-sm" title="Iniciar Tarea"><i data-lucide="play" class="w-3 h-3"></i></button>`; } else if (t.estado === 'EN PROCESO') { botonAvance = `<button onclick="moverTarea(${t.rowIndex},'TERMINADO')" class="bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 p-1.5 rounded-full shadow-sm" title="Finalizar Tarea"><i data-lucide="check" class="w-3 h-3"></i></button>`; } const html = `<div class="task-card relative group bg-white p-3 rounded shadow-sm border border-slate-200 hover:shadow-md transition-all"><div class="text-[10px] text-slate-400 mb-1 flex justify-between font-mono"><span>${t.fecha}</span><span class="font-bold text-slate-600 bg-slate-100 px-1 rounded">${t.idTrafo||'S/N'}</span></div><p class="font-bold text-slate-800 text-sm mb-2 leading-tight pr-6">${t.actividad}</p><div class="absolute top-2 right-2">${botonAvance}</div><div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100"><div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700 border border-blue-200">${t.responsable ? t.responsable.charAt(0) : '?'}</div><span class="text-xs text-slate-500 font-medium truncate max-w-[100px]">${t.responsable}</span><div class="ml-auto flex gap-1 items-center">${t.prioridad === 'Alta' ? '<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">ALTA</span>' : ''}<button onclick="editarTarea(${index})" class="p-1 text-slate-400 hover:text-blue-600"><i data-lucide="pencil" class="w-3 h-3"></i></button><button onclick="borrarTarea(${t.rowIndex})" class="p-1 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button></div></div></div>`; col.insertAdjacentHTML('beforeend', html); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }
+function renderizarTareas(d) { ['pendiente', 'proceso', 'terminado'].forEach(k => { const col = document.getElementById('col-' + k); if(col) col.innerHTML = ''; }); d.forEach((t, index) => { const colName = t.estado === 'PENDIENTE' ? 'pendiente' : (t.estado === 'EN PROCESO' ? 'proceso' : 'terminado'); const col = document.getElementById('col-' + colName); if(!col) return; let botonAvance = ''; if(t.estado === 'PENDIENTE') { botonAvance = `<button onclick="moverTarea(${t.rowIndex},'EN PROCESO')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 p-1.5 rounded-full shadow-sm" title="Iniciar Tarea uppercase"><i data-lucide="play" class="w-3 h-3"></i></button>`; } else if (t.estado === 'EN PROCESO') { botonAvance = `<button onclick="moverTarea(${t.rowIndex},'TERMINADO')" class="bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 p-1.5 rounded-full shadow-sm" title="Finalizar Tarea uppercase"><i data-lucide="check" class="w-3 h-3"></i></button>`; } const html = `<div class="task-card relative group bg-white p-3 rounded shadow-sm border border-slate-200 hover:shadow-md transition-all uppercase"><div class="text-[10px] text-slate-400 mb-1 flex justify-between font-mono uppercase"><span>${t.fecha}</span><span class="font-bold text-slate-600 bg-slate-100 px-1 rounded uppercase">${t.idTrafo||'S/N'}</span></div><p class="font-bold text-slate-800 text-sm mb-2 leading-tight pr-6 uppercase">${t.actividad}</p><div class="absolute top-2 right-2">${botonAvance}</div><div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100 uppercase"><div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700 border border-blue-200 uppercase">${t.responsable ? t.responsable.charAt(0) : '?'}</div><span class="text-xs text-slate-500 font-medium truncate max-w-[100px] uppercase">${t.responsable}</span><div class="ml-auto flex gap-1 items-center uppercase">${t.prioridad === 'Alta' ? '<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold uppercase">ALTA</span>' : ''}<button onclick="editarTarea(${index})" class="p-1 text-slate-400 hover:text-blue-600 uppercase"><i data-lucide="pencil" class="w-3 h-3"></i></button><button onclick="borrarTarea(${t.rowIndex})" class="p-1 text-slate-400 hover:text-red-600 uppercase"><i data-lucide="trash-2" class="w-3 h-3"></i></button></div></div></div>`; col.insertAdjacentHTML('beforeend', html); }); if(typeof lucide !== 'undefined') lucide.createIcons(); }
 
 // =========================================================================
 // PROCESADOR DE FOTOS (ESCUDO OOM + SUPER OFFLINE)
@@ -1013,17 +1031,16 @@ async function procesarFotosInmediato(input) {
         const statusDiv = document.getElementById('status-fotos');
         const listaDiv = document.getElementById('lista-fotos');
         const etapa = document.getElementById('foto-etapa').value;
-        statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse">Optimizando e inicializando motor offline...</span>';
+        statusDiv.innerHTML = '<span class="text-blue-600 animate-pulse uppercase">Optimizando e inicializando motor offline...</span>';
         const archivos = Array.from(input.files);
 
         for (const file of archivos) {
             const divPreview = document.createElement('div');
-            divPreview.className = "bg-white p-2 rounded border flex justify-between items-center mb-1 shadow-sm";
-            divPreview.innerHTML = `<span class="text-xs truncate font-bold w-1/2">${file.name}</span><span class="text-xs text-blue-500 font-bold estado-txt">Optimizando...</span>`;
+            divPreview.className = "bg-white p-2 rounded border flex justify-between items-center mb-1 shadow-sm uppercase";
+            divPreview.innerHTML = `<span class="text-xs truncate font-bold w-1/2 uppercase">${file.name}</span><span class="text-xs text-blue-500 font-bold estado-txt uppercase">Optimizando...</span>`;
             listaDiv.prepend(divPreview);
 
             try {
-                // 1. ESCUDO OOM KILL: Decodificación fuera del hilo principal para S23 Ultra
                 const bitmap = await createImageBitmap(file);
                 const canvas = document.createElement('canvas');
                 let width = bitmap.width;
@@ -1042,7 +1059,6 @@ async function procesarFotosInmediato(input) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(bitmap, 0, 0, width, height);
                 
-                // Liberar memoria RAM masiva inmediatamente
                 bitmap.close(); 
 
                 let base64 = canvas.toDataURL('image/jpeg', quality);
@@ -1067,26 +1083,24 @@ async function procesarFotosInmediato(input) {
                     base64 = canvas.toDataURL('image/jpeg', quality);
                 }
 
-                // Destruir canvas en RAM
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 canvas.width = 0; canvas.height = 0;
 
                 const payload = { base64: base64, idTrafo: idTrafo, etapa: etapa };
 
-                // 2. ENRUTADOR SUPER OFFLINE
                 if (!navigator.onLine) {
                     await guardarFotoOffline(payload);
-                    divPreview.className = "bg-orange-50 p-2 rounded border border-orange-200 mb-1";
-                    divPreview.querySelector('.estado-txt').innerHTML = `<span class="text-orange-600"><i data-lucide="wifi-off" class="w-4 h-4 inline"></i> En Cola Local</span>`;
+                    divPreview.className = "bg-orange-50 p-2 rounded border border-orange-200 mb-1 uppercase";
+                    divPreview.querySelector('.estado-txt').innerHTML = `<span class="text-orange-600 uppercase"><i data-lucide="wifi-off" class="w-4 h-4 inline uppercase"></i> En Cola Local</span>`;
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                 } else {
-                    divPreview.querySelector('.estado-txt').innerText = "Subiendo...";
+                    divPreview.querySelector('.estado-txt').innerText = "SUBIENDO...";
                     try {
                         await new Promise((resolve, reject) => {
                             google.script.run.withSuccessHandler(res => {
                                 if (res.exito) {
-                                    divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200 mb-1";
-                                    divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800 w-2/3">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600"><i data-lucide="check" class="w-4 h-4"></i></a>`;
+                                    divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200 mb-1 uppercase";
+                                    divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800 w-2/3 uppercase">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600 uppercase"><i data-lucide="check" class="w-4 h-4 uppercase"></i></a>`;
                                     if (typeof lucide !== 'undefined') lucide.createIcons();
                                     resolve();
                                 } else {
@@ -1095,21 +1109,20 @@ async function procesarFotosInmediato(input) {
                             }).withFailureHandler(reject).subirFotoProceso(payload);
                         });
                     } catch (err) {
-                        // Falsa conexión o timeout, enviar a IndexedDB
                         await guardarFotoOffline(payload);
-                        divPreview.className = "bg-orange-50 p-2 rounded border border-orange-200 mb-1";
-                        divPreview.querySelector('.estado-txt').innerHTML = `<span class="text-orange-600"><i data-lucide="wifi-off" class="w-4 h-4 inline"></i> Cola Local (Fallo Red)</span>`;
+                        divPreview.className = "bg-orange-50 p-2 rounded border border-orange-200 mb-1 uppercase";
+                        divPreview.querySelector('.estado-txt').innerHTML = `<span class="text-orange-600 uppercase"><i data-lucide="wifi-off" class="w-4 h-4 inline uppercase"></i> Cola Local (Fallo Red)</span>`;
                         if (typeof lucide !== 'undefined') lucide.createIcons();
                     }
                 }
 
             } catch (error) {
                 console.error("Error procesando foto:", error);
-                divPreview.className = "bg-red-50 p-2 rounded border border-red-200 mb-1";
-                divPreview.innerHTML = `<span class="text-xs truncate font-bold text-red-800 w-2/3">${file.name}</span><span class="text-xs text-red-600 font-bold">Error Memoria</span>`;
+                divPreview.className = "bg-red-50 p-2 rounded border border-red-200 mb-1 uppercase";
+                divPreview.innerHTML = `<span class="text-xs truncate font-bold text-red-800 w-2/3 uppercase">${file.name}</span><span class="text-xs text-red-600 font-bold uppercase">Error Memoria</span>`;
             }
         }
-        statusDiv.innerHTML = '<span class="text-green-600 font-bold">Captura completada</span>';
+        statusDiv.innerHTML = '<span class="text-green-600 font-bold uppercase">Captura completada</span>';
         setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
         input.value = "";
     }
