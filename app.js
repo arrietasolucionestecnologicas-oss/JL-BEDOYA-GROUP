@@ -409,12 +409,34 @@ function guardarCambios(){
     else if(c.tipo_ejecucion === 'EXTERNA' && (nuevoEstado === "INGRESO" || nuevoEstado === "PENDIENTE" || nuevoEstado === "SIN INGRESAR A SISTEMA" || nuevoEstado === "" || nuevoEstado === "EN PROVEEDOR / EXTERNO")) nuevoEstado = "EN PROVEEDOR / EXTERNO";
     
     const item = datosProg[indiceActual];
-    // Sincronizar objeto local con cambios para UI inmediata
+    // Sincronizar objeto local completo para evitar Stale State en UI
     item.estado = nuevoEstado;
     item.ods = c.ods;
     item.oferta_check = c.oferta_check;
     item.cliente = document.getElementById('m-cliente').innerText; 
     item.desc = c.desc;
+    item.f_oferta = c.f_oferta;
+    item.f_autorizacion = c.f_autorizacion;
+    item.f_entrega = c.entrega;
+    item.observacion = c.observacion;
+    item.remision = c.remision;
+    item.f_listo = c.listo;
+    item.idGroup = c.idGroup;
+    item.serie = c.serie;
+    item.tipo = c.tipo;
+    item.tipo_ejecucion = c.tipo_ejecucion;
+    item.proveedor_ext = c.proveedor;
+
+    if (!item.fases) item.fases = {};
+    item.fases.pruebas_ini = c.pruebas_ini;
+    item.fases.desencube = c.desencube;
+    item.fases.desensamble = c.desensamble;
+    item.fases.bobinado = c.bobinado;
+    item.fases.ensamble = c.ensamble;
+    item.fases.horno = c.horno;
+    item.fases.encube = c.encube;
+    item.fases.pruebas_fin = c.pruebas_fin;
+    item.fases.pintura = c.pintura;
     
     actualizarFilaDOM(indiceActual, item);
 
