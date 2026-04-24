@@ -254,10 +254,16 @@
                     <div class="bg-slate-50 p-3 rounded border border-slate-200 mt-4">
                         <h6 class="font-bold text-xs text-slate-500 mb-2">EDICIÓN CRÍTICA DE DATOS TÉCNICOS</h6>
                         <div class="grid grid-cols-2 gap-2">
-                            <input id="in-idgroup" placeholder="ID Group" class="border p-1 text-xs rounded">
-                            <input id="in-serie" placeholder="Serie" class="border p-1 text-xs rounded">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">ID GROUP</label>
+                                <input id="in-idgroup" placeholder="Ej: 54" class="w-full border p-2 text-xs rounded bg-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">SERIE</label>
+                                <input id="in-serie" placeholder="Ej: SN-1234" class="w-full border p-2 text-xs rounded bg-white">
+                            </div>
                             
-                            <div class="col-span-2">
+                            <div class="col-span-2 mt-1">
                                 <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">TIPO SERVICIO FINAL</label>
                                 <select id="in-tipo" class="w-full border p-2 text-xs rounded font-bold bg-white outline-none focus:ring-1 focus:ring-blue-500">
                                     <option value="">-- SELECCIONAR --</option>
@@ -276,7 +282,10 @@
                                 </select>
                             </div>
 
-                            <input id="in-desc" placeholder="Descripción" class="col-span-2 border p-1 text-xs rounded">
+                            <div class="col-span-2 mt-1">
+                                <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">DESCRIPCIÓN DEL EQUIPO</label>
+                                <input id="in-desc" placeholder="Ej: 75 KVA 13200/240..." class="w-full border p-2 text-xs rounded bg-white">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -483,20 +492,46 @@
 
     <div id="modal-historico" class="fixed inset-0 bg-slate-900/90 z-[70] hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl p-6 space-y-4">
-             <h3 class="font-black text-xl uppercase">Cargar Histórico Manual</h3>
+             <h3 class="font-black text-xl uppercase mb-2">Cargar Histórico Manual</h3>
              <div class="grid grid-cols-2 gap-3">
-                 <input id="hist-idjlb" placeholder="ID JLB" class="border p-2 rounded">
-                 <input id="hist-idgroup" placeholder="ID Group" class="border p-2 rounded">
-                 <input id="hist-fecha" type="date" class="border p-2 rounded">
-                 <input id="hist-cliente" placeholder="Cliente" class="border p-2 rounded">
+                 <div>
+                     <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">ID JLB</label>
+                     <input id="hist-idjlb" placeholder="Ej: 13500" class="w-full border p-2 text-sm rounded bg-white font-bold">
+                 </div>
+                 <div>
+                     <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">ID GROUP</label>
+                     <input id="hist-idgroup" placeholder="Ej: 80" class="w-full border p-2 text-sm rounded bg-white font-bold">
+                 </div>
+                 <div>
+                     <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">FECHA INGRESO</label>
+                     <input id="hist-fecha" type="date" class="w-full border p-2 text-sm rounded bg-white font-bold text-slate-600">
+                 </div>
+                 <div>
+                     <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">CLIENTE</label>
+                     <input id="hist-cliente" placeholder="Nombre del cliente" class="w-full border p-2 text-sm rounded bg-white font-bold uppercase">
+                 </div>
              </div>
-             <input id="hist-desc" placeholder="Descripción" class="w-full border p-2 rounded">
-             <div class="grid grid-cols-2 gap-3">
-                 <input id="hist-serie" placeholder="Serie" class="border p-2 rounded">
-                 <input id="hist-estado" placeholder="Estado (ej: ENTREGADO)" class="border p-2 rounded">
+             
+             <div class="mt-1">
+                 <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">DESCRIPCIÓN DEL EQUIPO</label>
+                 <input id="hist-desc" placeholder="Ej: 112.5 KVA 13200/240..." class="w-full border p-2 text-sm rounded bg-white font-bold uppercase">
              </div>
-             <button onclick="guardarHistorico()" class="w-full bg-orange-600 text-white font-bold py-3 rounded hover:bg-orange-700 uppercase">CARGAR AL SISTEMA</button>
-             <button onclick="document.getElementById('modal-historico').classList.add('hidden')" class="w-full text-slate-400 text-xs font-bold mt-2 uppercase">CANCELAR</button>
+
+             <div class="grid grid-cols-2 gap-3 mt-1">
+                 <div>
+                     <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">N° SERIE</label>
+                     <input id="hist-serie" placeholder="Serie del equipo" class="w-full border p-2 text-sm rounded bg-white font-bold uppercase">
+                 </div>
+                 <div>
+                     <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">ESTADO ACTUAL</label>
+                     <input id="hist-estado" placeholder="Ej: ENTREGADO" class="w-full border p-2 text-sm rounded bg-white font-bold uppercase">
+                 </div>
+             </div>
+
+             <div class="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                 <button onclick="guardarHistorico()" class="w-full bg-orange-600 text-white font-bold py-3 rounded-lg hover:bg-orange-700 uppercase transition-colors shadow">CARGAR AL SISTEMA</button>
+                 <button onclick="document.getElementById('modal-historico').classList.add('hidden')" class="w-full text-slate-400 text-xs font-bold py-2 uppercase hover:text-slate-600 transition-colors">CANCELAR</button>
+             </div>
         </div>
     </div>
 
