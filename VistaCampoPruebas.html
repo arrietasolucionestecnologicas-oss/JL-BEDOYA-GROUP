@@ -72,11 +72,9 @@
     .modo-informe .tab-content-ini, .modo-informe .tab-content-fin { display: block !important; margin-bottom: 25px; page-break-inside: avoid; }
     .modo-informe .card { border: 1px solid #000 !important; border-radius: 0 !important; box-shadow: none !important; margin-bottom: 20px !important; background: #fff !important; }
     
-    /* Inputs a Texto Plano */
     .modo-informe input, .modo-informe select, .modo-informe textarea { border: none !important; background: transparent !important; appearance: none; -moz-appearance: none; -webkit-appearance: none; box-shadow: none !important; color: #000 !important; font-weight: bold; text-align: center; padding: 2px !important; margin: 0 !important; border-radius: 0; }
     .modo-informe textarea { text-align: left; resize: none; overflow: hidden; border-bottom: 1px dashed #000 !important; }
     
-    /* Celdas y Tablas Profesionales */
     .modo-informe .input-group-text { border: none !important; background: #e9ecef !important; color: #000 !important; font-weight: bold; border-right: 1px solid #000 !important; border-radius: 0; width: 100px; }
     .modo-informe table, .modo-informe th, .modo-informe td { border: 1px solid #000 !important; color: #000 !important; vertical-align: middle; }
     .modo-informe th { background-color: #e9ecef !important; font-weight: bold; text-transform: uppercase; padding: 8px !important; }
@@ -85,18 +83,15 @@
     .modo-informe .ocultar-en-informe { display: none !important; }
     .modo-informe .mostrar-en-informe { display: block !important; }
     
-    /* Badges de Error (Mantener colores en reporte) */
     .modo-informe .badge { background: transparent !important; font-weight: 900; border-radius: 0; padding: 5px 10px; font-size: 0.9rem; }
     .modo-informe .badge.bg-danger { border: 2px solid #dc3545 !important; color: #dc3545 !important; }
     .modo-informe .badge.bg-success { border: 1px solid #198754 !important; color: #198754 !important; }
     .modo-informe .badge.bg-secondary { border: 1px dashed #aaa !important; color: #777 !important; }
     
-    /* Tipografía Estricta */
     .modo-informe h6 { font-weight: 900 !important; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 5px; color: #000 !important; margin-bottom: 15px; font-size: 1.1rem; background: #f8f9fa; padding: 8px; border-top: 1px solid #000;}
     .modo-informe h4 { text-align: center; border-bottom: 4px double #000; padding-bottom: 15px; margin-bottom: 25px; color: #000 !important; font-size: 1.6rem; text-transform: uppercase; font-weight: 900; }
     .modo-informe .alert { border: 2px solid #000 !important; background: transparent !important; color: #000 !important; border-radius: 0; padding: 15px !important;}
     
-    /* Caja de Veredicto Automático */
     .veredicto-box { border: 3px solid #000; padding: 20px; margin-top: 30px; background: #fff; font-family: 'Courier New', Courier, monospace; white-space: pre-wrap; font-size: 1rem; font-weight: bold; color: #000; line-height: 1.5; }
     .veredicto-conforme { border-color: #198754; color: #000; }
     .veredicto-alerta { border-color: #dc3545; color: #000; }
@@ -112,7 +107,7 @@
   <div class="overlay" onclick="toggleMenu()"></div>
 
   <div class="sidebar" id="sidebar">
-    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V41.4 | Reportes Inteligentes</small></div>
+    <div class="brand"><h5 class="text-primary fw-bold m-0"><i class="fas fa-bolt me-2"></i>SISTEMA TÉCNICO</h5><small class="text-muted">V43.0 | UI Blindada</small></div>
     <div class="mt-4">
       <div class="nav-link active" onclick="nav('home', this)"><i class="fas fa-home me-2"></i> Inicio</div>
       <div class="small text-muted fw-bold px-3 mt-3 mb-2">MÓDULOS</div>
@@ -486,7 +481,7 @@
                     <div class="row g-2">
                         <div class="col-6"><small>Icc Aplicada</small><input type="number" id="${l.id}_icc" class="form-control" onchange="calcLoss('${l.id}')"></div>
                         <div class="col-6"><small>Vcc Medido</small><input type="number" id="${l.id}_vcc" class="form-control" onchange="calcLoss('${l.id}')"></div>
-                        <div class="col-12"><small>Pérdidas Totales (Wcc) [VA]</small><input type="number" id="${l.id}_wcc" class="form-control bg-light text-danger" readonly></div>
+                        <div class="col-12"><small>Pérdidas (Wcc) [Watts]</small><input type="number" id="${l.id}_wcc" class="form-control bg-light text-danger" title="Borre y digite los Watts reales si usa Vatímetro"></div>
                     </div>
                 </div>
                 <div class="card p-3 border-warning">
@@ -494,7 +489,7 @@
                     <div class="d-none mostrar-en-informe mb-2 fw-bold text-center border-bottom pb-1">PRUEBA EN VACÍO (SIN CARGA)</div>
                     <div class="row g-2 mb-2">
                         <div class="col-6"><small>Vo Aplicado</small><input type="number" id="${l.id}_vo" class="form-control" onchange="calcLoss('${l.id}')"></div>
-                        <div class="col-6"><small>Pérdidas (Wo)</small><input type="number" id="${l.id}_wo" class="form-control bg-light text-warning" readonly></div>
+                        <div class="col-6"><small>Pérdidas (Wo) [Watts]</small><input type="number" id="${l.id}_wo" class="form-control bg-light text-warning"></div>
                     </div>
                     <div class="input-group">
                         <input id="${l.id}_io1" class="form-control" placeholder="Io1" onchange="calcLoss('${l.id}')">
@@ -551,14 +546,11 @@
         const view = document.getElementById('view-' + mod);
         if(!view) return;
         
-        // 1. Evaluar las pruebas para generar el veredicto
         generarVeredictoNorma(mod);
         
-        // 2. Activar las clases CSS de reporte
         document.body.classList.add('is-modo-informe');
         view.classList.add('modo-informe');
         
-        // 3. Ajustar textareas al contenido para evitar barras de scroll en el PDF/Pantallazo
         view.querySelectorAll('textarea').forEach(el => {
             el.style.height = 'auto';
             el.style.height = (el.scrollHeight + 10) + 'px';
@@ -583,59 +575,80 @@
         }
     }
     
-    // --- LÓGICA DE VEREDICTO AUTOMÁTICO (NORMA NTC/IEEE) ---
+    // HOTFIX BUG 4: Veredicto puramente Matemático (Desacoplado del DOM Text)
     function generarVeredictoNorma(mod) {
         let reporte = "EVALUACIÓN TÉCNICA Y METROLÓGICA (AUTO-DIAGNÓSTICO):\n============================================================\n\n";
         let fallas = 0;
 
-        // 1. Evaluando Aislamiento (Solo verificamos si hay datos)
         let ais_atbt = getVal(`${mod}_atbt`);
         if(ais_atbt) reporte += `[ℹ️] AISLAMIENTO: Registrado.\n`;
 
-        // 2. Evaluando TTR (Tolerancia Max 0.5%)
+        // MATEMÁTICA TTR CRUDA
+        let vp = parseFloat(DATA.vp) || 0;
+        let vs = parseFloat(DATA.vs) || 0;
+        let f = (DATA.fases === 3) ? 1.73205 : 1;
         let ttrFalla = false;
         let tapsTTR = [];
+        let nomTap = 3;
+        if(DATA.derivaciones === "+1") nomTap = 2;
+        if(DATA.derivaciones === "0") nomTap = 1;
+
         for(let i=1; i<=5; i++) {
-            let badge = document.getElementById(`err-${mod}-${i}`);
-            if(badge && badge.innerText !== '-') {
-                let err = parseFloat(badge.innerText.replace('%',''));
-                if(err > 0.5) { ttrFalla = true; tapsTTR.push(i); }
+            let u = getNum(`inp-${mod}-uv-${i}`);
+            let v = (DATA.fases === 3) ? getNum(`inp-${mod}-vw-${i}`) : 0;
+            let w = (DATA.fases === 3) ? getNum(`inp-${mod}-wu-${i}`) : 0;
+            if(u>0 || v>0 || w>0) {
+                let factorVoltage = 1 + ((nomTap - i) * 0.025);
+                let ttr_teorico = ((vp * factorVoltage) / vs) * f;
+                let maxErr = 0;
+                [u,v,w].forEach(val => {
+                    if(val>0) {
+                        let err = Math.abs((ttr_teorico - val)/ttr_teorico) * 100;
+                        if(err > maxErr) maxErr = err;
+                    }
+                });
+                if(maxErr > 0.5) { ttrFalla = true; tapsTTR.push(i); }
             }
         }
+
         if(ttrFalla) { reporte += `[❌] TTR: NO CONFORME (Desviación > 0.5% detectada en Tap ${tapsTTR.join(', ')}).\n`; fallas++; }
         else { reporte += `[✅] TTR: CONFORME (Desviaciones dentro del margen de 0.5%).\n`; }
 
-        // 3. Evaluando Resistencia (Tolerancia Desbalance Max 5%)
+        // MATEMÁTICA RESISTENCIA CRUDA
         let resFalla = false;
-        for(let i=1; i<=5; i++) {
-            let badge = document.getElementById(`res-err-${mod}-pri-${i}`);
-            if(badge && badge.innerText !== '-') {
-                let err = parseFloat(badge.innerText.replace('%',''));
-                if(err > 5.0) resFalla = true;
+        if(DATA.fases === 3) {
+            for(let i=1; i<=5; i++) {
+                let r1 = getNum(`inp-${mod}-r-uv-${i}`);
+                let r2 = getNum(`inp-${mod}-r-vw-${i}`);
+                let r3 = getNum(`inp-${mod}-r-wu-${i}`);
+                if(r1>0 && r2>0 && r3>0) {
+                    let avg = (r1+r2+r3)/3;
+                    let maxDev = Math.max(Math.abs(r1-avg), Math.abs(r2-avg), Math.abs(r3-avg));
+                    if((maxDev/avg)*100 > 5.0) resFalla = true;
+                }
             }
-        }
-        let secBadge = document.getElementById(`res-err-${mod}-sec`);
-        if(secBadge && secBadge.innerText !== '-') {
-            let err = parseFloat(secBadge.innerText.replace('%',''));
-            if(err > 5.0) resFalla = true;
+            let s1=getNum(`${mod}_pnx`), s2=getNum(`${mod}_pny`), s3=getNum(`${mod}_pnz`);
+            if(s1>0 && s2>0 && s3>0) {
+                let avgS = (s1+s2+s3)/3;
+                let maxDevS = Math.max(Math.abs(s1-avgS), Math.abs(s2-avgS), Math.abs(s3-avgS));
+                if((maxDevS/avgS)*100 > 5.0) resFalla = true;
+            }
         }
         
         if(resFalla) { reporte += `[❌] RESISTENCIA: NO CONFORME (Desbalance entre fases > 5%).\n`; fallas++; }
         else { reporte += `[✅] RESISTENCIA: CONFORME (Desbalance equilibrado ≤ 5%).\n`; }
 
-        // 4. Evaluando Pérdidas de Corto (Wcc) - Tolerancia +10%
-        let wccMed = getNum(`${mod}_wcc`); // Calculado en VA
+        // MATEMÁTICA PÉRDIDAS (Wcc y Wo)
+        let wccMed = getNum(`${mod}_wcc`); 
         let wccGar = getNum(`${mod}_gar_wcarga`);
         if(wccMed > 0 && wccGar > 0) {
             let maxWcc = wccGar * 1.10; 
             if(wccMed > maxWcc) { 
-                reporte += `[⚠️] PÉRDIDAS CON CARGA (Wcc): ALERTA.\n    - Límite Norma (+10%): ${maxWcc.toFixed(2)} W\n    - Calculado (VA): ${wccMed} VA.\n    *Nota: El valor aparente supera el límite. Requiere validación con factor de potencia real.\n`; 
-                // No lo contamos como falla directa por la diferencia VA vs W, solo alerta.
+                reporte += `[⚠️] PÉRDIDAS CON CARGA (Wcc): ALERTA.\n    - Límite Norma (+10%): ${maxWcc.toFixed(2)} W\n    - Registrado: ${wccMed}.\n    *Verifique si el valor ingresado corresponde a Watts reales o VA aparentes.\n`; 
             }
-            else { reporte += `[✅] PÉRDIDAS CON CARGA (Wcc): CONFORME (Incluso en VA no supera el límite de Wattios).\n`; }
+            else { reporte += `[✅] PÉRDIDAS CON CARGA (Wcc): CONFORME (Valor registrado no supera tolerancia +10%).\n`; }
         }
 
-        // 5. Evaluando Pérdidas de Vacío (Wo) - Tolerancia +10%
         let woMed = getNum(`${mod}_wo`);
         let woGar = getNum(`${mod}_gar_wvacio`);
         if(woMed > 0 && woGar > 0) {
@@ -649,7 +662,7 @@
         const box = document.getElementById(`${mod}_veredicto_auto`);
         if(box) {
             if(fallas === 0) {
-                reporte += "DICTAMEN FINAL: EQUIPO APTO. PRUEBAS DENTRO DE PARÁMETROS NORMATIVOS.";
+                reporte += "DICTAMEN FINAL: EQUIPO APTO. PRUEBAS PRINCIPALES DENTRO DE PARÁMETROS.";
                 box.className = "veredicto-box mostrar-en-informe veredicto-conforme";
             } else {
                 reporte += "DICTAMEN FINAL: EL EQUIPO PRESENTA DESVIACIONES CRÍTICAS FUERA DE NORMA. REQUIERE REVISIÓN INGENIERIL.";
@@ -657,16 +670,6 @@
             }
             box.innerText = reporte;
         }
-    }
-
-    function verProtocolo(mod) {
-        if(!DATA.entrada) return Swal.fire('Error','Seleccione una entrada','warning');
-        loading(true);
-        google.script.run.withSuccessHandler(res => {
-            loading(false);
-            if(res.found) window.open(res.url, '_blank');
-            else Swal.fire({title: 'No encontrado', text: '¿Deseas generarlo?', icon: 'info', showCancelButton: true, confirmButtonText: 'Sí'}).then((r) => { if(r.isConfirmed) generarProtocoloCliente(mod); });
-        }).withFailureHandler(e => { loading(false); Swal.fire('Error', e.toString(), 'error'); }).buscarProtocoloExistente({entrada: DATA.entrada, tipo: mod});
     }
 
     function initInsp() { document.getElementById('form_insp').classList.remove('d-none'); const list = [{c:'ESTRUCTURA', i:['Placa','Pintura','Cuba','Expansion','Gabinete','Radiadores','Borne']},{c:'ACCESORIOS', i:['Termometro','Nivel','Silica','Valv.Drenaje','Valv.Presion','Buchholz']},{c:'BUJES', i:['Bujes AT','Bujes BT','Herrajes AT','Herrajes BT']},{c:'FUGAS', i:['Empaque Tapa-Tanque','Empaque Bujes AT','Empaque Bujes BT']},{c:'PRUEBAS PRELIMINARES', i:['TTR','Aislamiento','Resistencia', 'Vacio', 'Corto']}]; let h=''; list.forEach(g => { h+=`<tr class="bg-light fw-bold"><td colspan="2">${g.c}</td></tr>`; let options = '<option value="" selected></option>'; if(g.c === 'PRUEBAS PRELIMINARES') options += '<option>CONFORME</option><option>NO CONFORME</option><option>N/A</option>'; else if(g.c === 'FUGAS') options += '<option>BUENO</option><option>MALO</option><option>CAMBIAR</option><option>N/A</option>'; else options += '<option>BUENO</option><option>MALO</option><option>FALTANTE</option><option>CAMBIAR</option><option>PINTAR</option><option>LIMPIAR</option><option>N/A</option>'; g.i.forEach(it => { let id = 'chk_' + it.replace(/ /g,'').replace('.','').replace('-','').toLowerCase(); h+=`<tr><td>${it}</td><td><select id="${id}" class="form-select form-select-sm">${options}</select></td></tr>`; }); }); document.getElementById('insp_body').innerHTML = h; if(DATA.saved_insp) { const d = DATA.saved_insp; if(d.servicio) document.getElementById('insp_servicio').value = d.servicio; if(d.observaciones) document.getElementById('insp_obs').value = d.observaciones; if(d.realizado) document.getElementById('insp_realizado').value = d.realizado; const ids = ['placa','pintura','cuba','expansion','gabinete','radiadores','borne','termometro','nivel','silica','valvdrenaje','valvpresion','buchholz','bujesat','bujesbt','herrajesat','herrajesbt','ttr','aislamiento','resistencia']; ids.forEach(k => { const el = document.getElementById('chk_'+k); if(el && d[k]) el.value = d[k]; }); if(d.fugatapa) setVal('chk_empaquetapatanque', d.fugatapa); if(d.fugabujes_at) setVal('chk_empaquebujesat', d.fugabujes_at); if(d.fugabujes_bt) setVal('chk_empaquebujesbt', d.fugabujes_bt); if(d.vacio) setVal('chk_vacio', d.vacio); if(d.corto) setVal('chk_corto', d.corto); const lblInsp = document.getElementById('lbl-fecha-insp'); if(lblInsp) { if(d.estado_cert === 'CERTIFICADO') lblInsp.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> CERTIFICADO EL: ' + formatearFechaDato(d.fecha_registro) + '</span>'; else lblInsp.innerHTML = '<span class="text-warning text-dark"><i class="fas fa-edit"></i> EN BORRADOR: ' + formatearFechaDato(d.fecha_registro) + '</span>'; } } else { const lblInsp = document.getElementById('lbl-fecha-insp'); if(lblInsp) lblInsp.innerHTML = "<span class='text-muted'>Equipo nuevo / Sin inspección</span>"; } }
@@ -677,18 +680,12 @@
         Swal.fire({ title:'No Existe', text:'¿Crear Hoja de Vida?', icon:'question', showCancelButton:true, confirmButtonText:'Sí, Crear' }).then(r => { 
             if(r.isConfirmed) { 
                 document.getElementById('new_entrada').value = val;
-                
                 if(ITEM_SELECCIONADO && String(ITEM_SELECCIONADO.id) === String(val)) {
                     if(ITEM_SELECCIONADO.cliente) document.getElementById('new_cliente').value = ITEM_SELECCIONADO.cliente;
                     if(ITEM_SELECCIONADO.serie) document.getElementById('new_serie').value = ITEM_SELECCIONADO.serie;
-                    
-                    let kva = "";
-                    const desc = ITEM_SELECCIONADO.descripcion || "";
-                    const match = desc.match(/(\d+(\.\d+)?)\s*KVA/i);
-                    if(match) kva = match[1];
-                    if(kva) document.getElementById('new_kva').value = kva;
+                    let kva = ""; const desc = ITEM_SELECCIONADO.descripcion || ""; const match = desc.match(/(\d+(\.\d+)?)\s*KVA/i);
+                    if(match) kva = match[1]; if(kva) document.getElementById('new_kva').value = kva;
                 }
-                
                 if(modalCrear) modalCrear.show(); 
             } 
         }); 
@@ -700,14 +697,23 @@
     function getNum(id) { const v=parseFloat(document.getElementById(id).value); return isNaN(v)?0:v; }
     function setVal(id, val) { const el=document.getElementById(id); if(el) el.value = val; }
     function openTab(mod, tabId, btn) { document.querySelectorAll(`.tab-content-${mod}`).forEach(e => e.classList.add('d-none')); document.getElementById(`tab_${mod}_${tabId}`).classList.remove('d-none'); btn.closest('.nav').querySelectorAll('.nav-link').forEach(e => e.classList.remove('active')); btn.classList.add('active'); }
-    function monitorCambios(mod) { const container = document.getElementById('form_' + mod); if(!container) return; container.addEventListener('input', function() { let f = recopilarDatos(mod); localStorage.setItem('backup_' + f.entrada, JSON.stringify(f)); }); }
+    
+    // HOTFIX BUG 2: Degradación elegante del LocalStorage en iframes bloqueados
+    function monitorCambios(mod) { 
+        const container = document.getElementById('form_' + mod); 
+        if(!container) return; 
+        container.addEventListener('input', function() { 
+            let f = recopilarDatos(mod); 
+            try { localStorage.setItem('backup_' + f.entrada, JSON.stringify(f)); }
+            catch(e) { /* Storage bloqueado por políticas del navegador, ignorar silenciosamente */ }
+        }); 
+    }
 
     function abrirAgenda() { if(modalAgenda) modalAgenda.show(); cargarAgenda(); }
     
     function cargarAgenda() {
        const c = document.getElementById('listaAgendaContainer');
        c.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Sincronizando con Producción...</p></div>';
-       
        google.script.run.withSuccessHandler(res => {
            let lista = res.data || res; 
            if(res.error) { c.innerHTML = `<div class="alert alert-danger">Error: ${res.error}</div>`; return; }
@@ -717,13 +723,14 @@
        }).withFailureHandler(e => { c.innerHTML = `<div class="alert alert-danger">Error de Conexión: ${e}</div>`; }).obtenerDatosProgramacion();
     }
 
+    // HOTFIX BUG 5: Enlazar al ID Inmutable, no al index mutante
     function renderAgenda(lista) {
        const c = document.getElementById('listaAgendaContainer'); c.innerHTML = '';
        if(lista.length === 0) {
            c.innerHTML = '<div class="text-center py-5 text-muted">No se encontraron resultados con ese filtro.</div>';
            return;
        }
-       lista.forEach((item, index) => {
+       lista.forEach(item => {
            let badgeClass = item.empresa === 'JLB' ? 'badge-jlb' : 'badge-group';
            let estadoTecnico = item.estadoTecnico || "PENDIENTE";
            let colorTecnico = item.colorTecnico || "secondary";
@@ -731,7 +738,7 @@
            if (colorTecnico === 'purple') badgeColorClass = 'bg-purple';
 
            let html = `
-           <div class="card agenda-card mb-3 p-3 border-left-${colorTecnico} ${colorTecnico}" onclick="seleccionarDeAgenda(${index})">
+           <div class="card agenda-card mb-3 p-3 border-left-${colorTecnico} ${colorTecnico}" onclick="seleccionarDeAgendaPorId('${item.id}')">
                <div class="d-flex justify-content-between align-items-start">
                    <div>
                        <span class="badge ${badgeClass} mb-1">${item.empresa} #${item.id}</span>
@@ -749,52 +756,31 @@
 
     function filtrarAgenda(criterio, btn) {
        if(criterio) CRITERIO_FILTRO_ACTUAL = criterio;
-       if(btn) {
-           document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
-           btn.classList.add('active');
-       }
-
+       if(btn) { document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
        const q = document.getElementById('filtroAgenda').value.toLowerCase();
-       
        const filtrados = AGENDA_CACHE.filter(i => {
            const matchTexto = i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q);
            let matchEstado = true;
            const textoTarjeta = (i.estadoTecnico || "").toUpperCase();
-           
            if (CRITERIO_FILTRO_ACTUAL === 'warning') matchEstado = textoTarjeta.includes("INSPECCION") || textoTarjeta.includes("DIAGNOSTICO") || textoTarjeta.includes("PENDIENTE");
            else if (CRITERIO_FILTRO_ACTUAL === 'primary') matchEstado = (textoTarjeta.includes("REPARACION") || textoTarjeta.includes("EN PROCESO")) && !textoTarjeta.includes("FINALES");
            else if (CRITERIO_FILTRO_ACTUAL === 'purple') matchEstado = textoTarjeta.includes("PRUEBAS FINALES") || textoTarjeta.includes("PROTOCOLO");
-           
            return matchTexto && matchEstado;
        });
-       
        renderAgenda(filtrados);
     }
     
-    function seleccionarDeAgenda(index) {
-        const q = document.getElementById('filtroAgenda').value.toLowerCase();
-        const filtrados = AGENDA_CACHE.filter(i => {
-           const matchTexto = i.cliente.toLowerCase().includes(q) || i.id.toString().includes(q);
-           let matchEstado = true;
-           const textoTarjeta = (i.estadoTecnico || "").toUpperCase();
-           if (CRITERIO_FILTRO_ACTUAL === 'warning') matchEstado = textoTarjeta.includes("INSPECCION") || textoTarjeta.includes("DIAGNOSTICO") || textoTarjeta.includes("PENDIENTE");
-           else if (CRITERIO_FILTRO_ACTUAL === 'primary') matchEstado = (textoTarjeta.includes("REPARACION") || textoTarjeta.includes("EN PROCESO")) && !textoTarjeta.includes("FINALES");
-           else if (CRITERIO_FILTRO_ACTUAL === 'purple') matchEstado = textoTarjeta.includes("PRUEBAS FINALES") || textoTarjeta.includes("PROTOCOLO");
-           return matchTexto && matchEstado;
-        });
-
-        if(filtrados[index]) {
-            ITEM_SELECCIONADO = filtrados[index];
+    // HOTFIX BUG 5: Localización robusta por ID Absoluto
+    function seleccionarDeAgendaPorId(idStr) {
+        const item = AGENDA_CACHE.find(i => String(i.id) === String(idStr));
+        if(item) {
+            ITEM_SELECCIONADO = item;
             modalAgenda.hide();
             
             let moduloDestino = 'insp';
-            if (ITEM_SELECCIONADO.colorTecnico === 'purple') {
-                moduloDestino = 'fin';
-            } else if (ITEM_SELECCIONADO.colorTecnico === 'warning') {
-                moduloDestino = 'insp';
-            } else {
-                moduloDestino = 'insp';
-            }
+            if (ITEM_SELECCIONADO.colorTecnico === 'purple') moduloDestino = 'fin';
+            else if (ITEM_SELECCIONADO.colorTecnico === 'warning') moduloDestino = 'insp';
+            else moduloDestino = 'insp';
 
             document.getElementById('search_' + moduloDestino).value = ITEM_SELECCIONADO.id;
             buscar(moduloDestino);
@@ -826,21 +812,13 @@
         }).then((result) => {
             if (result.isConfirmed && result.value) {
                 loading(true);
-                const payload = { 
-                    entrada: DATA.entrada_curva, 
-                    temp: temp, 
-                    at_bt: at_bt, at_t: at_t, bt_t: bt_t, 
-                    obs: getVal('curva_obs'), 
-                    realizado: result.value 
-                };
+                const payload = { entrada: DATA.entrada_curva, temp: temp, at_bt: at_bt, at_t: at_t, bt_t: bt_t, obs: getVal('curva_obs'), realizado: result.value };
                 google.script.run.withSuccessHandler(res => {
                     if(res.success) {
                         ['curva_temp','curva_at_bt','curva_at_t','curva_bt_t','curva_obs'].forEach(id => document.getElementById(id).value = '');
                         buscarCurva();
                         Swal.fire({toast:true, position:'top-end', icon:'success', title:'Registrado', timer:2000});
-                    } else {
-                        loading(false); Swal.fire('Error', res.error, 'error');
-                    }
+                    } else { loading(false); Swal.fire('Error', res.error, 'error'); }
                 }).registrarLecturaCurva(payload);
             }
         });
@@ -889,6 +867,17 @@
         }); 
     }
     
+    // HOTFIX BUG 6: Restaurada la función huérfana de Historial
+    function verDocHistorial(entrada) {
+        if(!entrada) return;
+        loading(true);
+        google.script.run.withSuccessHandler(res => {
+            loading(false);
+            if(res.found) window.open(res.url, '_blank');
+            else Swal.fire('Sin Protocolo', 'No se ha generado el documento oficial para esta entrada.', 'info');
+        }).withFailureHandler(e => { loading(false); Swal.fire('Error', e.toString(), 'error'); }).buscarProtocoloExistente({entrada: entrada, tipo: 'fin'});
+    }
+
     function filtrarHistorial() { const q = document.getElementById('filtroHistorial').value.toLowerCase(); const filtrados = HISTORIAL_CACHE.filter(i => i.entrada.toString().includes(q) || i.cliente.toLowerCase().includes(q) ); renderHistorial(filtrados); }
     function crearHoja() { const d = { entrada: getVal('new_entrada'), cliente: getVal('new_cliente'), kva: getVal('new_kva'), marca: getVal('new_marca'), serie: getVal('new_serie'), grupo: getVal('new_grupo'), vp: getVal('new_vp'), vs: getVal('new_vs'), fases: getVal('new_fases'), anio: getVal('new_anio'), tipo: getVal('new_tipo'), proyecto: getVal('new_proyecto'), celular: getVal('new_celular'), peso: getVal('new_peso'), aceite: getVal('new_aceite'), derivaciones: getVal('new_deriv') }; if(!d.cliente || !d.kva) return Swal.fire('Faltan Datos','','warning'); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { if(modalCrear) modalCrear.hide(); Swal.fire('Creado','','success').then(() => { if(ITEM_SELECCIONADO) { document.getElementById('search_insp').value = d.entrada; buscar('insp'); } }); } else Swal.fire('Error',res.error,'error'); }).registrarNuevaEntrada(d); }
     function initHV() { document.getElementById('form_hv').classList.remove('d-none'); document.getElementById('edit_entrada').value=DATA.entrada; document.getElementById('edit_cliente').value=DATA.cliente; document.getElementById('edit_kva').value=DATA.kva; document.getElementById('edit_marca').value=DATA.marca; document.getElementById('edit_serie').value=DATA.serie; document.getElementById('edit_vp').value=DATA.vp; document.getElementById('edit_vs').value=DATA.vs; document.getElementById('edit_fases').value=DATA.fases; document.getElementById('edit_grupo').value=DATA.grupo; document.getElementById('edit_anio').value=DATA.anio; document.getElementById('edit_tipo').value=DATA.tipo; document.getElementById('edit_peso').value=DATA.peso; document.getElementById('edit_aceite').value=DATA.aceite; document.getElementById('edit_deriv').value=DATA.derivaciones; document.getElementById('edit_celular').value=DATA.celular; document.getElementById('edit_proyecto').value=DATA.proyecto; }
@@ -902,17 +891,14 @@
         let saved = (mod === 'ini') ? DATA.saved_ini : DATA.saved_fin; 
         let originalDb = saved ? {...saved} : null; 
         
-        let localData = localStorage.getItem('backup_' + DATA.entrada); 
-        if(localData) { 
-            try { 
+        try { 
+            let localData = localStorage.getItem('backup_' + DATA.entrada); 
+            if(localData) {
                 saved = JSON.parse(localData); 
-                if(originalDb) {
-                    saved.fecha_registro = originalDb.fecha_registro;
-                    saved.estado_cert = originalDb.estado_cert;
-                }
+                if(originalDb) { saved.fecha_registro = originalDb.fecha_registro; saved.estado_cert = originalDb.estado_cert; }
                 Swal.fire({toast:true, position:'top-end', icon:'warning', title:'Borrador local recuperado', timer:2000}); 
-            } catch(e){} 
-        } 
+            }
+        } catch(e){} 
         
         let taps=5; 
         let hTTR='<thead><tr><th>T</th><th>U-V</th>'+(DATA.fases==3?'<th>V-W</th><th>W-U</th>':'')+'<th>%Err</th></tr></thead><tbody>'; 
@@ -976,7 +962,30 @@
 
     function calcTTRDev(mod, tapIdx) { let deriv = DATA.derivaciones || "+2"; let nomTap = 3; if(deriv === '+1') nomTap = 2; if(deriv === '0') nomTap = 1; let steps = nomTap - tapIdx; let factor = 1 + (steps * 0.025); let vp_tap = parseFloat(DATA.vp) * factor; let vs = parseFloat(DATA.vs); let factorFases = (DATA.fases === 3) ? 1.73205 : 1; let ttr_teorico = (vp_tap / vs) * factorFases; let u = getNum(`inp-${mod}-uv-${tapIdx}`); let v = (DATA.fases==3) ? getNum(`inp-${mod}-vw-${tapIdx}`) : 0; let w = (DATA.fases==3) ? getNum(`inp-${mod}-wu-${tapIdx}`) : 0; let errMax = 0; let hayDato = false; [u,v,w].forEach(val => { if(val > 0) { hayDato = true; let err = Math.abs((ttr_teorico - val)/ttr_teorico) * 100; if(err > errMax) errMax = err; } }); let badge = document.getElementById(`err-${mod}-${tapIdx}`); if(hayDato) { badge.innerText = errMax.toFixed(2) + '%'; badge.className = errMax > 0.5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
     function calcResBal(mod, type, rowIdx) { if(DATA.fases !== 3) return; let v1=0, v2=0, v3=0; let badgeId = ''; if(type === 'pri') { v1 = getNum(`inp-${mod}-r-uv-${rowIdx}`); v2 = getNum(`inp-${mod}-r-vw-${rowIdx}`); v3 = getNum(`inp-${mod}-r-wu-${rowIdx}`); badgeId = `res-err-${mod}-pri-${rowIdx}`; } else { v1 = getNum(`${mod}_pnx`); v2 = getNum(`${mod}_pny`); v3 = getNum(`${mod}_pnz`); badgeId = `res-err-${mod}-sec`; } let badge = document.getElementById(badgeId); if(v1 > 0 && v2 > 0 && v3 > 0) { let avg = (v1 + v2 + v3) / 3; let maxDev = Math.max(Math.abs(v1-avg), Math.abs(v2-avg), Math.abs(v3-avg)); let percentDev = (maxDev / avg) * 100; badge.innerText = percentDev.toFixed(2) + '%'; badge.className = percentDev > 5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
-    function calcLoss(mod) { let f = (DATA.fases === 3) ? 1.73205 : 1; document.getElementById(`${mod}_wcc`).value = (getNum(`${mod}_vcc`)*getNum(`${mod}_icc`)*f).toFixed(2); let i1=getNum(`${mod}_io1`), i2=getNum(`${mod}_io2`), i3=getNum(`${mod}_io3`); let div = (DATA.fases === 3) ? 3 : 1; let iavg = (i1+i2+i3)/div; document.getElementById(`${mod}_wo`).value = (getNum(`${mod}_vo`)*iavg*f).toFixed(2); }
+    
+    // HOTFIX BUG 3: CÁLCULOS METROLÓGICOS FÍSICAMENTE CORRECTOS (VA como recomendación, no imposición)
+    function calcLoss(mod) { 
+        let f = (DATA.fases === 3) ? 1.73205 : 1; 
+        
+        let vcc = getNum(`${mod}_vcc`);
+        let icc = getNum(`${mod}_icc`);
+        if(vcc > 0 && icc > 0) {
+            let s_cc = vcc * icc * f; // VA Aparentes
+            let wccInput = document.getElementById(`${mod}_wcc`);
+            // Sugerimos el valor VA, pero el técnico puede borrarlo e ingresar Watts de Vatímetro
+            if(wccInput.value === "") wccInput.value = s_cc.toFixed(2);
+        }
+        
+        let vo = getNum(`${mod}_vo`);
+        let i1=getNum(`${mod}_io1`), i2=getNum(`${mod}_io2`), i3=getNum(`${mod}_io3`); 
+        if(vo > 0 && (i1 > 0 || i2 > 0 || i3 > 0)) {
+            let div = (DATA.fases === 3) ? 3 : 1; 
+            let iavg = (i1+i2+i3)/div; 
+            let s_o = vo * iavg * f; // VA Aparentes
+            let woInput = document.getElementById(`${mod}_wo`);
+            if(woInput.value === "") woInput.value = s_o.toFixed(2);
+        }
+    }
     
     function recopilarDatos(mod) { 
         let f = {...DATA}; 
@@ -1041,7 +1050,16 @@
     }
 
     function generarProtocoloCliente(mod) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) Swal.fire({title:'Protocolo Generado', html:`<a href="${res.url}" target="_blank" class="btn btn-dark btn-lg">Abrir Protocolo (PDF)</a>`, icon:'success'}); else Swal.fire('Error Word',res.error,'error'); }).generarProtocoloClienteDoc(f); }
-    function fin(res) { if(res.success && DATA.entrada) localStorage.removeItem('backup_' + DATA.entrada); loading(false); if(res.success && res.message) { Swal.fire('Guardado', res.message, 'success'); } else if(res.success) { res.url ? window.open(res.url) : Swal.fire('Guardado','Datos en Excel','success'); } else { Swal.fire('Error',res.error,'error'); } }
+    
+    function fin(res) { 
+        loading(false); 
+        if(res.success && DATA.entrada) {
+            try { localStorage.removeItem('backup_' + DATA.entrada); } catch(e){}
+        }
+        if(res.success && res.message) { Swal.fire('Guardado', res.message, 'success'); } 
+        else if(res.success) { res.url ? window.open(res.url) : Swal.fire('Guardado','Datos en Excel','success'); } 
+        else { Swal.fire('Error',res.error,'error'); } 
+    }
   </script>
 </body>
 </html>
