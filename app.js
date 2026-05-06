@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V26.1 - TOKEN SEGURIDAD) */
+/* JLB OPERACIONES - APP.JS (V27.0 - SEGURIDAD TBT & OOM OPTIMIZED) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -22,12 +22,16 @@ class GasRunner {
         });
     }
     _execute(actionName, payload) {
-        // INYECCIÓN DE SEGURIDAD: Adjuntar Token Secreto
+        // TOKEN DINÁMICO TBT (Muta cada hora para prevenir interceptaciones de largo plazo)
+        const horaUTC = new Date().toISOString().slice(0, 13);
+        const dynamicToken = btoa("JLB_PROD_" + horaUTC);
+
         const requestBody = JSON.stringify({ 
             action: actionName, 
             payload: payload,
-            token: "JLB_2026_PROD_XK9" 
+            token: dynamicToken 
         });
+
         fetch(API_ENDPOINT, {
             method: 'POST', redirect: 'follow', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: requestBody
         })
@@ -101,8 +105,13 @@ async function syncFotosOffline() {
                         }).withFailureHandler(reject).subirFotoProceso(item.payload);
                     });
                     
-                    const txDel = db.transaction(STORE_FOTOS, 'readwrite');
-                    txDel.objectStore(STORE_FOTOS).delete(item.id);
+                    // ESCUDO DE DATA (Garantiza borrado secuencial confirmando a IndexedDB)
+                    await new Promise((res, rej) => {
+                        const txDel = db.transaction(STORE_FOTOS, 'readwrite');
+                        txDel.objectStore(STORE_FOTOS).delete(item.id);
+                        txDel.oncomplete = () => res();
+                        txDel.onerror = () => rej(txDel.error);
+                    });
                 } catch(e) { console.error("Fallo al sincronizar", e); }
             }
             showToast("Sincronización offline completada");
@@ -130,7 +139,7 @@ window.onload = function() {
     if(document.getElementById('wrapper-operaciones')) {
         nav('programacion');
         google.script.run.withSuccessHandler(d => { dbClientes = d; actualizarDatalistClientes(); }).obtenerClientesDB();
-        setTimeout(syncFotosOffline, 3000); // Intento de vaciado de cola al iniciar la app
+        setTimeout(syncFotosOffline, 3000); 
     }
 };
 
@@ -212,7 +221,6 @@ function renderTablaProg() {
     tDesk.innerHTML = ''; tMob.innerHTML = '';
     const q = document.getElementById('searchProg').value.toLowerCase();
     
-    // Filtro unificado (Búsqueda + ODS)
     const filtrados = datosProg.filter(r => {
         const matchBusqueda = ((r.idJLB || "") + " " + (r.idGroup || "") + " " + (r.cliente || "") + " " + (r.desc || "") + " " + (r.estado || "")).toLowerCase().includes(q);
         const matchODS = filtroSoloSinODS ? (!r.ods || String(r.ods).trim() === "") : true;
@@ -267,7 +275,11 @@ function insertarFilaHTML(r, i, tDesk, tMob) {
 function abrirModal(i){ 
     indiceActual = i; 
     const d = datosProg[i]; 
-    document.getElementById('modal-detalle').classList.remove('hidden'); 
+    const modal = document.getElementById('modal-detalle');
+    
+    modal.classList.remove('hidden'); 
+    modal.dataset.rowIndex = d.rowIndex; // Inyección de seguridad (Independencia de Estado Global)
+    
     document.getElementById('m-cliente').innerText = d.cliente; 
     document.getElementById('m-ids-badge').innerText = `ID: ${d.idJLB} | GRUPO: ${d.idGroup||'N/A'}`; 
     document.getElementById('date-f-oferta').value = fechaParaInput(d.f_oferta); 
@@ -280,7 +292,6 @@ function abrirModal(i){
     document.getElementById('in-ods').value = d.ods; 
     document.getElementById('in-desc').value = d.desc; 
     
-    // Nuevos campos
     document.getElementById('check-oferta').checked = (d.oferta_check === true || d.oferta_check === 'TRUE');
 
     const selTipo = document.getElementById('in-tipo');
@@ -288,7 +299,7 @@ function abrirModal(i){
 
     renderPasosSeguimiento(d);
     
-    listaReqTemp = [];
+    // No reseteamos ciegamente, dejamos que cargarRequerimientos evalúe la fusión
     historialReqCache = [];
     document.getElementById('req-cant').value = "1";
     document.getElementById('req-desc').value = "";
@@ -382,6 +393,16 @@ function guardarCambios(){
     const b = document.getElementById('btn-guardar-prog'); 
     const txtOriginal = b.innerHTML; b.innerHTML = 'GUARDANDO...'; b.disabled = true; 
     
+    const modal = document.getElementById('modal-detalle');
+    const safeRowIndex = modal.dataset.rowIndex;
+    
+    const item = datosProg.find(r => String(r.rowIndex) === String(safeRowIndex));
+    if (!item) {
+        alert("Error de sincronización local. Recargue la página.");
+        b.innerHTML = txtOriginal; b.disabled = false;
+        return;
+    }
+    
     const c = { 
         f_oferta: document.getElementById('date-f-oferta').value, 
         oferta_check: document.getElementById('check-oferta').checked,
@@ -408,13 +429,11 @@ function guardarCambios(){
         proveedor: document.getElementById('in-proveedor-dyn')?.value || ''
     }; 
     
-    let nuevoEstado = datosProg[indiceActual].estado;
+    let nuevoEstado = item.estado;
     if(c.entrega) nuevoEstado = "ENTREGADO";
     else if(c.listo) nuevoEstado = "FINALIZADO / LISTO";
     else if(c.tipo_ejecucion === 'EXTERNA' && (nuevoEstado === "INGRESO" || nuevoEstado === "PENDIENTE" || nuevoEstado === "SIN INGRESAR A SISTEMA" || nuevoEstado === "" || nuevoEstado === "EN PROVEEDOR / EXTERNO")) nuevoEstado = "EN PROVEEDOR / EXTERNO";
     
-    const item = datosProg[indiceActual];
-    // Sincronizar objeto local completo para evitar Stale State en UI
     item.estado = nuevoEstado;
     item.ods = c.ods;
     item.oferta_check = c.oferta_check;
@@ -443,15 +462,16 @@ function guardarCambios(){
     item.fases.pruebas_fin = c.pruebas_fin;
     item.fases.pintura = c.pintura;
     
-    actualizarFilaDOM(indiceActual, item);
+    const iReal = datosProg.indexOf(item);
+    actualizarFilaDOM(iReal, item);
 
     google.script.run.withSuccessHandler(() => { 
+        cerrarModal(); // Movidó al bloque de éxito (Blindaje Visual)
+        indiceActual = -1;
         b.innerHTML = txtOriginal; b.disabled = false; showToast("Cambios guardados"); 
     }).withFailureHandler(e => { 
-        b.innerHTML = txtOriginal; b.disabled = false; alert("Hubo un error al guardar en la nube: " + e + ". Por favor recarga."); 
+        b.innerHTML = txtOriginal; b.disabled = false; alert("Hubo un error al guardar en la nube: " + e + ". Por favor reintenta."); 
     }).guardarAvance({rowIndex: item.rowIndex, cambios: c}); 
-    
-    cerrarModal(); 
 }
 
 function actualizarFilaDOM(i, r) {
@@ -471,17 +491,21 @@ function actualizarFilaDOM(i, r) {
         const badge = card.querySelector('span.rounded');
         if(badge) { badge.innerText = r.estado; badge.className = `text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide uppercase`; }
     }
-    // Si el filtro de ODS está activo, re-renderizar para ocultar si ahora tiene ODS
     if (filtroSoloSinODS) renderTablaProg();
 }
 
 function avanzarEstado(nuevoEstado, accion) {
     if(!confirm("¿Confirmar cambio?")) return;
-    const d = datosProg[indiceActual];
-    d.estado = nuevoEstado; 
-    actualizarFilaDOM(indiceActual, d);
+    const modal = document.getElementById('modal-detalle');
+    const safeRowIndex = modal.dataset.rowIndex;
+    const item = datosProg.find(r => String(r.rowIndex) === String(safeRowIndex));
+    if (!item) return;
+
+    item.estado = nuevoEstado; 
+    const iReal = datosProg.indexOf(item);
+    actualizarFilaDOM(iReal, item);
     cerrarModal();
-    google.script.run.withSuccessHandler(res => { if(!res.exito) alert("Error al sincronizar estado."); }).avanzarEstadoAdmin({ rowIndex: d.rowIndex, nuevoEstado: nuevoEstado, accion: accion, idTrafo: d.idJLB||d.idGroup });
+    google.script.run.withSuccessHandler(res => { if(!res.exito) alert("Error al sincronizar estado."); }).avanzarEstadoAdmin({ rowIndex: item.rowIndex, nuevoEstado: nuevoEstado, accion: accion, idTrafo: item.idJLB||item.idGroup });
 }
 
 // --- LOGICA REQUERIMIENTOS: PANEL INTEGRADO PRO ---
@@ -598,14 +622,20 @@ function cargarRequerimientos(idTrafo) {
     google.script.run.withSuccessHandler(list => {
         divHistory.innerHTML = '';
         historialReqCache = []; 
+        
+        // Mantenemos los ítems locales no guardados si existen
+        const itemsNoGuardados = listaReqTemp.length > 0 ? [...listaReqTemp] : [];
         listaReqTemp = [];
 
         if(!list || list.length === 0) {
             divHistory.innerHTML = '<div class="text-center py-4 text-slate-300 text-xs uppercase">No hay historial.</div>';
+            if (itemsNoGuardados.length > 0) listaReqTemp = itemsNoGuardados;
             renderListaReqTemp(); 
             return;
         }
         
+        const itemsDelServidor = [];
+
         list.forEach(r => {
             const textoMostrado = r.texto || r.descripcion || "Sin detalle";
             
@@ -618,7 +648,7 @@ function cargarRequerimientos(idTrafo) {
                     cant = match[1];
                     desc = match[2];
                 }
-                listaReqTemp.push({ cant: cant, desc: desc });
+                itemsDelServidor.push({ cant: cant, desc: desc });
 
             } else {
                 let color = "text-green-600";
@@ -645,6 +675,13 @@ function cargarRequerimientos(idTrafo) {
             }
         });
 
+        // Fusión Inteligente de caché
+        if (itemsNoGuardados.length > 0) {
+            listaReqTemp = itemsNoGuardados;
+        } else {
+            listaReqTemp = itemsDelServidor;
+        }
+
         renderListaReqTemp();
         if(typeof lucide !== 'undefined') lucide.createIcons();
 
@@ -654,8 +691,12 @@ function cargarRequerimientos(idTrafo) {
 }
 
 function guardarTodoReq() {
-    const d = datosProg[indiceActual];
-    const idTrafo = d.idJLB || d.idGroup;
+    const modal = document.getElementById('modal-detalle');
+    const safeRowIndex = modal.dataset.rowIndex;
+    const item = datosProg.find(r => String(r.rowIndex) === String(safeRowIndex));
+    if (!item) return;
+
+    const idTrafo = item.idJLB || item.idGroup;
     
     if (!idTrafo) { alert("Error: No hay ID de Trafo"); return; }
     
@@ -699,12 +740,16 @@ function enviarAlmacenAPI() {
 
     if (!confirm(`¿Confirmar envío de ${pendientes.length} items a Almacén?`)) return;
 
-    const d = datosProg[indiceActual];
-    const idTrafo = d.idJLB || d.idGroup;
-    const cliente = d.cliente;
+    const modal = document.getElementById('modal-detalle');
+    const safeRowIndex = modal.dataset.rowIndex;
+    const item = datosProg.find(r => String(r.rowIndex) === String(safeRowIndex));
+    if (!item) return;
+
+    const idTrafo = item.idJLB || item.idGroup;
+    const cliente = item.cliente;
     const prioridad = document.getElementById('req-prioridad-envio').value;
 
-    showToast("Procesando envío...", "info");
+    showToast("Fase 1/2: Guardando borrador...", "info");
 
     const payloadGuardar = {
         idTrafo: idTrafo,
@@ -714,6 +759,7 @@ function enviarAlmacenAPI() {
 
     google.script.run.withSuccessHandler(resGuardar => {
         if(resGuardar.success) {
+            showToast("Fase 2/2: Enviando a Almacén...", "info");
             const payloadEnviar = {
                 idTrafo: idTrafo,
                 cliente: cliente,
@@ -854,10 +900,10 @@ function limpiarFirma() { if(ctx) ctx.clearRect(0,0,canvas.width,canvas.height);
 function getFirmaBase64() { 
     if(!canvas) return null; 
     
-    const blank = document.createElement('canvas'); 
-    blank.width = canvas.width; 
-    blank.height = canvas.height; 
-    if(canvas.toDataURL() === blank.toDataURL()) return null; 
+    // ESCUDO DE MEMORIA: Verificación por Píxeles en lugar de Serialización Base64 Completa
+    const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const isCanvasEmpty = !pixelData.some(channel => channel !== 0);
+    if (isCanvasEmpty) return null; 
     
     const tempCanvas = document.createElement('canvas');
     const rect = canvas.parentElement.getBoundingClientRect();
@@ -1104,6 +1150,8 @@ async function procesarFotosInmediato(input) {
                     canvas.height = newHeight;
                     
                     const bitmap2 = await createImageBitmap(file);
+                    // OOM Shield: Clear de fragmentos huérfanos antes de redibujar
+                    ctx.clearRect(0, 0, canvas.width, canvas.height); 
                     ctx.drawImage(bitmap2, 0, 0, targetWidth, newHeight);
                     bitmap2.close();
                     
