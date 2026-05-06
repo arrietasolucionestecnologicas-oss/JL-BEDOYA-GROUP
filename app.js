@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V26.0 - FILTROS ODS & CHECK OFERTAS) */
+/* JLB OPERACIONES - APP.JS (V26.1 - TOKEN SEGURIDAD) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -22,7 +22,12 @@ class GasRunner {
         });
     }
     _execute(actionName, payload) {
-        const requestBody = JSON.stringify({ action: actionName, payload: payload });
+        // INYECCIÓN DE SEGURIDAD: Adjuntar Token Secreto
+        const requestBody = JSON.stringify({ 
+            action: actionName, 
+            payload: payload,
+            token: "JLB_2026_PROD_XK9" 
+        });
         fetch(API_ENDPOINT, {
             method: 'POST', redirect: 'follow', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: requestBody
         })
@@ -775,7 +780,7 @@ function actualizarDatalistClientes(){ const dl = document.getElementById('lista
 function autocompletarCliente(input){ const val = input.value.toUpperCase(); const found = dbClientes.find(c => c.nombre === val); if(found){ document.getElementById('in-cedula-ent').value = found.nit; document.getElementById('in-telefono-ent').value = found.telefono; document.getElementById('in-contacto-ent').value = found.contacto; document.getElementById('in-ciudad-ent').value = found.ciudad; showToast("Cliente cargado"); } }
 function abrirModalNuevaEntrada() { document.getElementById('modal-nueva-entrada').classList.remove('hidden'); setTimeout(initCanvas, 100); }
 function cerrarModalNueva() { document.getElementById('modal-nueva-entrada').classList.add('hidden'); document.getElementById('form-entrada').reset(); limpiarFirma(); }
-function filtrarProg() { renderTablaProg(); } // Centralizado en renderTablaProg para admitir filtros múltiples
+function filtrarProg() { renderTablaProg(); } 
 
 function initCanvas() { 
     canvas = document.getElementById('signature-pad'); 
