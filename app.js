@@ -466,7 +466,7 @@ function guardarCambios(){
     actualizarFilaDOM(iReal, item);
 
     google.script.run.withSuccessHandler(() => { 
-        cerrarModal(); 
+        cerrarModal(); // Movidó al bloque de éxito (Blindaje Visual)
         indiceActual = -1;
         b.innerHTML = txtOriginal; b.disabled = false; showToast("Cambios guardados"); 
     }).withFailureHandler(e => { 
