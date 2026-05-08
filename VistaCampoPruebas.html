@@ -116,6 +116,7 @@
       <div class="nav-link" onclick="nav('curva', this)"><i class="fas fa-temperature-high me-2"></i> Curva Secamiento</div>
       <div class="nav-link" onclick="nav('ini', this)"><i class="fas fa-flask me-2"></i> Pruebas Iniciales</div>
       <div class="nav-link" onclick="nav('fin', this)"><i class="fas fa-check-circle me-2"></i> Pruebas Finales</div>
+      <div class="nav-link" onclick="nav('calidad', this)"><i class="fas fa-award me-2"></i> Calidad (QA)</div>
       <div class="nav-link" onclick="nav('hist', this)"><i class="fas fa-history me-2"></i> Historial</div>
     </div>
   </div>
@@ -136,7 +137,8 @@
           <div class="col-md-3 col-6"><div class="card p-4 text-center h-100 border-start border-5 border-danger hover-effect" onclick="nav('curva')"><i class="fas fa-temperature-high fa-3x text-danger mb-3"></i><h5>Secamiento</h5></div></div>
           <div class="col-md-3 col-6"><div class="card p-4 text-center h-100 border-start border-5 border-warning hover-effect" onclick="nav('ini')"><i class="fas fa-flask fa-3x text-warning mb-3"></i><h5>Iniciales</h5></div></div>
           <div class="col-md-3 col-6"><div class="card p-4 text-center h-100 border-start border-5 border-primary hover-effect" onclick="nav('fin')"><i class="fas fa-check-circle fa-3x text-primary mb-3"></i><h5>Finales</h5></div></div>
-          <div class="col-md-3 col-6"><div class="card p-4 text-center h-100 border-start border-5 border-info hover-effect" onclick="nav('hist')"><i class="fas fa-history fa-3x text-info mb-3"></i><h5>Historial</h5></div></div>
+          <div class="col-md-3 col-6"><div class="card p-4 text-center h-100 border-start border-5 border-info hover-effect" onclick="nav('calidad')"><i class="fas fa-award fa-3x text-info mb-3"></i><h5>Calidad (QA)</h5></div></div>
+          <div class="col-md-3 col-6"><div class="card p-4 text-center h-100 border-start border-5 border-secondary hover-effect" onclick="nav('hist')"><i class="fas fa-history fa-3x text-secondary mb-3"></i><h5>Historial</h5></div></div>
         </div>
       </div>
     </div>
@@ -210,6 +212,51 @@
         </div>
     </div>
 
+    <div id="template-lab"></div>
+
+    <div id="view-calidad" class="view">
+      <h4 class="mb-3 fw-bold text-info"><i class="fas fa-award me-2"></i>Control de Calidad (QA)</h4>
+      <div class="card p-3 mb-3">
+        <div class="input-group">
+            <input type="number" id="search_calidad" class="form-control fw-bold" placeholder="Entrada..." list="list_fin">
+            <button class="btn btn-info text-white fw-bold" onclick="buscar('calidad')">Validar Trafo</button>
+        </div>
+      </div>
+      
+      <div id="form_calidad" class="d-none">
+        <div class="alert alert-info text-dark py-2 mb-3 text-center">
+            <div class="row">
+                <div class="col-4 border-end"><small>ENTRADA</small><div class="fw-bold lbl-entrada"></div></div>
+                <div class="col-4 border-end"><small>KVA</small><div class="fw-bold lbl-kva"></div></div>
+                <div class="col-4"><small>CLIENTE</small><div class="fw-bold lbl-cliente text-truncate"></div></div>
+            </div>
+        </div>
+
+        <div class="card p-3 mb-3 border-info">
+            <h6 class="text-info fw-bold"><i class="fas fa-tasks me-2"></i>CHECKLIST DE LIBERACIÓN</h6>
+            <table class="table table-sm align-middle mt-2">
+                <tbody>
+                    <tr><td>1. Revisión de Pintura y Acabados</td><td><select id="qa_pintura" class="form-select form-select-sm"><option value="PENDIENTE">Pendiente</option><option value="APROBADO">Aprobado</option><option value="RECHAZADO">Rechazado</option></select></td></tr>
+                    <tr><td>2. Hermeticidad (Cero Fugas)</td><td><select id="qa_fugas" class="form-select form-select-sm"><option value="PENDIENTE">Pendiente</option><option value="APROBADO">Aprobado</option><option value="RECHAZADO">Rechazado</option></select></td></tr>
+                    <tr><td>3. Accesorios Completos y Ajustados</td><td><select id="qa_accesorios" class="form-select form-select-sm"><option value="PENDIENTE">Pendiente</option><option value="APROBADO">Aprobado</option><option value="RECHAZADO">Rechazado</option></select></td></tr>
+                    <tr><td>4. Placa de Características Instalada</td><td><select id="qa_placa" class="form-select form-select-sm"><option value="PENDIENTE">Pendiente</option><option value="APROBADO">Aprobado</option><option value="RECHAZADO">Rechazado</option></select></td></tr>
+                    <tr><td>5. Protocolo de Pruebas Conforme</td><td><select id="qa_protocolo" class="form-select form-select-sm"><option value="PENDIENTE">Pendiente</option><option value="APROBADO">Aprobado</option><option value="RECHAZADO">Rechazado</option></select></td></tr>
+                </tbody>
+            </table>
+            
+            <label class="label-mini mt-2">Observaciones de Calidad</label>
+            <textarea id="qa_obs" class="form-control mb-3" rows="2"></textarea>
+            
+            <label class="label-mini text-info">Inspector de Calidad</label>
+            <input id="qa_inspector" class="form-control fw-bold border-info mb-3">
+            
+            <button class="btn btn-info text-white w-100 fw-bold py-3 shadow" onclick="guardarCalidad()">
+                <i class="fas fa-stamp me-2"></i> LIBERAR EQUIPO (APROBAR)
+            </button>
+        </div>
+      </div>
+    </div>
+
     <div id="view-hist" class="view">
         <h4 class="mb-3 fw-bold text-info"><i class="fas fa-database me-2"></i>Historial (Local)</h4>
         <div class="card p-3 mb-3"><input type="text" id="filtroHistorial" class="form-control" placeholder="Buscar..." onkeyup="filtrarHistorial()"></div>
@@ -222,8 +269,6 @@
             </div>
         </div>
     </div>
-
-    <div id="template-lab"></div>
 
   </div> 
 
@@ -281,17 +326,14 @@
                     return (...args) => {
                         let payload = (args.length > 0) ? args[0] : {}; 
                         
-                        // FIX: Si recibe múltiples argumentos, agruparlos según convención
                         if (args.length > 1) {
                             if (prop === 'guardarPruebasIniciales' || prop === 'guardarPruebasFinales') {
                                 payload = { form: args[0], soloGuardar: args[1], esCertificacion: args[2] };
                             } else if (prop === 'registrarLecturaCurva' || prop === 'subirFotoProceso') {
-                                // Agrupar params antiguos a nuevo payload
-                                payload = args[0]; // Asume que ya venía unificado en las últimas versiones
+                                payload = args[0]; 
                             }
                         }
 
-                        // SEGURIDAD TBT 
                         const horaUTC = new Date().toISOString().slice(0, 13);
                         const dynamicToken = btoa("JLB_PROD_" + horaUTC);
 
@@ -300,7 +342,7 @@
                             body: JSON.stringify({ 
                                 action: prop, 
                                 payload: payload,
-                                token: dynamicToken // FIX: Token de Autenticación
+                                token: dynamicToken 
                             }) 
                         })
                         .then(r => r.json())
@@ -538,7 +580,7 @@
       document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
       if(btnElement) btnElement.classList.add('active');
       else { 
-          const map = {'hv':0, 'insp':1, 'curva':2, 'ini':3, 'fin':4, 'hist':5}; 
+          const map = {'hv':0, 'insp':1, 'curva':2, 'ini':3, 'fin':4, 'calidad':5, 'hist':6}; 
           if(map[viewId] !== undefined) document.querySelectorAll('.sidebar .nav-link')[map[viewId]].classList.add('active'); 
       }
       if(window.innerWidth<=768) toggleMenu();
@@ -580,7 +622,6 @@
         }
     }
     
-    // HOTFIX BUG 5: Veredicto puramente Matemático (Blindaje getNum)
     function generarVeredictoNorma(mod) {
         let reporte = "EVALUACIÓN TÉCNICA Y METROLÓGICA (AUTO-DIAGNÓSTICO):\n============================================================\n\n";
         let fallas = 0;
@@ -588,7 +629,6 @@
         let ais_atbt = getVal(`${mod}_atbt`);
         if(ais_atbt) reporte += `[ℹ️] AISLAMIENTO: Registrado.\n`;
 
-        // MATEMÁTICA TTR CRUDA
         let vp = parseFloat(DATA.vp) || 0;
         let vs = parseFloat(DATA.vs) || 0;
         let f = (DATA.fases === 3) ? 1.73205 : 1;
@@ -619,7 +659,6 @@
         if(ttrFalla) { reporte += `[❌] TTR: NO CONFORME (Desviación > 0.5% detectada en Tap ${tapsTTR.join(', ')}).\n`; fallas++; }
         else { reporte += `[✅] TTR: CONFORME (Desviaciones dentro del margen de 0.5%).\n`; }
 
-        // MATEMÁTICA RESISTENCIA CRUDA
         let resFalla = false;
         if(DATA.fases === 3) {
             for(let i=1; i<=5; i++) {
@@ -643,7 +682,6 @@
         if(resFalla) { reporte += `[❌] RESISTENCIA: NO CONFORME (Desbalance entre fases > 5%).\n`; fallas++; }
         else { reporte += `[✅] RESISTENCIA: CONFORME (Desbalance equilibrado ≤ 5%).\n`; }
 
-        // MATEMÁTICA PÉRDIDAS (Wcc y Wo)
         let wccMed = getNum(`${mod}_wcc`); 
         let wccGar = getNum(`${mod}_gar_wcarga`);
         if(wccMed > 0 && wccGar > 0) {
@@ -682,12 +720,11 @@
     function guardarInsp(pdf) { if(!getVal('insp_realizado')) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatosInspeccion(); f.estado_cert = "PENDIENTE"; loading(true); const action = pdf ? 'procesarInspeccion' : 'guardarSoloBD_Inspeccion'; google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { if(res.url) window.open(res.url); else Swal.fire('Guardado','Estado: PENDIENTE','success'); } else Swal.fire('Error',res.error,'error'); })[action](f); }
     function certificarInspeccion() { if(!getVal('insp_realizado')) return Swal.fire('Firma Requerida', '', 'warning'); Swal.fire({ title: '¿Certificar?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, Certificar' }).then((result) => { if (result.isConfirmed) { loading(true); let f = recopilarDatosInspeccion(); f.estado_cert = "CERTIFICADO"; google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { Swal.fire('¡Certificado!', '', 'success'); if(res.url) window.open(res.url); } else Swal.fire('Error', res.error, 'error'); }).procesarInspeccion(f); } }); }
     
-    // D1 FIX: Limpiar DATA global antes de buscar para evitar mix de datos
     function buscar(mod) { 
         const val = document.getElementById('search_'+mod).value; 
         if(!val) return Swal.fire('Error','Ingrese Entrada','warning'); 
         loading(true); 
-        DATA = {}; // RESET GLOBAL
+        DATA = {}; 
         google.script.run.withSuccessHandler(res => { 
             loading(false); 
             if(res.found) { 
@@ -700,6 +737,7 @@
                 if(mod === 'insp') initInsp(); 
                 else if(mod === 'hv') initHV(); 
                 else if(mod === 'curva') buscarCurva(); 
+                else if(mod === 'calidad') document.getElementById('form_calidad').classList.remove('d-none');
                 else initLab(mod); 
             } else { 
                 Swal.fire({ title:'No Existe', text:'¿Crear Hoja de Vida?', icon:'question', showCancelButton:true, confirmButtonText:'Sí, Crear' }).then(r => { 
@@ -722,7 +760,6 @@
     function loading(show) { const el=document.getElementById('loader'); show?el.classList.remove('d-none'):el.classList.add('d-none'); }
     function getVal(id) { const el=document.getElementById(id); return el?el.value:''; }
     
-    // BUG 5 FIX: Blindaje null pointer
     function getNum(id) { 
         const el = document.getElementById(id);
         if(!el) return 0;
@@ -739,7 +776,7 @@
         container.addEventListener('input', function() { 
             let f = recopilarDatos(mod); 
             try { localStorage.setItem('backup_' + f.entrada, JSON.stringify(f)); }
-            catch(e) { /* Ignorar cuota o iframes incognitos */ }
+            catch(e) { }
         }); 
     }
 
@@ -750,14 +787,13 @@
        c.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Sincronizando con Producción...</p></div>';
        google.script.run.withSuccessHandler(res => {
            let lista = res.data || res; 
-           // BUG 3 FIX: Detección de error desde endpoint backend
            if(res.error || (lista.length > 0 && lista[0] && lista[0].error)) { 
                c.innerHTML = `<div class="alert alert-danger">Error: ${res.error || lista[0].mensaje}</div>`; return; 
            }
            if(!Array.isArray(lista) || lista.length === 0) { c.innerHTML = `<div class="text-center py-5 text-muted"><i class="fas fa-check-circle fa-2x mb-2 text-success"></i><br>¡Todo al día! No hay pendientes.</div>`; return; }
            AGENDA_CACHE = lista;
            renderAgenda(lista);
-       }).withFailureHandler(e => { c.innerHTML = `<div class="alert alert-danger">Error de Conexión: ${e}</div>`; }).obtenerDatosProgramacion(); // Llama al wrapper global que ya invoca a obtenerAgendaCampo (o enrutalo directo al action real en Main.gs si creaste el case)
+       }).withFailureHandler(e => { c.innerHTML = `<div class="alert alert-danger">Error de Conexión: ${e}</div>`; }).obtenerDatosProgramacion(); 
     }
 
     function renderAgenda(lista) {
@@ -1106,6 +1142,33 @@
         if(res.success && res.message) { Swal.fire('Guardado', res.message, 'success'); } 
         else if(res.success) { res.url ? window.open(res.url) : Swal.fire('Guardado','Datos en Excel','success'); } 
         else { Swal.fire('Error',res.error,'error'); } 
+    }
+
+    // --- NUEVO: FUNCIÓN PARA GUARDAR ESTADO DE CALIDAD ---
+    function guardarCalidad() {
+        if(!getVal('qa_inspector')) return Swal.fire('Falta Firma', 'Ingrese el nombre del inspector.', 'warning');
+        
+        const payload = {
+            entrada: DATA.entrada,
+            pintura: getVal('qa_pintura'),
+            fugas: getVal('qa_fugas'),
+            accesorios: getVal('qa_accesorios'),
+            placa: getVal('qa_placa'),
+            protocolo: getVal('qa_protocolo'),
+            observaciones: getVal('qa_obs'),
+            inspector: getVal('qa_inspector'),
+            estado_qa: "LIBERADO"
+        };
+        
+        loading(true);
+        google.script.run.withSuccessHandler(res => {
+            loading(false);
+            if(res.success) {
+                Swal.fire('Equipo Liberado', 'El sello de calidad se ha guardado exitosamente.', 'success');
+            } else {
+                Swal.fire('Error', res.error, 'error');
+            }
+        }).guardarFaseCalidad(payload);
     }
   </script>
 </body>
