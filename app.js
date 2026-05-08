@@ -1,4 +1,4 @@
-/* JLB OPERACIONES - APP.JS (V27.0 - SEGURIDAD TBT & OOM OPTIMIZED) */
+/* JLB OPERACIONES - APP.JS (V28.0 - SEGURIDAD TBT EXTENDIDA & OOM OPTIMIZED) */
 
 // =============================================================
 // 1. CONFIGURACIÓN
@@ -101,7 +101,8 @@ async function syncFotosOffline() {
                 try {
                     await new Promise((resolve, reject) => {
                         google.script.run.withSuccessHandler(res => {
-                            if(res.exito) resolve(); else reject(res.error);
+                            // FIX: Contrato flexible (exito o success) para mitigar falsos rechazos
+                            if(res.exito || res.success) resolve(); else reject(res.error || res.message || "Error desconocido");
                         }).withFailureHandler(reject).subirFotoProceso(item.payload);
                     });
                     
@@ -128,7 +129,7 @@ let alqFotosNuevas = [];
 let listaReqTemp = []; 
 let historialReqCache = []; 
 let canvas, ctx, isDrawing=false, indiceActual=-1;
-let filtroSoloSinODS = false; // Estado global del filtro de ODS
+let filtroSoloSinODS = false; 
 
 // VARIABLES PARA EL ROBOT DE FOTOS
 let COLA_FOTOS = [];
@@ -278,7 +279,7 @@ function abrirModal(i){
     const modal = document.getElementById('modal-detalle');
     
     modal.classList.remove('hidden'); 
-    modal.dataset.rowIndex = d.rowIndex; // Inyección de seguridad (Independencia de Estado Global)
+    modal.dataset.rowIndex = d.rowIndex; 
     
     document.getElementById('m-cliente').innerText = d.cliente; 
     document.getElementById('m-ids-badge').innerText = `ID: ${d.idJLB} | GRUPO: ${d.idGroup||'N/A'}`; 
@@ -299,7 +300,6 @@ function abrirModal(i){
 
     renderPasosSeguimiento(d);
     
-    // No reseteamos ciegamente, dejamos que cargarRequerimientos evalúe la fusión
     historialReqCache = [];
     document.getElementById('req-cant').value = "1";
     document.getElementById('req-desc').value = "";
@@ -466,7 +466,7 @@ function guardarCambios(){
     actualizarFilaDOM(iReal, item);
 
     google.script.run.withSuccessHandler(() => { 
-        cerrarModal(); // Movidó al bloque de éxito (Blindaje Visual)
+        cerrarModal(); 
         indiceActual = -1;
         b.innerHTML = txtOriginal; b.disabled = false; showToast("Cambios guardados"); 
     }).withFailureHandler(e => { 
@@ -623,7 +623,6 @@ function cargarRequerimientos(idTrafo) {
         divHistory.innerHTML = '';
         historialReqCache = []; 
         
-        // Mantenemos los ítems locales no guardados si existen
         const itemsNoGuardados = listaReqTemp.length > 0 ? [...listaReqTemp] : [];
         listaReqTemp = [];
 
@@ -675,7 +674,6 @@ function cargarRequerimientos(idTrafo) {
             }
         });
 
-        // Fusión Inteligente de caché
         if (itemsNoGuardados.length > 0) {
             listaReqTemp = itemsNoGuardados;
         } else {
@@ -716,11 +714,11 @@ function guardarTodoReq() {
         .withSuccessHandler(res => {
             btn.disabled = false; 
             btn.innerHTML = txtOriginal;
-            if (res.success) {
+            if (res.success || res.exito) {
                 showToast("✅ Borrador sincronizado");
                 cargarRequerimientos(idTrafo);
             } else {
-                alert("Error al guardar: " + res.error);
+                alert("Error al guardar: " + (res.error || res.message));
             }
         })
         .withFailureHandler(e => {
@@ -758,7 +756,7 @@ function enviarAlmacenAPI() {
     };
 
     google.script.run.withSuccessHandler(resGuardar => {
-        if(resGuardar.success) {
+        if(resGuardar.success || resGuardar.exito) {
             showToast("Fase 2/2: Enviando a Almacén...", "info");
             const payloadEnviar = {
                 idTrafo: idTrafo,
@@ -767,16 +765,16 @@ function enviarAlmacenAPI() {
             };
 
             google.script.run.withSuccessHandler(resEnvio => {
-                if (resEnvio.success) {
-                    showToast("🚀 " + resEnvio.msg);
+                if (resEnvio.success || resEnvio.exito) {
+                    showToast("🚀 " + (resEnvio.msg || "Enviado correctamente"));
                     cargarRequerimientos(idTrafo); 
                 } else {
-                    alert("Error Almacén: " + resEnvio.error);
+                    alert("Error Almacén: " + (resEnvio.error || "Fallo de integración"));
                 }
             }).enviarPedidoAlmacen(payloadEnviar);
 
         } else {
-            alert("Error guardando borrador previo: " + resGuardar.error);
+            alert("Error guardando borrador previo: " + (resGuardar.error || "Desconocido"));
         }
     }).guardarBorradorMasivo(payloadGuardar);
 }
@@ -942,7 +940,7 @@ function enviarFormulario(){
     }; 
     
     google.script.run.withSuccessHandler(r => { 
-        if(r.exito) { 
+        if(r.exito || r.success) { 
             cerrarModalNueva(); 
             b.innerHTML = txtOriginal; 
             b.disabled = false; 
@@ -950,7 +948,7 @@ function enviarFormulario(){
             cargarProgramacion(); 
             showToast("Entrada guardada"); 
         } else { 
-            alert("Error: " + r.error); 
+            alert("Error: " + (r.error || r.message)); 
             b.innerHTML = txtOriginal; 
             b.disabled = false; 
         } 
@@ -976,11 +974,11 @@ function genPDF(id, rix){
         b.disabled = true; 
         google.script.run
         .withSuccessHandler(r => { 
-            if(r.exito) { 
+            if(r.exito || r.success) { 
                 b.parentElement.innerHTML = `<a href="${r.url}" target="_blank" class="w-full bg-red-50 text-red-600 py-2 rounded text-xs font-bold flex justify-center gap-2 uppercase"><i data-lucide="file-text" class="w-4 h-4"></i> VER PDF</a>`; 
                 if(typeof lucide !== 'undefined') lucide.createIcons(); 
             } else { 
-                alert("Error del Servidor: " + r.error); 
+                alert("Error del Servidor: " + (r.error || r.message)); 
                 b.innerHTML = o; 
                 b.disabled = false; 
             } 
@@ -1077,7 +1075,7 @@ function abrirModalAlq(nuevo) {
 function cerrarModalAlq() { document.getElementById('modal-alq').classList.add('hidden'); }
 function previewAlqFoto(input) { if (input.files && input.files.length > 0) { const container = document.getElementById('alq-preview-container'); container.classList.remove('hidden'); document.getElementById('btn-limpiar-fotos').classList.remove('hidden'); Array.from(input.files).forEach(file => { const reader = new FileReader(); reader.onload = function(e) { const img = new Image(); img.src = e.target.result; img.onload = function() { const canvas = document.createElement('canvas'); const MAX_WIDTH = 1000; const scaleSize = MAX_WIDTH / img.width; if (img.width > MAX_WIDTH) { canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize; } else { canvas.width = img.width; canvas.height = img.height; } const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6); alqFotosNuevas.push(compressedDataUrl); const div = document.createElement('div'); div.className = "aspect-square rounded border border-slate-200 overflow-hidden relative"; div.innerHTML = `<img src="${compressedDataUrl}" class="w-full h-full object-cover">`; container.appendChild(div); }; }; reader.readAsDataURL(file); }); input.value = ""; } }
 function limpiarFotosAlq() { alqFotosNuevas = []; const container = document.getElementById('alq-preview-container'); container.innerHTML = ''; container.classList.add('hidden'); document.getElementById('btn-limpiar-fotos').classList.add('hidden'); }
-function guardarAlquiler() { const estadoSeleccionado = document.getElementById('alq-estado-manual').value; let cliente = document.getElementById('alq-cliente').value; if(estadoSeleccionado !== "PRESTADO") { cliente = ""; } const d = { codigo: document.getElementById('alq-codigo').value, kva: document.getElementById('alq-kva').value, marca: document.getElementById('alq-marca').value, voltajes: document.getElementById('alq-volt').value, cliente: cliente, salida: document.getElementById('alq-salida').value, regreso: document.getElementById('alq-regreso').value, estadoManual: estadoSeleccionado }; enviarAlquiler(d); cerrarModalAlq(); showToast("Datos guardados. Procesando fotos..."); if(alqFotosNuevas.length > 0) { showToast("Subiendo fotos en segundo plano...", "info"); google.script.run.withSuccessHandler(res => { if(res.exito) { google.script.run.withSuccessHandler(() => { showToast("✅ Fotos subidas y vinculadas."); cargarAlquiler(); }).actualizarFotoAlquiler({ codigo: d.codigo, url: res.url }); } else { showToast("Error subiendo fotos: " + res.error, 'error'); } }).subirFotosAlquilerBatch({ listaBase64: alqFotosNuevas, codigo: d.codigo }); } }
+function guardarAlquiler() { const estadoSeleccionado = document.getElementById('alq-estado-manual').value; let cliente = document.getElementById('alq-cliente').value; if(estadoSeleccionado !== "PRESTADO") { cliente = ""; } const d = { codigo: document.getElementById('alq-codigo').value, kva: document.getElementById('alq-kva').value, marca: document.getElementById('alq-marca').value, voltajes: document.getElementById('alq-volt').value, cliente: cliente, salida: document.getElementById('alq-salida').value, regreso: document.getElementById('alq-regreso').value, estadoManual: estadoSeleccionado }; enviarAlquiler(d); cerrarModalAlq(); showToast("Datos guardados. Procesando fotos..."); if(alqFotosNuevas.length > 0) { showToast("Subiendo fotos en segundo plano...", "info"); google.script.run.withSuccessHandler(res => { if(res.exito || res.success) { google.script.run.withSuccessHandler(() => { showToast("✅ Fotos subidas y vinculadas."); cargarAlquiler(); }).actualizarFotoAlquiler({ codigo: d.codigo, url: res.url }); } else { showToast("Error subiendo fotos: " + (res.error || res.message), 'error'); } }).subirFotosAlquilerBatch({ listaBase64: alqFotosNuevas, codigo: d.codigo }); } }
 function enviarAlquiler(d){ google.script.run.withSuccessHandler(() => { cargarAlquiler(); alqFotosNuevas=[]; }).withFailureHandler(e => { showToast("Error guardar: " + e, 'error'); }).guardarAlquiler(d); }
 function cargarActividades() { google.script.run.withSuccessHandler(list => { const s = document.getElementById('task-resp'); if(!s) return; const sel = s.value; let html = list.map(n => `<option value="${n}">${n}</option>`).join(''); html += `<option value="CREAR_NUEVO" class="font-bold text-blue-600 bg-blue-50">[ + CREAR NUEVO ]</option>`; s.innerHTML = html; if(list.includes(sel)) s.value = sel; }).obtenerTrabajadores(); google.script.run.withSuccessHandler(d => { tareasCache = d; renderizarTareas(d); }).obtenerActividades(); }
 function verificarNuevoResponsable(selectElement) { if (selectElement.value === 'CREAR_NUEVO') { const nuevoNombre = prompt("Ingrese el nombre del nuevo integrante:"); if (nuevoNombre && nuevoNombre.trim().length > 0) { const nombreFinal = nuevoNombre.trim().toUpperCase(); const opcionCarga = document.createElement("option"); opcionCarga.text = "Guardando..."; selectElement.add(opcionCarga, selectElement[0]); selectElement.selectedIndex = 0; selectElement.disabled = true; google.script.run.withSuccessHandler(nuevaLista => { let html = nuevaLista.map(n => `<option value="${n}">${n}</option>`).join(''); html += `<option value="CREAR_NUEVO" class="font-bold text-blue-600 bg-blue-50">[ + CREAR NUEVO ]</option>`; selectElement.innerHTML = html; selectElement.value = nombreFinal; if (selectElement.value !== nombreFinal) selectElement.selectedIndex = 0; selectElement.disabled = false; showToast("Trabajador creado"); }).crearTrabajador({ nombre: nombreFinal }); } else { selectElement.selectedIndex = 0; } } }
@@ -1173,21 +1171,25 @@ async function procesarFotosInmediato(input) {
                     try {
                         await new Promise((resolve, reject) => {
                             google.script.run.withSuccessHandler(res => {
-                                if (res.exito) {
+                                // FIX: Contrato flexible de éxito (exito vs success)
+                                if (res.exito || res.success) {
                                     divPreview.className = "bg-green-50 p-2 rounded border flex justify-between items-center border-green-200 mb-1 uppercase";
                                     divPreview.innerHTML = `<span class="text-xs truncate font-bold text-green-800 w-2/3 uppercase">${file.name}</span><a href="${res.url}" target="_blank" class="text-green-600 uppercase"><i data-lucide="check" class="w-4 h-4 uppercase"></i></a>`;
                                     if (typeof lucide !== 'undefined') lucide.createIcons();
                                     resolve();
                                 } else {
-                                    reject(res.error);
+                                    reject(res.error || res.message || "Error desconocido en servidor");
                                 }
                             }).withFailureHandler(reject).subirFotoProceso(payload);
                         });
                     } catch (err) {
                         await guardarFotoOffline(payload);
                         divPreview.className = "bg-orange-50 p-2 rounded border border-orange-200 mb-1 uppercase";
-                        divPreview.querySelector('.estado-txt').innerHTML = `<span class="text-orange-600 uppercase"><i data-lucide="wifi-off" class="w-4 h-4 inline uppercase"></i> Cola Local (Fallo Red)</span>`;
+                        // FIX: Exposición explícita del error para diagnóstico en la UI
+                        const errorUI = (typeof err === 'string') ? err : "Fallo Red";
+                        divPreview.querySelector('.estado-txt').innerHTML = `<span class="text-orange-600 uppercase" title="${errorUI}"><i data-lucide="wifi-off" class="w-4 h-4 inline uppercase"></i> Cola Local</span>`;
                         if (typeof lucide !== 'undefined') lucide.createIcons();
+                        console.error("Fallo al subir foto:", err);
                     }
                 }
 
