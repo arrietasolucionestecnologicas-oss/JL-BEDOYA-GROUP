@@ -1134,6 +1134,32 @@
 
     function generarProtocoloCliente(mod) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) Swal.fire({title:'Protocolo Generado', html:`<a href="${res.url}" target="_blank" class="btn btn-dark btn-lg">Abrir Protocolo (PDF)</a>`, icon:'success'}); else Swal.fire('Error Word',res.error,'error'); }).generarProtocoloClienteDoc(f); }
     
+    // --- HOTFIX: FUNCIÓN FALTANTE PARA VER EL PDF GENERADO ---
+    function verProtocolo(mod) {
+        if (!DATA || !DATA.entrada) {
+            return Swal.fire('Error', 'No hay datos cargados. Por favor valide una entrada primero.', 'warning');
+        }
+        
+        loading(true);
+        
+        // Llamamos al backend para buscar el PDF o Word en Google Drive
+        google.script.run
+            .withSuccessHandler(res => {
+                loading(false);
+                if(res.found && res.url) {
+                    // Si lo encuentra, lo abre en una pestaña nueva
+                    window.open(res.url, '_blank');
+                } else {
+                    Swal.fire('Sin Protocolo', 'Aún no se ha certificado o generado el documento oficial (PDF) para esta prueba.', 'info');
+                }
+            })
+            .withFailureHandler(err => {
+                loading(false);
+                Swal.fire('Error de Conexión', err.toString(), 'error');
+            })
+            .buscarProtocoloExistente({entrada: DATA.entrada, tipo: mod});
+    }
+
     function fin(res) { 
         loading(false); 
         if(res.success && DATA.entrada) {
