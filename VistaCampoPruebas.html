@@ -427,6 +427,11 @@
                     <i class="fas fa-camera me-1"></i> PANTALLAZO
                 </button>
             </div>
+            <div class="col-12 mt-2">
+                <button class="btn btn-success w-100 fw-bold small-text p-2 shadow" onclick="generarProtocoloCliente('fin')">
+                    <i class="fas fa-file-word me-1"></i> GENERAR WORD OFICIAL
+                </button>
+            </div>
         </div>`;
 
       const botonesIni = `
@@ -449,6 +454,11 @@
             <div class="col-6 mt-2">
                 <button class="btn btn-outline-dark w-100 fw-bold small-text p-2" onclick="toggleModoInforme('ini')">
                     <i class="fas fa-camera me-1"></i> PANTALLAZO
+                </button>
+            </div>
+            <div class="col-12 mt-2">
+                <button class="btn btn-success w-100 fw-bold small-text p-2 shadow" onclick="generarProtocoloCliente('ini')">
+                    <i class="fas fa-file-word me-1"></i> GENERAR WORD OFICIAL
                 </button>
             </div>
         </div>`;
@@ -572,7 +582,6 @@
       });
       document.getElementById('template-lab').innerHTML = html;
     }
-
     function nav(viewId, btnElement) {
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       const target = document.getElementById('view-' + viewId);
