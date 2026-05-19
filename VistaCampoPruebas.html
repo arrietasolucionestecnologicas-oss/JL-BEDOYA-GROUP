@@ -582,6 +582,7 @@
       });
       document.getElementById('template-lab').innerHTML = html;
     }
+
     function nav(viewId, btnElement) {
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       const target = document.getElementById('view-' + viewId);
@@ -1141,7 +1142,64 @@
         })[metodo](f, soloGuardar, esCertificacion);
     }
 
-    function generarProtocoloCliente(mod) { if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatos(mod); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) Swal.fire({title:'Protocolo Generado', html:`<a href="${res.url}" target="_blank" class="btn btn-dark btn-lg">Abrir Protocolo (PDF)</a>`, icon:'success'}); else Swal.fire('Error Word',res.error,'error'); }).generarProtocoloClienteDoc(f); }
+    function generarProtocoloCliente(mod) { 
+        if(!getVal(`${mod}_realizado`)) return Swal.fire('Falta Firma','','warning'); 
+        
+        Swal.fire({
+            title: 'Veredicto Final',
+            input: 'select',
+            inputOptions: {
+                'APTO': 'El equipo se encuentra apto para su correcta operación.',
+                'NO_APTO': 'El equipo presenta fallas y NO es apto para operar.',
+                'OTRO': 'Escribir observación personalizada...'
+            },
+            inputPlaceholder: 'Seleccione un veredicto',
+            showCancelButton: true,
+            confirmButtonText: 'Generar Protocolo',
+            cancelButtonText: 'Cancelar',
+            inputValidator: (value) => {
+                if (!value) return 'Debe seleccionar una opción'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                if (result.value === 'OTRO') {
+                    Swal.fire({
+                        title: 'Observación Personalizada',
+                        input: 'textarea',
+                        inputPlaceholder: 'Escriba las observaciones finales aquí...',
+                        showCancelButton: true,
+                        confirmButtonText: 'Generar'
+                    }).then((textResult) => {
+                        if (textResult.isConfirmed) {
+                            ejecutarGeneracionWord(mod, textResult.value);
+                        }
+                    });
+                } else {
+                    let textoFinal = result.value === 'APTO' 
+                        ? 'El equipo se encuentra apto para su correcta operación.' 
+                        : 'El equipo presenta fallas y NO es apto para operar.';
+                    ejecutarGeneracionWord(mod, textoFinal);
+                }
+            }
+        });
+    }
+
+    function ejecutarGeneracionWord(mod, observacionesFinales) {
+        let f = recopilarDatos(mod); 
+        f.obs_oficial = observacionesFinales;
+        
+        loading(true); 
+        google.script.run
+            .withSuccessHandler(res => { 
+                loading(false); 
+                if(res.success) {
+                    Swal.fire({title:'Protocolo Generado', html:`<a href="${res.url}" target="_blank" class="btn btn-dark btn-lg">Abrir Protocolo (Word)</a>`, icon:'success'}); 
+                } else {
+                    Swal.fire('Error Word', res.error, 'error'); 
+                }
+            })
+            .generarProtocoloClienteDoc(f);
+    }
     
     // --- HOTFIX: FUNCIÓN FALTANTE PARA VER EL PDF GENERADO ---
     function verProtocolo(mod) {
