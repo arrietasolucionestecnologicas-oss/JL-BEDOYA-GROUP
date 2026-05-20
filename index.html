@@ -454,14 +454,24 @@
                     <div><label class="label-form uppercase">F. Salida</label><input type="date" id="alq-salida" class="input-form"></div>
                     <div><label class="label-form uppercase">F. Regreso</label><input type="date" id="alq-regreso" class="input-form"></div>
                 </div>
-                <div class="bg-slate-50 p-3 rounded border">
-                    <label class="flex items-center justify-center gap-2 bg-white border border-slate-300 py-2 rounded cursor-pointer hover:bg-slate-100">
-                        <i data-lucide="camera" class="w-4 h-4 text-slate-500"></i> <span class="text-xs font-bold uppercase">AGREGAR FOTOS</span>
-                        <input type="file" multiple accept="image/*" class="hidden" onchange="previewAlqFoto(this)">
-                    </label>
-                    <div id="alq-preview-container" class="grid grid-cols-3 gap-2 mt-2 hidden"></div>
-                    <button type="button" id="btn-limpiar-fotos" onclick="limpiarFotosAlq()" class="text-xs text-red-500 underline mt-2 hidden w-full text-center uppercase">Limpiar fotos</button>
-                </div>
+               <!-- ✅ DESPUÉS — dos botones, igual al patrón del modal de Procesos -->
+<div class="bg-slate-50 p-3 rounded border">
+    <div class="grid grid-cols-2 gap-2">
+        <label class="flex items-center justify-center gap-2 bg-white border border-slate-300 py-2 rounded cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">
+            <i data-lucide="camera" class="w-4 h-4 text-blue-500"></i>
+            <span class="text-xs font-bold uppercase text-blue-600">CÁMARA</span>
+            <input type="file" accept="image/*" capture="environment" class="hidden" onchange="previewAlqFoto(this)">
+        </label>
+        <label class="flex items-center justify-center gap-2 bg-white border border-slate-300 py-2 rounded cursor-pointer hover:bg-green-50 active:bg-green-100 transition-colors">
+            <i data-lucide="image" class="w-4 h-4 text-green-500"></i>
+            <span class="text-xs font-bold uppercase text-green-600">GALERÍA</span>
+            <input type="file" accept="image/*" multiple class="hidden" onchange="previewAlqFoto(this)">
+        </label>
+    </div>
+    <div id="alq-preview-container" class="grid grid-cols-3 gap-2 mt-2 hidden"></div>
+    <button type="button" id="btn-limpiar-fotos" onclick="limpiarFotosAlq()" class="text-xs text-red-500 underline mt-2 hidden w-full text-center uppercase">Limpiar fotos</button>
+</div>
+
             </form>
             <div class="p-4 border-t">
                 <button id="btn-alq-save" onclick="guardarAlquiler()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 uppercase">GUARDAR</button>
