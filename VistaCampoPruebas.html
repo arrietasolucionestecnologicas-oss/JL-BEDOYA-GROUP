@@ -1043,14 +1043,12 @@
     function calcTTRDev(mod, tapIdx) { let deriv = DATA.derivaciones || "+2"; let nomTap = 3; if(deriv === '+1') nomTap = 2; if(deriv === '0') nomTap = 1; let steps = nomTap - tapIdx; let factor = 1 + (steps * 0.025); let vp_tap = parseFloat(DATA.vp) * factor; let vs = parseFloat(DATA.vs); let factorFases = (DATA.fases === 3) ? 1.73205 : 1; let ttr_teorico = (vp_tap / vs) * factorFases; let u = getNum(`inp-${mod}-uv-${tapIdx}`); let v = (DATA.fases==3) ? getNum(`inp-${mod}-vw-${tapIdx}`) : 0; let w = (DATA.fases==3) ? getNum(`inp-${mod}-wu-${tapIdx}`) : 0; let errMax = 0; let hayDato = false; [u,v,w].forEach(val => { if(val > 0) { hayDato = true; let err = Math.abs((ttr_teorico - val)/ttr_teorico) * 100; if(err > errMax) errMax = err; } }); let badge = document.getElementById(`err-${mod}-${tapIdx}`); if(hayDato) { badge.innerText = errMax.toFixed(2) + '%'; badge.className = errMax > 0.5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
     function calcResBal(mod, type, rowIdx) { if(DATA.fases !== 3) return; let v1=0, v2=0, v3=0; let badgeId = ''; if(type === 'pri') { v1 = getNum(`inp-${mod}-r-uv-${rowIdx}`); v2 = getNum(`inp-${mod}-r-vw-${rowIdx}`); v3 = getNum(`inp-${mod}-r-wu-${rowIdx}`); badgeId = `res-err-${mod}-pri-${rowIdx}`; } else { v1 = getNum(`${mod}_pnx`); v2 = getNum(`${mod}_pny`); v3 = getNum(`${mod}_pnz`); badgeId = `res-err-${mod}-sec`; } let badge = document.getElementById(badgeId); if(v1 > 0 && v2 > 0 && v3 > 0) { let avg = (v1 + v2 + v3) / 3; let maxDev = Math.max(Math.abs(v1-avg), Math.abs(v2-avg), Math.abs(v3-avg)); let percentDev = (maxDev / avg) * 100; badge.innerText = percentDev.toFixed(2) + '%'; badge.className = percentDev > 5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
     
-    // HOTFIX BUG 6: Alerta visual (Color Amarillo) cuando Wcc/Wo es estimado en VA
+    // HOTFIX BUG 6: Alerta visual (Color Amarillo) ajustado al método de consola local (V * I sin factor raiz de 3)
     function calcLoss(mod) { 
-        let f = (DATA.fases === 3) ? 1.73205 : 1; 
-        
         let vcc = getNum(`${mod}_vcc`);
         let icc = getNum(`${mod}_icc`);
         if(vcc > 0 && icc > 0) {
-            let s_cc = vcc * icc * f; // VA Aparentes
+            let s_cc = vcc * icc; // VA Aparentes (Cálculo directo de consola)
             let wccInput = document.getElementById(`${mod}_wcc`);
             if(wccInput.value === "") {
                 wccInput.value = s_cc.toFixed(2);
@@ -1067,7 +1065,7 @@
         if(vo > 0 && (i1 > 0 || i2 > 0 || i3 > 0)) {
             let div = (DATA.fases === 3) ? 3 : 1; 
             let iavg = (i1+i2+i3)/div; 
-            let s_o = vo * iavg * f; // VA Aparentes
+            let s_o = vo * iavg; // VA Aparentes (Cálculo directo de consola)
             let woInput = document.getElementById(`${mod}_wo`);
             if(woInput.value === "") {
                 woInput.value = s_o.toFixed(2);
