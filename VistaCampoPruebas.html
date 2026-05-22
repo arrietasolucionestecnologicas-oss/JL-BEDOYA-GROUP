@@ -1084,41 +1084,50 @@
     function calcTTRDev(mod, tapIdx) { let deriv = DATA.derivaciones || "+2"; let nomTap = 3; if(deriv === '+1') nomTap = 2; if(deriv === '0') nomTap = 1; let steps = nomTap - tapIdx; let factor = 1 + (steps * 0.025); let vp_tap = parseFloat(DATA.vp) * factor; let vs = parseFloat(DATA.vs); let factorFases = (DATA.fases === 3) ? 1.73205 : 1; let ttr_teorico = (vp_tap / vs) * factorFases; let u = getNum(`inp-${mod}-uv-${tapIdx}`); let v = (DATA.fases==3) ? getNum(`inp-${mod}-vw-${tapIdx}`) : 0; let w = (DATA.fases==3) ? getNum(`inp-${mod}-wu-${tapIdx}`) : 0; let errMax = 0; let hayDato = false; [u,v,w].forEach(val => { if(val > 0) { hayDato = true; let err = Math.abs((ttr_teorico - val)/ttr_teorico) * 100; if(err > errMax) errMax = err; } }); let badge = document.getElementById(`err-${mod}-${tapIdx}`); if(hayDato) { badge.innerText = errMax.toFixed(2) + '%'; badge.className = errMax > 0.5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
     function calcResBal(mod, type, rowIdx) { if(DATA.fases !== 3) return; let v1=0, v2=0, v3=0; let badgeId = ''; if(type === 'pri') { v1 = getNum(`inp-${mod}-r-uv-${rowIdx}`); v2 = getNum(`inp-${mod}-r-vw-${rowIdx}`); v3 = getNum(`inp-${mod}-r-wu-${rowIdx}`); badgeId = `res-err-${mod}-pri-${rowIdx}`; } else { v1 = getNum(`${mod}_pnx`); v2 = getNum(`${mod}_pny`); v3 = getNum(`${mod}_pnz`); badgeId = `res-err-${mod}-sec`; } let badge = document.getElementById(badgeId); if(v1 > 0 && v2 > 0 && v3 > 0) { let avg = (v1 + v2 + v3) / 3; let maxDev = Math.max(Math.abs(v1-avg), Math.abs(v2-avg), Math.abs(v3-avg)); let percentDev = (maxDev / avg) * 100; badge.innerText = percentDev.toFixed(2) + '%'; badge.className = percentDev > 5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
     
-    // HOTFIX BUG 6: Alerta visual (Color Amarillo) ajustado al método de consola local (V * I sin factor raiz de 3)
-    function calcLoss(mod) { 
-        let vcc = getNum(`${mod}_vcc`);
-        let icc = getNum(`${mod}_icc`);
-        if(vcc > 0 && icc > 0) {
-            let s_cc = vcc * icc; // VA Aparentes (Cálculo directo de consola)
-            let wccInput = document.getElementById(`${mod}_wcc`);
-            if(wccInput.value === "") {
-                wccInput.value = s_cc.toFixed(2);
-                wccInput.style.backgroundColor = "#fff3cd"; // Amarilo = estimado
-                wccInput.classList.remove("bg-light");
-                wccInput.title = "⚠️ Valor estimado (VA). Borre e ingrese Watts reales medidos con Vatímetro.";
-            } else if (parseFloat(wccInput.value).toFixed(2) !== s_cc.toFixed(2)) {
-                wccInput.style.backgroundColor = ""; // Reset a blanco si el usuario digitó manualmente
-            }
+   // [HOTFIX V45.3] calcLoss: Fórmula V×I directa para Corto y Vacío.
+// - Monofásico: Vo × Io1 (directo)
+// - Trifásico: Vo × promedio(Io que tengan valor) — sin factor √3 ni divisor fijo
+// - El campo Wcc/Wo solo se autorrellena si está vacío (el técnico puede pisarlo)
+function calcLoss(mod) {
+    // --- CORTO ---
+    let vcc = getNum(`${mod}_vcc`);
+    let icc = getNum(`${mod}_icc`);
+    if (vcc > 0 && icc > 0) {
+        let s_cc = vcc * icc; // V × I directo, sin √3
+        let wccInput = document.getElementById(`${mod}_wcc`);
+        if (wccInput && wccInput.value === "") {
+            wccInput.value = s_cc.toFixed(2);
+            wccInput.style.backgroundColor = "#fff3cd";
+            wccInput.title = "⚠️ Valor estimado (VA). Borre e ingrese Watts reales medidos con Vatímetro.";
+        } else if (wccInput && parseFloat(wccInput.value).toFixed(2) !== s_cc.toFixed(2)) {
+            wccInput.style.backgroundColor = ""; // El técnico digitó manualmente → fondo limpio
         }
-        
-        let vo = getNum(`${mod}_vo`);
-        let i1=getNum(`${mod}_io1`), i2=getNum(`${mod}_io2`), i3=getNum(`${mod}_io3`); 
-        if(vo > 0 && (i1 > 0 || i2 > 0 || i3 > 0)) {
-            let div = (DATA.fases === 3) ? 3 : 1; 
-            let iavg = (i1+i2+i3)/div; 
-            let s_o = vo * iavg; // VA Aparentes (Cálculo directo de consola)
+    }
+
+    // --- VACÍO ---
+    let vo = getNum(`${mod}_vo`);
+    let i1 = getNum(`${mod}_io1`);
+    let i2 = getNum(`${mod}_io2`);
+    let i3 = getNum(`${mod}_io3`);
+
+    if (vo > 0) {
+        // Promedio SOLO sobre las corrientes que tengan valor real (> 0)
+        // Sin importar si es mono o trifásico: V × Io_promedio, sin √3
+        let corrientesValidas = [i1, i2, i3].filter(v => v > 0);
+        if (corrientesValidas.length > 0) {
+            let iavg = corrientesValidas.reduce((a, b) => a + b, 0) / corrientesValidas.length;
+            let s_o = vo * iavg; // V × I directo
             let woInput = document.getElementById(`${mod}_wo`);
-            if(woInput.value === "") {
+            if (woInput && woInput.value === "") {
                 woInput.value = s_o.toFixed(2);
                 woInput.style.backgroundColor = "#fff3cd";
-                woInput.classList.remove("bg-light");
                 woInput.title = "⚠️ Valor estimado (VA). Borre e ingrese Watts reales.";
-            } else if (parseFloat(woInput.value).toFixed(2) !== s_o.toFixed(2)) {
-                woInput.style.backgroundColor = ""; 
+            } else if (woInput && parseFloat(woInput.value).toFixed(2) !== s_o.toFixed(2)) {
+                woInput.style.backgroundColor = "";
             }
         }
     }
-    
+}
     function recopilarDatos(mod) { 
         let f = {...DATA}; 
         let lblIp = document.querySelector('.lbl-ip'); let lblIs = document.querySelector('.lbl-is'); 
