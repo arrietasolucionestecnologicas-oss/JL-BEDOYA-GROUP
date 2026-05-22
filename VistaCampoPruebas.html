@@ -95,6 +95,12 @@
     .veredicto-box { border: 3px solid #000; padding: 20px; margin-top: 30px; background: #fff; font-family: 'Courier New', Courier, monospace; white-space: pre-wrap; font-size: 1rem; font-weight: bold; color: #000; line-height: 1.5; }
     .veredicto-conforme { border-color: #198754; color: #000; }
     .veredicto-alerta { border-color: #dc3545; color: #000; }
+    /* HOTFIX V45.1 */
+    .veredicto-box[style*="display: block"] {
+        margin-top: 15px;
+        font-size: 0.82rem;
+    }
+  </style>
   </style>
 </head>
 <body>
@@ -780,15 +786,33 @@
     function setVal(id, val) { const el=document.getElementById(id); if(el) el.value = val; }
     function openTab(mod, tabId, btn) { document.querySelectorAll(`.tab-content-${mod}`).forEach(e => e.classList.add('d-none')); document.getElementById(`tab_${mod}_${tabId}`).classList.remove('d-none'); btn.closest('.nav').querySelectorAll('.nav-link').forEach(e => e.classList.remove('active')); btn.classList.add('active'); }
     
-    function monitorCambios(mod) { 
-        const container = document.getElementById('form_' + mod); 
-        if(!container) return; 
-        container.addEventListener('input', function() { 
-            let f = recopilarDatos(mod); 
-            try { localStorage.setItem('backup_' + f.entrada, JSON.stringify(f)); }
-            catch(e) { }
-        }); 
-    }
+   function monitorCambios(mod) { 
+    const container = document.getElementById('form_' + mod); 
+    if(!container) return; 
+    let debounceTimer = null;
+    container.addEventListener('input', function() { 
+        let f = recopilarDatos(mod); 
+        try { localStorage.setItem('backup_' + f.entrada, JSON.stringify(f)); }
+        catch(e) { }
+        // HOTFIX V45.1: Diagnóstico en vivo con debounce de 800ms
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => { diagnosticoEnVivo(mod); }, 800);
+    }); 
+}
+    function diagnosticoEnVivo(mod) {
+    const box = document.getElementById(`${mod}_veredicto_auto`);
+    if(!box) return;
+
+    // Mostrar el panel sin activar el modo pantallazo CSS
+    box.classList.remove('d-none');
+    box.classList.add('mostrar-en-informe');
+
+    // Reusar el motor existente
+    generarVeredictoNorma(mod);
+
+    // Forzar visibilidad inline (fuera del modo-informe el CSS lo oculta)
+    box.style.display = 'block';
+}
 
     function abrirAgenda() { if(modalAgenda) modalAgenda.show(); cargarAgenda(); }
     
