@@ -803,15 +803,32 @@
     const box = document.getElementById(`${mod}_veredicto_auto`);
     if(!box) return;
 
-    // Mostrar el panel sin activar el modo pantallazo CSS
-    box.classList.remove('d-none');
-    box.classList.add('mostrar-en-informe');
-
-    // Reusar el motor existente
+    // Ejecutar motor de veredicto (escribe innerText)
     generarVeredictoNorma(mod);
 
-    // Forzar visibilidad inline (fuera del modo-informe el CSS lo oculta)
+    // Forzar visibilidad con estilos inline (evita conflicto con d-none y mostrar-en-informe)
+    box.classList.remove('d-none');
     box.style.display = 'block';
+    box.style.padding = '15px';
+    box.style.marginTop = '15px';
+    box.style.fontSize = '0.82rem';
+    box.style.fontFamily = "'Courier New', Courier, monospace";
+    box.style.whiteSpace = 'pre-wrap';
+    box.style.fontWeight = 'bold';
+    box.style.lineHeight = '1.5';
+
+    // Color del borde según dictamen
+    const texto = box.innerText || "";
+    if(texto.includes("EQUIPO APTO")) {
+        box.style.border = '3px solid #198754';
+        box.style.color = '#000';
+    } else if(texto.includes("DESVIACIONES")) {
+        box.style.border = '3px solid #dc3545';
+        box.style.color = '#000';
+    } else {
+        box.style.border = '3px solid #000';
+        box.style.color = '#000';
+    }
 }
 
     function abrirAgenda() { if(modalAgenda) modalAgenda.show(); cargarAgenda(); }
