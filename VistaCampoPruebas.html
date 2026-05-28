@@ -1418,17 +1418,25 @@ function calcLoss(mod) {
             ? `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`
             : fechaPrueba;
 
-        const W = 900, H = 560;
+        // Calcular altura de la caja de texto según cantidad de líneas del veredicto
+        const lineas = textoVeredicto.split('\n');
+        const boxHeight = (lineas.length * 20) + 40;
+        
+        // Ajustar altura total del Canvas dinámicamente
+        const W = 900;
+        const baseOffset = 300; // Espacio superior reservado para datos
+        const H = baseOffset + boxHeight + 200 + (selladoQA ? 60 : 0); 
+        
         const canvas = document.createElement('canvas');
         canvas.width  = W;
         canvas.height = H;
         const ctx = canvas.getContext('2d');
 
-        // Fondo
+        // Fondo general
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, W, H);
 
-        // Franja superior
+        // Franja superior de color
         ctx.fillStyle = resultadoColor;
         ctx.fillRect(0, 0, W, 10);
 
@@ -1447,14 +1455,14 @@ function calcLoss(mod) {
         ctx.fillText('JL BEDOYA GROUP — SISTEMA TÉCNICO DE INSPECCIÓN', 30, 42);
         ctx.fillStyle = '#6c757d';
         ctx.font = '11px Segoe UI, Arial';
-        ctx.fillText('CERTIFICADO DE PRUEBAS ELÉCTRICAS', 30, 60);
+        ctx.fillText('CERTIFICADO DE RESULTADOS DE ENSAYO', 30, 60);
 
         // Línea divisoria encabezado
         ctx.strokeStyle = '#e9ecef';
         ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(30, 72); ctx.lineTo(W - 30, 72); ctx.stroke();
 
-        // Sello circular
+        // Sello circular (estado general) a la derecha
         const cx = W - 120, cy = 160, r = 72;
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, 2 * Math.PI);
@@ -1500,65 +1508,93 @@ function calcLoss(mod) {
             dy += 38;
         });
 
-        // Sello QA
+        // --- CAJA DE RESULTADOS / VEREDICTO DETALLADO ---
+        const vy = Math.max(dy, 290); // Nos aseguramos que inicie por debajo del sello circular
+        
+        ctx.fillStyle = '#f8f9fa'; // Fondo gris tenue para la caja
+        ctx.fillRect(30, vy, W - 60, boxHeight);
+        
+        // Borde condicionado al estado final
+        ctx.strokeStyle = resultadoColor;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(30, vy, W - 60, boxHeight);
+
+        // Renderizado del texto línea por línea (imitando el panel "Pantallazo")
+        let textY = vy + 25;
+        lineas.forEach(linea => {
+            if (linea.includes('DICTAMEN FINAL')) {
+                ctx.font = 'bold 15px "Courier New", Courier, monospace';
+                ctx.fillStyle = resultadoColor;
+            } else if (linea.includes('=====')) {
+                ctx.font = 'bold 14px "Courier New", Courier, monospace';
+                ctx.fillStyle = '#adb5bd';
+            } else {
+                ctx.font = 'bold 14px "Courier New", Courier, monospace';
+                ctx.fillStyle = '#212529';
+            }
+            ctx.fillText(linea, 50, textY);
+            textY += 20;
+        });
+
+        let currentY = vy + boxHeight + 30;
+
+        // Sello QA si está aprobado
         if (selladoQA) {
-            const qax = 30, qay = dy + 8;
             ctx.fillStyle = '#0d6efd18';
-            ctx.beginPath(); roundRect(ctx, qax, qay, 210, 36, 6); ctx.fill();
+            ctx.beginPath(); roundRect(ctx, 30, currentY, 210, 36, 6); ctx.fill();
             ctx.strokeStyle = '#0d6efd';
             ctx.lineWidth = 1.5;
-            ctx.beginPath(); roundRect(ctx, qax, qay, 210, 36, 6); ctx.stroke();
+            ctx.beginPath(); roundRect(ctx, 30, currentY, 210, 36, 6); ctx.stroke();
             ctx.fillStyle = '#0d6efd';
             ctx.font = 'bold 12px Segoe UI, Arial';
-            ctx.fillText('✔  CALIDAD QA APROBADO', qax + 10, qay + 23);
-            dy += 52;
+            ctx.fillText('✔  CALIDAD QA APROBADO', 40, currentY + 23);
         }
 
         // Línea divisoria pie
         ctx.strokeStyle = '#e9ecef';
         ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(30, H - 120); ctx.lineTo(W - 30, H - 120); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(30, H - 100); ctx.lineTo(W - 30, H - 100); ctx.stroke();
 
         // Firma e ingeniero
         ctx.strokeStyle = '#adb5bd';
         ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(30, H - 96); ctx.lineTo(220, H - 96); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(30, H - 76); ctx.lineTo(220, H - 76); ctx.stroke();
         ctx.fillStyle = '#212529';
         ctx.font = 'bold 13px Segoe UI, Arial';
-        ctx.fillText(ingeniero, 30, H - 88);
+        ctx.fillText(ingeniero, 30, H - 68);
         ctx.fillStyle = '#6c757d';
         ctx.font = '11px Segoe UI, Arial';
-        ctx.fillText('Ingeniero / Técnico Responsable', 30, H - 70);
+        ctx.fillText('Ingeniero / Técnico Responsable', 30, H - 50);
 
         // Fecha
         ctx.textAlign = 'right';
         ctx.fillStyle = '#212529';
         ctx.font = 'bold 13px Segoe UI, Arial';
-        ctx.fillText(fechaFormato, W - 30, H - 88);
+        ctx.fillText(fechaFormato, W - 30, H - 68);
         ctx.fillStyle = '#6c757d';
         ctx.font = '11px Segoe UI, Arial';
-        ctx.fillText('Fecha de Prueba', W - 30, H - 70);
+        ctx.fillText('Fecha de Prueba', W - 30, H - 50);
         ctx.textAlign = 'left';
 
         // Número de certificado
         ctx.fillStyle = '#adb5bd';
         ctx.font = '10px Segoe UI, Arial';
-        ctx.fillText(`Cert. N° STI-${entrada}-${Date.now().toString().slice(-6)}`, 30, H - 28);
+        ctx.fillText(`Cert. N° STI-${entrada}-${Date.now().toString().slice(-6)}`, 30, H - 20);
 
         // Franja inferior
         ctx.fillStyle = resultadoColor;
         ctx.fillRect(0, H - 10, W, 10);
 
-        // Descarga
+        // Ejecutar descarga
         const link = document.createElement('a');
-        link.download = `Certificado_T${entrada}_${cliente.replace(/\s/g,'_')}.png`;
+        link.download = `Resultados_T${entrada}_${cliente.replace(/\s/g,'_')}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
 
         Swal.fire({
             toast: true, position: 'top-end', icon: 'success',
-            title: 'PNG descargado',
-            text: 'Listo para enviar por WhatsApp o correo.',
+            title: 'Reporte Generado',
+            text: 'Descarga de PNG lista con resultados detallados.',
             timer: 3000, showConfirmButton: false
         });
     }
