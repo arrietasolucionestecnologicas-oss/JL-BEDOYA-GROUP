@@ -101,7 +101,6 @@
         font-size: 0.82rem;
     }
   </style>
-  </style>
 </head>
 <body>
 
@@ -438,6 +437,11 @@
                     <i class="fas fa-file-word me-1"></i> GENERAR WORD OFICIAL
                 </button>
             </div>
+            <div class="col-12 mt-2">
+                <button class="btn btn-info text-white w-100 fw-bold small-text p-2" onclick="generarCertificadoCliente('fin')">
+                    <i class="fas fa-id-card me-1"></i> CERTIFICADO CLIENTE (PNG)
+                </button>
+            </div>
         </div>`;
 
       const botonesIni = `
@@ -465,6 +469,11 @@
             <div class="col-12 mt-2">
                 <button class="btn btn-success w-100 fw-bold small-text p-2 shadow" onclick="generarProtocoloCliente('ini')">
                     <i class="fas fa-file-word me-1"></i> GENERAR WORD OFICIAL
+                </button>
+            </div>
+            <div class="col-12 mt-2">
+                <button class="btn btn-info text-white w-100 fw-bold small-text p-2" onclick="generarCertificadoCliente('ini')">
+                    <i class="fas fa-id-card me-1"></i> CERTIFICADO CLIENTE (PNG)
                 </button>
             </div>
         </div>`;
@@ -641,30 +650,41 @@
     function generarVeredictoNorma(mod) {
         let reporte = "EVALUACIÓN TÉCNICA Y METROLÓGICA (AUTO-DIAGNÓSTICO):\n============================================================\n\n";
         let fallas = 0;
+        let sinDatos = 0;
 
+        // --- AISLAMIENTO ---
         let ais_atbt = getVal(`${mod}_atbt`);
-        if(ais_atbt) reporte += `[ℹ️] AISLAMIENTO: Registrado.\n`;
+        let ais_att  = getVal(`${mod}_att`);
+        let ais_btt  = getVal(`${mod}_btt`);
+        if (ais_atbt || ais_att || ais_btt) {
+            reporte += `[ℹ️] AISLAMIENTO: Registrado.\n`;
+        } else {
+            reporte += `[⚪] AISLAMIENTO: NO REALIZADO — Sin datos ingresados.\n`;
+            sinDatos++;
+        }
 
+        // --- TTR ---
         let vp = parseFloat(DATA.vp) || 0;
         let vs = parseFloat(DATA.vs) || 0;
-        let f = (DATA.fases === 3) ? 1.73205 : 1;
-        let ttrFalla = false;
-        let tapsTTR = [];
+        let ttrFalla    = false;
+        let ttrSinDatos = true;
+        let tapsTTR     = [];
         let nomTap = 3;
         if(DATA.derivaciones === "+1") nomTap = 2;
-        if(DATA.derivaciones === "0") nomTap = 1;
+        if(DATA.derivaciones === "0")  nomTap = 1;
 
-        for(let i=1; i<=5; i++) {
+        for(let i = 1; i <= 5; i++) {
             let u = getNum(`inp-${mod}-uv-${i}`);
             let v = (DATA.fases === 3) ? getNum(`inp-${mod}-vw-${i}`) : 0;
             let w = (DATA.fases === 3) ? getNum(`inp-${mod}-wu-${i}`) : 0;
-            if(u>0 || v>0 || w>0) {
+            if(u > 0 || v > 0 || w > 0) {
+                ttrSinDatos = false;
                 let factorVoltage = 1 + ((nomTap - i) * 0.025);
-                let ttr_teorico = ((vp * factorVoltage) / vs) * f;
+                let ttr_teorico = ((vp * factorVoltage) / vs) * ((DATA.fases === 3) ? 1.73205 : 1);
                 let maxErr = 0;
-                [u,v,w].forEach(val => {
-                    if(val>0) {
-                        let err = Math.abs((ttr_teorico - val)/ttr_teorico) * 100;
+                [u, v, w].forEach(val => {
+                    if(val > 0) {
+                        let err = Math.abs((ttr_teorico - val) / ttr_teorico) * 100;
                         if(err > maxErr) maxErr = err;
                     }
                 });
@@ -672,60 +692,103 @@
             }
         }
 
-        if(ttrFalla) { reporte += `[❌] TTR: NO CONFORME (Desviación > 0.5% detectada en Tap ${tapsTTR.join(', ')}).\n`; fallas++; }
-        else { reporte += `[✅] TTR: CONFORME (Desviaciones dentro del margen de 0.5%).\n`; }
+        if(ttrSinDatos) {
+            reporte += `[⚪] TTR: NO REALIZADO — Sin mediciones ingresadas.\n`;
+            sinDatos++;
+        } else if(ttrFalla) {
+            reporte += `[❌] TTR: NO CONFORME (Desviación > 0.5% en Tap ${tapsTTR.join(', ')}).\n`;
+            fallas++;
+        } else {
+            reporte += `[✅] TTR: CONFORME (Desviaciones dentro del margen de 0.5%).\n`;
+        }
 
-        let resFalla = false;
+        // --- RESISTENCIA ENTRE DEVANADOS ---
+        let resFalla    = false;
+        let resSinDatos = true;
+
         if(DATA.fases === 3) {
-            for(let i=1; i<=5; i++) {
+            for(let i = 1; i <= 5; i++) {
                 let r1 = getNum(`inp-${mod}-r-uv-${i}`);
                 let r2 = getNum(`inp-${mod}-r-vw-${i}`);
                 let r3 = getNum(`inp-${mod}-r-wu-${i}`);
-                if(r1>0 && r2>0 && r3>0) {
-                    let avg = (r1+r2+r3)/3;
-                    let maxDev = Math.max(Math.abs(r1-avg), Math.abs(r2-avg), Math.abs(r3-avg));
-                    if((maxDev/avg)*100 > 5.0) resFalla = true;
+                if(r1 > 0 || r2 > 0 || r3 > 0) {
+                    resSinDatos = false;
+                    if(r1 > 0 && r2 > 0 && r3 > 0) {
+                        let avg    = (r1 + r2 + r3) / 3;
+                        let maxDev = Math.max(Math.abs(r1-avg), Math.abs(r2-avg), Math.abs(r3-avg));
+                        if((maxDev / avg) * 100 > 5.0) resFalla = true;
+                    }
                 }
             }
-            let s1=getNum(`${mod}_pnx`), s2=getNum(`${mod}_pny`), s3=getNum(`${mod}_pnz`);
-            if(s1>0 && s2>0 && s3>0) {
-                let avgS = (s1+s2+s3)/3;
-                let maxDevS = Math.max(Math.abs(s1-avgS), Math.abs(s2-avgS), Math.abs(s3-avgS));
-                if((maxDevS/avgS)*100 > 5.0) resFalla = true;
+            let s1 = getNum(`${mod}_pnx`), s2 = getNum(`${mod}_pny`), s3 = getNum(`${mod}_pnz`);
+            if(s1 > 0 || s2 > 0 || s3 > 0) {
+                resSinDatos = false;
+                if(s1 > 0 && s2 > 0 && s3 > 0) {
+                    let avgS    = (s1 + s2 + s3) / 3;
+                    let maxDevS = Math.max(Math.abs(s1-avgS), Math.abs(s2-avgS), Math.abs(s3-avgS));
+                    if((maxDevS / avgS) * 100 > 5.0) resFalla = true;
+                }
+            }
+        } else {
+            for(let i = 1; i <= 5; i++) {
+                if(getNum(`inp-${mod}-r-uv-${i}`) > 0) { resSinDatos = false; break; }
             }
         }
-        
-        if(resFalla) { reporte += `[❌] RESISTENCIA: NO CONFORME (Desbalance entre fases > 5%).\n`; fallas++; }
-        else { reporte += `[✅] RESISTENCIA: CONFORME (Desbalance equilibrado ≤ 5%).\n`; }
 
-        let wccMed = getNum(`${mod}_wcc`); 
+        if(resSinDatos) {
+            reporte += `[⚪] RESISTENCIA: NO REALIZADA — Sin mediciones ingresadas. No se puede emitir dictamen.\n`;
+            sinDatos++;
+        } else if(resFalla) {
+            reporte += `[❌] RESISTENCIA: NO CONFORME (Desbalance entre fases > 5%).\n`;
+            fallas++;
+        } else {
+            reporte += `[✅] RESISTENCIA: CONFORME (Desbalance equilibrado ≤ 5%).\n`;
+        }
+
+        // --- PÉRDIDAS ---
+        let wccMed = getNum(`${mod}_wcc`);
         let wccGar = getNum(`${mod}_gar_wcarga`);
         if(wccMed > 0 && wccGar > 0) {
-            let maxWcc = wccGar * 1.10; 
-            if(wccMed > maxWcc) { 
-                reporte += `[⚠️] PÉRDIDAS CON CARGA (Wcc): ALERTA.\n    - Límite Norma (+10%): ${maxWcc.toFixed(2)} W\n    - Registrado: ${wccMed}.\n    *Verifique si el valor ingresado corresponde a Watts reales o VA aparentes.\n`; 
+            let maxWcc = wccGar * 1.10;
+            if(wccMed > maxWcc) {
+                reporte += `[⚠️] PÉRDIDAS CON CARGA (Wcc): ALERTA.\n    - Límite (+10%): ${maxWcc.toFixed(2)} W  |  Registrado: ${wccMed} W\n    *Verifique si el valor corresponde a Watts reales o VA aparentes.\n`;
+            } else {
+                reporte += `[✅] PÉRDIDAS CON CARGA (Wcc): CONFORME.\n`;
             }
-            else { reporte += `[✅] PÉRDIDAS CON CARGA (Wcc): CONFORME (Valor registrado no supera tolerancia +10%).\n`; }
+        } else {
+            reporte += `[⚪] PÉRDIDAS CON CARGA (Wcc): NO EVALUADAS — Sin datos suficientes.\n`;
+            sinDatos++;
         }
 
         let woMed = getNum(`${mod}_wo`);
         let woGar = getNum(`${mod}_gar_wvacio`);
         if(woMed > 0 && woGar > 0) {
-            let maxWo = woGar * 1.10; 
-            if(woMed > maxWo) { reporte += `[⚠️] PÉRDIDAS EN VACÍO (Wo): ALERTA (Supera tolerancia del +10%).\n`; }
-            else { reporte += `[✅] PÉRDIDAS EN VACÍO (Wo): CONFORME.\n`; }
+            let maxWo = woGar * 1.10;
+            if(woMed > maxWo) {
+                reporte += `[⚠️] PÉRDIDAS EN VACÍO (Wo): ALERTA (Supera tolerancia del +10%).\n`;
+            } else {
+                reporte += `[✅] PÉRDIDAS EN VACÍO (Wo): CONFORME.\n`;
+            }
+        } else {
+            reporte += `[⚪] PÉRDIDAS EN VACÍO (Wo): NO EVALUADAS — Sin datos suficientes.\n`;
+            sinDatos++;
         }
 
+        // --- DICTAMEN FINAL ---
         reporte += "\n============================================================\n";
-        
+
         const box = document.getElementById(`${mod}_veredicto_auto`);
         if(box) {
-            if(fallas === 0) {
+            if(fallas === 0 && sinDatos === 0) {
                 reporte += "DICTAMEN FINAL: EQUIPO APTO. PRUEBAS PRINCIPALES DENTRO DE PARÁMETROS.";
                 box.className = "veredicto-box mostrar-en-informe veredicto-conforme";
-            } else {
+            } else if(fallas > 0) {
                 reporte += "DICTAMEN FINAL: EL EQUIPO PRESENTA DESVIACIONES CRÍTICAS FUERA DE NORMA. REQUIERE REVISIÓN INGENIERIL.";
                 box.className = "veredicto-box mostrar-en-informe veredicto-alerta";
+            } else {
+                reporte += `DICTAMEN FINAL: EVALUACIÓN INCOMPLETA — ${sinDatos} prueba(s) sin datos. No se puede emitir dictamen definitivo.`;
+                box.className = "veredicto-box mostrar-en-informe";
+                box.style.borderColor = "#fd7e14";
             }
             box.innerText = reporte;
         }
@@ -1310,6 +1373,208 @@ function calcLoss(mod) {
                 Swal.fire('Error', res.error, 'error');
             }
         }).guardarFaseCalidad(payload);
+    }
+    
+    function generarCertificadoCliente(mod) {
+        if (!DATA || !DATA.entrada) {
+            return Swal.fire('Sin datos', 'Valide una entrada primero.', 'warning');
+        }
+        if (!getVal(`${mod}_realizado`)) {
+            return Swal.fire('Falta Firma', 'Ingrese el nombre del técnico responsable.', 'warning');
+        }
+
+        const entrada   = DATA.entrada  || '—';
+        const cliente   = DATA.cliente  || '—';
+        const kva       = DATA.kva      || '—';
+        const vp        = DATA.vp       || '—';
+        const vs        = DATA.vs       || '—';
+        const tipo      = DATA.tipo     || '—';
+        const ingeniero = getVal(`${mod}_realizado`);
+        const fechaPrueba = getVal(`${mod}_fecha_prueba`) || new Date().toISOString().split('T')[0];
+        const tipoPrueba  = mod === 'ini' ? 'PRUEBAS INICIALES' : 'PRUEBAS FINALES';
+
+        // Ejecutar veredicto actualizado para leer su resultado
+        generarVeredictoNorma(mod);
+        const boxVeredicto  = document.getElementById(`${mod}_veredicto_auto`);
+        const textoVeredicto = boxVeredicto ? (boxVeredicto.innerText || '') : '';
+
+        let resultadoTexto = 'EVALUACIÓN INCOMPLETA';
+        let resultadoColor = '#fd7e14';
+        let resultadoIcono = '⚠';
+        if (textoVeredicto.includes('EQUIPO APTO')) {
+            resultadoTexto = 'CONFORME';
+            resultadoColor = '#198754';
+            resultadoIcono = '✓';
+        } else if (textoVeredicto.includes('DESVIACIONES CRÍTICAS')) {
+            resultadoTexto = 'NO CONFORME';
+            resultadoColor = '#dc3545';
+            resultadoIcono = '✗';
+        }
+
+        const selladoQA = getVal('qa_protocolo') === 'APROBADO';
+
+        const partesFecha = fechaPrueba.split('-');
+        const fechaFormato = partesFecha.length === 3
+            ? `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`
+            : fechaPrueba;
+
+        const W = 900, H = 560;
+        const canvas = document.createElement('canvas');
+        canvas.width  = W;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d');
+
+        // Fondo
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, W, H);
+
+        // Franja superior
+        ctx.fillStyle = resultadoColor;
+        ctx.fillRect(0, 0, W, 10);
+
+        // Franja lateral izquierda
+        ctx.fillStyle = resultadoColor;
+        ctx.fillRect(0, 0, 6, H);
+
+        // Borde exterior
+        ctx.strokeStyle = '#dee2e6';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(6, 10, W - 12, H - 16);
+
+        // Encabezado
+        ctx.fillStyle = '#212529';
+        ctx.font = 'bold 13px Segoe UI, Arial';
+        ctx.fillText('JL BEDOYA GROUP — SISTEMA TÉCNICO DE INSPECCIÓN', 30, 42);
+        ctx.fillStyle = '#6c757d';
+        ctx.font = '11px Segoe UI, Arial';
+        ctx.fillText('CERTIFICADO DE PRUEBAS ELÉCTRICAS', 30, 60);
+
+        // Línea divisoria encabezado
+        ctx.strokeStyle = '#e9ecef';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(30, 72); ctx.lineTo(W - 30, 72); ctx.stroke();
+
+        // Sello circular
+        const cx = W - 120, cy = 160, r = 72;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.fillStyle = resultadoColor + '18';
+        ctx.fill();
+        ctx.strokeStyle = resultadoColor;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.fillStyle = resultadoColor;
+        ctx.font = 'bold 38px Segoe UI, Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(resultadoIcono, cx, cy + 4);
+        ctx.font = 'bold 11px Segoe UI, Arial';
+        ctx.fillText(resultadoTexto, cx, cy + 22);
+        ctx.font = '10px Segoe UI, Arial';
+        ctx.fillStyle = '#6c757d';
+        ctx.fillText(tipoPrueba, cx, cy + 38);
+        ctx.textAlign = 'left';
+
+        // Datos del transformador
+        ctx.fillStyle = '#212529';
+        ctx.font = 'bold 22px Segoe UI, Arial';
+        ctx.fillText(`ENTRADA N° ${entrada}`, 30, 105);
+        ctx.font = 'bold 15px Segoe UI, Arial';
+        ctx.fillStyle = '#495057';
+        ctx.fillText(cliente.toUpperCase(), 30, 128);
+
+        const datosTec = [
+            ['Potencia',   `${kva} KVA`],
+            ['Tensión AT', `${vp} V`],
+            ['Tensión BT', `${vs} V`],
+            ['Tipo',        tipo],
+        ];
+        let dy = 158;
+        datosTec.forEach(([label, valor]) => {
+            ctx.fillStyle = '#6c757d';
+            ctx.font = '11px Segoe UI, Arial';
+            ctx.fillText(label.toUpperCase(), 30, dy);
+            ctx.fillStyle = '#212529';
+            ctx.font = 'bold 13px Segoe UI, Arial';
+            ctx.fillText(valor, 30, dy + 16);
+            dy += 38;
+        });
+
+        // Sello QA
+        if (selladoQA) {
+            const qax = 30, qay = dy + 8;
+            ctx.fillStyle = '#0d6efd18';
+            ctx.beginPath(); roundRect(ctx, qax, qay, 210, 36, 6); ctx.fill();
+            ctx.strokeStyle = '#0d6efd';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); roundRect(ctx, qax, qay, 210, 36, 6); ctx.stroke();
+            ctx.fillStyle = '#0d6efd';
+            ctx.font = 'bold 12px Segoe UI, Arial';
+            ctx.fillText('✔  CALIDAD QA APROBADO', qax + 10, qay + 23);
+            dy += 52;
+        }
+
+        // Línea divisoria pie
+        ctx.strokeStyle = '#e9ecef';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(30, H - 120); ctx.lineTo(W - 30, H - 120); ctx.stroke();
+
+        // Firma e ingeniero
+        ctx.strokeStyle = '#adb5bd';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(30, H - 96); ctx.lineTo(220, H - 96); ctx.stroke();
+        ctx.fillStyle = '#212529';
+        ctx.font = 'bold 13px Segoe UI, Arial';
+        ctx.fillText(ingeniero, 30, H - 88);
+        ctx.fillStyle = '#6c757d';
+        ctx.font = '11px Segoe UI, Arial';
+        ctx.fillText('Ingeniero / Técnico Responsable', 30, H - 70);
+
+        // Fecha
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#212529';
+        ctx.font = 'bold 13px Segoe UI, Arial';
+        ctx.fillText(fechaFormato, W - 30, H - 88);
+        ctx.fillStyle = '#6c757d';
+        ctx.font = '11px Segoe UI, Arial';
+        ctx.fillText('Fecha de Prueba', W - 30, H - 70);
+        ctx.textAlign = 'left';
+
+        // Número de certificado
+        ctx.fillStyle = '#adb5bd';
+        ctx.font = '10px Segoe UI, Arial';
+        ctx.fillText(`Cert. N° STI-${entrada}-${Date.now().toString().slice(-6)}`, 30, H - 28);
+
+        // Franja inferior
+        ctx.fillStyle = resultadoColor;
+        ctx.fillRect(0, H - 10, W, 10);
+
+        // Descarga
+        const link = document.createElement('a');
+        link.download = `Certificado_T${entrada}_${cliente.replace(/\s/g,'_')}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+        Swal.fire({
+            toast: true, position: 'top-end', icon: 'success',
+            title: 'PNG descargado',
+            text: 'Listo para enviar por WhatsApp o correo.',
+            timer: 3000, showConfirmButton: false
+        });
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
     }
   </script>
 </body>
