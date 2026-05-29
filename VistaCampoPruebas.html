@@ -648,153 +648,215 @@
         }
     }
     
-    function generarVeredictoNorma(mod) {
-        let reporte = "EVALUACIÓN TÉCNICA Y METROLÓGICA (AUTO-DIAGNÓSTICO):\n============================================================\n\n";
-        let fallas = 0;
-        let sinDatos = 0;
+function generarVeredictoNorma(mod) {
+    let reporte = "EVALUACIÓN TÉCNICA Y METROLÓGICA (AUTO-DIAGNÓSTICO):\n============================================================\n\n";
+    let fallas = 0;
+    let sinDatos = 0;
 
-        // --- AISLAMIENTO ---
-        let ais_atbt = getVal(`${mod}_atbt`);
-        let ais_att  = getVal(`${mod}_att`);
-        let ais_btt  = getVal(`${mod}_btt`);
-        if (ais_atbt || ais_att || ais_btt) {
-            reporte += `[ℹ️] AISLAMIENTO: Registrado.\n`;
-        } else {
-            reporte += `[⚪] AISLAMIENTO: NO REALIZADO — Sin datos ingresados.\n`;
-            sinDatos++;
-        }
+    // --- AISLAMIENTO ---
+    let ais_atbt = getVal(`${mod}_atbt`);
+    let ais_att  = getVal(`${mod}_att`);
+    let ais_btt  = getVal(`${mod}_btt`);
+    if (ais_atbt || ais_att || ais_btt) {
+        reporte += `[ℹ️] AISLAMIENTO: Registrado.\n`;
+    } else {
+        reporte += `[⚪] AISLAMIENTO: NO REALIZADO — Sin datos ingresados.\n`;
+        sinDatos++;
+    }
 
-        // --- TTR ---
-        let vp = parseFloat(DATA.vp) || 0;
-        let vs = parseFloat(DATA.vs) || 0;
-        let ttrFalla    = false;
-        let ttrSinDatos = true;
-        let tapsTTR     = [];
-        let nomTap = 3;
-        if(DATA.derivaciones === "+1") nomTap = 2;
-        if(DATA.derivaciones === "0")  nomTap = 1;
+    // --- TTR ---
+    let vp = parseFloat(DATA.vp) || 0;
+    let vs = parseFloat(DATA.vs) || 0;
+    let ttrFalla    = false;
+    let ttrSinDatos = true;
+    let tapsTTR     = [];
+    let nomTap = 3;
+    if(DATA.derivaciones === "+1") nomTap = 2;
+    if(DATA.derivaciones === "0")  nomTap = 1;
 
-        for(let i = 1; i <= 5; i++) {
-            let u = getNum(`inp-${mod}-uv-${i}`);
-            let v = (DATA.fases === 3) ? getNum(`inp-${mod}-vw-${i}`) : 0;
-            let w = (DATA.fases === 3) ? getNum(`inp-${mod}-wu-${i}`) : 0;
-            if(u > 0 || v > 0 || w > 0) {
-                ttrSinDatos = false;
-                let factorVoltage = 1 + ((nomTap - i) * 0.025);
-                let ttr_teorico = ((vp * factorVoltage) / vs) * ((DATA.fases === 3) ? 1.73205 : 1);
-                let maxErr = 0;
-                [u, v, w].forEach(val => {
-                    if(val > 0) {
-                        let err = Math.abs((ttr_teorico - val) / ttr_teorico) * 100;
-                        if(err > maxErr) maxErr = err;
-                    }
-                });
-                if(maxErr > 0.5) { ttrFalla = true; tapsTTR.push(i); }
-            }
-        }
-
-        if(ttrSinDatos) {
-            reporte += `[⚪] TTR: NO REALIZADO — Sin mediciones ingresadas.\n`;
-            sinDatos++;
-        } else if(ttrFalla) {
-            reporte += `[❌] TTR: NO CONFORME (Desviación > 0.5% en Tap ${tapsTTR.join(', ')}).\n`;
-            fallas++;
-        } else {
-            reporte += `[✅] TTR: CONFORME (Desviaciones dentro del margen de 0.5%).\n`;
-        }
-
-        // --- RESISTENCIA ENTRE DEVANADOS ---
-        let resFalla    = false;
-        let resSinDatos = true;
-
-        if(DATA.fases === 3) {
-            for(let i = 1; i <= 5; i++) {
-                let r1 = getNum(`inp-${mod}-r-uv-${i}`);
-                let r2 = getNum(`inp-${mod}-r-vw-${i}`);
-                let r3 = getNum(`inp-${mod}-r-wu-${i}`);
-                if(r1 > 0 || r2 > 0 || r3 > 0) {
-                    resSinDatos = false;
-                    if(r1 > 0 && r2 > 0 && r3 > 0) {
-                        let avg    = (r1 + r2 + r3) / 3;
-                        let maxDev = Math.max(Math.abs(r1-avg), Math.abs(r2-avg), Math.abs(r3-avg));
-                        if((maxDev / avg) * 100 > 5.0) resFalla = true;
-                    }
+    for(let i = 1; i <= 5; i++) {
+        let u = getNum(`inp-${mod}-uv-${i}`);
+        let v = (DATA.fases === 3) ? getNum(`inp-${mod}-vw-${i}`) : 0;
+        let w = (DATA.fases === 3) ? getNum(`inp-${mod}-wu-${i}`) : 0;
+        if(u > 0 || v > 0 || w > 0) {
+            ttrSinDatos = false;
+            let factorVoltage = 1 + ((nomTap - i) * 0.025);
+            let ttr_teorico = ((vp * factorVoltage) / vs) * ((DATA.fases === 3) ? 1.73205 : 1);
+            let maxErr = 0;
+            [u, v, w].forEach(val => {
+                if(val > 0) {
+                    let err = Math.abs((ttr_teorico - val) / ttr_teorico) * 100;
+                    if(err > maxErr) maxErr = err;
                 }
-            }
-            let s1 = getNum(`${mod}_pnx`), s2 = getNum(`${mod}_pny`), s3 = getNum(`${mod}_pnz`);
-            if(s1 > 0 || s2 > 0 || s3 > 0) {
-                resSinDatos = false;
-                if(s1 > 0 && s2 > 0 && s3 > 0) {
-                    let avgS    = (s1 + s2 + s3) / 3;
-                    let maxDevS = Math.max(Math.abs(s1-avgS), Math.abs(s2-avgS), Math.abs(s3-avgS));
-                    if((maxDevS / avgS) * 100 > 5.0) resFalla = true;
-                }
-            }
-        } else {
-            for(let i = 1; i <= 5; i++) {
-                if(getNum(`inp-${mod}-r-uv-${i}`) > 0) { resSinDatos = false; break; }
-            }
-        }
-
-        if(resSinDatos) {
-            reporte += `[⚪] RESISTENCIA: NO REALIZADA — Sin mediciones ingresadas. No se puede emitir dictamen.\n`;
-            sinDatos++;
-        } else if(resFalla) {
-            reporte += `[❌] RESISTENCIA: NO CONFORME (Desbalance entre fases > 5%).\n`;
-            fallas++;
-        } else {
-            reporte += `[✅] RESISTENCIA: CONFORME (Desbalance equilibrado ≤ 5%).\n`;
-        }
-
-        // --- PÉRDIDAS ---
-        let wccMed = getNum(`${mod}_wcc`);
-        let wccGar = getNum(`${mod}_gar_wcarga`);
-        if(wccMed > 0 && wccGar > 0) {
-            let maxWcc = wccGar * 1.10;
-            if(wccMed > maxWcc) {
-                reporte += `[⚠️] PÉRDIDAS CON CARGA (Wcc): ALERTA.\n    - Límite (+10%): ${maxWcc.toFixed(2)} W  |  Registrado: ${wccMed} W\n    *Verifique si el valor corresponde a Watts reales o VA aparentes.\n`;
-            } else {
-                reporte += `[✅] PÉRDIDAS CON CARGA (Wcc): CONFORME.\n`;
-            }
-        } else {
-            reporte += `[⚪] PÉRDIDAS CON CARGA (Wcc): NO EVALUADAS — Sin datos suficientes.\n`;
-            sinDatos++;
-        }
-
-        let woMed = getNum(`${mod}_wo`);
-        let woGar = getNum(`${mod}_gar_wvacio`);
-        if(woMed > 0 && woGar > 0) {
-            let maxWo = woGar * 1.10;
-            if(woMed > maxWo) {
-                reporte += `[⚠️] PÉRDIDAS EN VACÍO (Wo): ALERTA (Supera tolerancia del +10%).\n`;
-            } else {
-                reporte += `[✅] PÉRDIDAS EN VACÍO (Wo): CONFORME.\n`;
-            }
-        } else {
-            reporte += `[⚪] PÉRDIDAS EN VACÍO (Wo): NO EVALUADAS — Sin datos suficientes.\n`;
-            sinDatos++;
-        }
-
-        // --- DICTAMEN FINAL ---
-        reporte += "\n============================================================\n";
-
-        const box = document.getElementById(`${mod}_veredicto_auto`);
-        if(box) {
-            if(fallas === 0 && sinDatos === 0) {
-                reporte += "DICTAMEN FINAL: EQUIPO APTO. PRUEBAS PRINCIPALES DENTRO DE PARÁMETROS.";
-                box.className = "veredicto-box mostrar-en-informe veredicto-conforme";
-            } else if(fallas > 0) {
-                reporte += "DICTAMEN FINAL: EL EQUIPO PRESENTA DESVIACIONES CRÍTICAS FUERA DE NORMA. REQUIERE REVISIÓN INGENIERIL.";
-                box.className = "veredicto-box mostrar-en-informe veredicto-alerta";
-            } else {
-                reporte += `DICTAMEN FINAL: EVALUACIÓN INCOMPLETA — ${sinDatos} prueba(s) sin datos. No se puede emitir dictamen definitivo.`;
-                box.className = "veredicto-box mostrar-en-informe";
-                box.style.borderColor = "#fd7e14";
-            }
-            box.innerText = reporte;
+            });
+            if(maxErr > 0.5) { ttrFalla = true; tapsTTR.push(i); }
         }
     }
 
+    if(ttrSinDatos) {
+        reporte += `[⚪] TTR: NO REALIZADO — Sin mediciones ingresadas.\n`;
+        sinDatos++;
+    } else if(ttrFalla) {
+        reporte += `[❌] TTR: NO CONFORME (Desviación > 0.5% en Tap ${tapsTTR.join(', ')}).\n`;
+        fallas++;
+    } else {
+        reporte += `[✅] TTR: CONFORME (Desviaciones dentro del margen de 0.5%).\n`;
+    }
+
+    // --- RESISTENCIA ENTRE DEVANADOS ---
+    let resFalla    = false;
+    let resSinDatos = true;
+
+    if(DATA.fases === 3) {
+        for(let i = 1; i <= 5; i++) {
+            let r1 = getNum(`inp-${mod}-r-uv-${i}`);
+            let r2 = getNum(`inp-${mod}-r-vw-${i}`);
+            let r3 = getNum(`inp-${mod}-r-wu-${i}`);
+            if(r1 > 0 || r2 > 0 || r3 > 0) {
+                resSinDatos = false;
+                if(r1 > 0 && r2 > 0 && r3 > 0) {
+                    let avg    = (r1 + r2 + r3) / 3;
+                    let maxDev = Math.max(Math.abs(r1-avg), Math.abs(r2-avg), Math.abs(r3-avg));
+                    if((maxDev / avg) * 100 > 5.0) resFalla = true;
+                }
+            }
+        }
+        let s1 = getNum(`${mod}_pnx`), s2 = getNum(`${mod}_pny`), s3 = getNum(`${mod}_pnz`);
+        if(s1 > 0 || s2 > 0 || s3 > 0) {
+            resSinDatos = false;
+            if(s1 > 0 && s2 > 0 && s3 > 0) {
+                let avgS    = (s1 + s2 + s3) / 3;
+                let maxDevS = Math.max(Math.abs(s1-avgS), Math.abs(s2-avgS), Math.abs(s3-avgS));
+                if((maxDevS / avgS) * 100 > 5.0) resFalla = true;
+            }
+        }
+    } else {
+        for(let i = 1; i <= 5; i++) {
+            if(getNum(`inp-${mod}-r-uv-${i}`) > 0) { resSinDatos = false; break; }
+        }
+    }
+
+    if(resSinDatos) {
+        reporte += `[⚪] RESISTENCIA: NO REALIZADA — Sin mediciones ingresadas. No se puede emitir dictamen.\n`;
+        sinDatos++;
+    } else if(resFalla) {
+        reporte += `[❌] RESISTENCIA: NO CONFORME (Desbalance entre fases > 5%).\n`;
+        fallas++;
+    } else {
+        reporte += `[✅] RESISTENCIA: CONFORME (Desbalance equilibrado ≤ 5%).\n`;
+    }
+
+    // --- PÉRDIDAS EN CARGA (CORTO) — evaluación independiente ---
+    let wccMed = getNum(`${mod}_wcc`);
+    let wccGar = getNum(`${mod}_gar_wcarga`);
+    if(wccMed > 0 && wccGar > 0) {
+        let maxWcc = wccGar * 1.10;
+        if(wccMed > maxWcc) {
+            reporte += `[⚠️] PÉRDIDAS CON CARGA (Wcc): ALERTA.\n    - Límite (+10%): ${maxWcc.toFixed(2)} W  |  Registrado: ${wccMed} W\n    *Verifique si el valor corresponde a Watts reales o VA aparentes.\n`;
+        } else {
+            reporte += `[✅] PÉRDIDAS CON CARGA (Wcc): CONFORME.\n`;
+        }
+    } else if(wccMed > 0 && wccGar === 0) {
+        reporte += `[ℹ️] PÉRDIDAS CON CARGA (Wcc): Registrado ${wccMed} W — Sin garantía del fabricante para comparar.\n`;
+    } else {
+        reporte += `[⚪] PÉRDIDAS CON CARGA (Wcc): NO EVALUADAS — Sin datos de cortocircuito.\n`;
+        sinDatos++;
+    }
+
+    // --- PÉRDIDAS EN VACÍO — evaluación independiente con detección de corto ---
+    let voMed  = getNum(`${mod}_vo`);
+    let woMed  = getNum(`${mod}_wo`);
+    let woGar  = getNum(`${mod}_gar_wvacio`);
+    let io1    = getNum(`${mod}_io1`);
+    let io2    = getNum(`${mod}_io2`);
+    let io3    = getNum(`${mod}_io3`);
+
+    const hayVacio = voMed > 0 || woMed > 0 || io1 > 0 || io2 > 0 || io3 > 0;
+
+    if (!hayVacio) {
+        reporte += `[⚪] PÉRDIDAS EN VACÍO (Wo / Io): NO EVALUADAS — Sin datos de vacío.\n`;
+        sinDatos++;
+    } else {
+        // Detección de corriente anómala por corto en devanado
+        // Regla: si una Io es 5x mayor que el promedio de las otras dos → corto probable
+        let corrientes = [io1, io2, io3].filter(v => v > 0);
+        let cortoProbable = false;
+        let faseCorto = '';
+
+        if (corrientes.length === 3) {
+            let labels = ['U', 'V', 'W'];
+            let vals   = [io1, io2, io3];
+            for (let i = 0; i < 3; i++) {
+                let otras = vals.filter((_, j) => j !== i && vals[j] > 0);
+                if (otras.length >= 1) {
+                    let promOtras = otras.reduce((a,b) => a+b, 0) / otras.length;
+                    if (promOtras > 0 && vals[i] / promOtras >= 5) {
+                        cortoProbable = true;
+                        faseCorto = labels[i];
+                    }
+                }
+            }
+        }
+
+        if (cortoProbable) {
+            // Calcular promedio solo con fases sanas
+            let labels = ['U','V','W'];
+            let vals   = [io1, io2, io3];
+            let sanas  = vals.filter((v, i) => v > 0 && labels[i] !== faseCorto);
+            let promSanas = sanas.length > 0
+                ? (sanas.reduce((a,b) => a+b, 0) / sanas.length).toFixed(3)
+                : '—';
+
+            reporte += `[❌] VACÍO — CORTO EN DEVANADO DETECTADO:\n`;
+            reporte += `    Fase ${faseCorto} presenta corriente anómala (posible cortocircuito).\n`;
+            reporte += `    Io promedio (fases sanas): ${promSanas} A\n`;
+            if(voMed > 0) reporte += `    Vo aplicado: ${voMed} V\n`;
+            if(woMed > 0) reporte += `    Wo registrado: ${woMed} W\n`;
+            reporte += `    DICTAMEN: NO CONFORME — Requiere inspección de devanados.\n`;
+            fallas++;
+        } else {
+            // Vacío normal — evaluar Wo vs garantía
+            if(woMed > 0 && woGar > 0) {
+                let maxWo = woGar * 1.10;
+                if(woMed > maxWo) {
+                    reporte += `[⚠️] PÉRDIDAS EN VACÍO (Wo): ALERTA (Supera tolerancia +10%).\n`;
+                    reporte += `    Límite: ${maxWo.toFixed(2)} W  |  Registrado: ${woMed} W\n`;
+                } else {
+                    reporte += `[✅] PÉRDIDAS EN VACÍO (Wo): CONFORME.\n`;
+                }
+            } else if(woMed > 0) {
+                reporte += `[ℹ️] PÉRDIDAS EN VACÍO (Wo): Registrado ${woMed} W — Sin garantía para comparar.\n`;
+            }
+
+            // Mostrar corrientes de vacío con promedio
+            if(corrientes.length > 0) {
+                let prom = (corrientes.reduce((a,b) => a+b, 0) / corrientes.length).toFixed(3);
+                let detalle = [io1,io2,io3].map((v,i) => v > 0 ? `I${['U','V','W'][i]}:${v}` : null).filter(Boolean).join('  ');
+                reporte += `[ℹ️] CORRIENTE DE EXCITACIÓN: Io_prom=${prom} A  (${detalle})\n`;
+                if(voMed > 0) reporte += `    Vo aplicado: ${voMed} V\n`;
+            }
+        }
+    }
+
+    // --- DICTAMEN FINAL ---
+    reporte += "\n============================================================\n";
+
+    const box = document.getElementById(`${mod}_veredicto_auto`);
+    if(box) {
+        if(fallas === 0 && sinDatos === 0) {
+            reporte += "DICTAMEN FINAL: EQUIPO APTO. PRUEBAS PRINCIPALES DENTRO DE PARÁMETROS.";
+            box.className = "veredicto-box mostrar-en-informe veredicto-conforme";
+        } else if(fallas > 0) {
+            reporte += "DICTAMEN FINAL: EL EQUIPO PRESENTA DESVIACIONES CRÍTICAS FUERA DE NORMA. REQUIERE REVISIÓN INGENIERIL.";
+            box.className = "veredicto-box mostrar-en-informe veredicto-alerta";
+        } else {
+            reporte += `DICTAMEN FINAL: EVALUACIÓN INCOMPLETA — ${sinDatos} prueba(s) sin datos. No se puede emitir dictamen definitivo.`;
+            box.className = "veredicto-box mostrar-en-informe";
+            box.style.borderColor = "#fd7e14";
+        }
+        box.innerText = reporte;
+    }
+}
     function initInsp() { document.getElementById('form_insp').classList.remove('d-none'); const list = [{c:'ESTRUCTURA', i:['Placa','Pintura','Cuba','Expansion','Gabinete','Radiadores','Borne']},{c:'ACCESORIOS', i:['Termometro','Nivel','Silica','Valv.Drenaje','Valv.Presion','Buchholz']},{c:'BUJES', i:['Bujes AT','Bujes BT','Herrajes AT','Herrajes BT']},{c:'FUGAS', i:['Empaque Tapa-Tanque','Empaque Bujes AT','Empaque Bujes BT']},{c:'PRUEBAS PRELIMINARES', i:['TTR','Aislamiento','Resistencia', 'Vacio', 'Corto']}]; let h=''; list.forEach(g => { h+=`<tr class="bg-light fw-bold"><td colspan="2">${g.c}</td></tr>`; let options = '<option value="" selected></option>'; if(g.c === 'PRUEBAS PRELIMINARES') options += '<option>CONFORME</option><option>NO CONFORME</option><option>N/A</option>'; else if(g.c === 'FUGAS') options += '<option>BUENO</option><option>MALO</option><option>CAMBIAR</option><option>N/A</option>'; else options += '<option>BUENO</option><option>MALO</option><option>FALTANTE</option><option>CAMBIAR</option><option>PINTAR</option><option>LIMPIAR</option><option>N/A</option>'; g.i.forEach(it => { let id = 'chk_' + it.replace(/ /g,'').replace('.','').replace('-','').toLowerCase(); h+=`<tr><td>${it}</td><td><select id="${id}" class="form-select form-select-sm">${options}</select></td></tr>`; }); }); document.getElementById('insp_body').innerHTML = h; if(DATA.saved_insp) { const d = DATA.saved_insp; if(d.servicio) document.getElementById('insp_servicio').value = d.servicio; if(d.observaciones) document.getElementById('insp_obs').value = d.observaciones; if(d.realizado) document.getElementById('insp_realizado').value = d.realizado; const ids = ['placa','pintura','cuba','expansion','gabinete','radiadores','borne','termometro','nivel','silica','valvdrenaje','valvpresion','buchholz','bujesat','bujesbt','herrajesat','herrajesbt','ttr','aislamiento','resistencia']; ids.forEach(k => { const el = document.getElementById('chk_'+k); if(el && d[k]) el.value = d[k]; }); if(d.fugatapa) setVal('chk_empaquetapatanque', d.fugatapa); if(d.fugabujes_at) setVal('chk_empaquebujesat', d.fugabujes_at); if(d.fugabujes_bt) setVal('chk_empaquebujesbt', d.fugabujes_bt); if(d.vacio) setVal('chk_vacio', d.vacio); if(d.corto) setVal('chk_corto', d.corto); const lblInsp = document.getElementById('lbl-fecha-insp'); if(lblInsp) { if(d.estado_cert === 'CERTIFICADO') lblInsp.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> CERTIFICADO EL: ' + formatearFechaDato(d.fecha_registro) + '</span>'; else lblInsp.innerHTML = '<span class="text-warning text-dark"><i class="fas fa-edit"></i> EN BORRADOR: ' + formatearFechaDato(d.fecha_registro) + '</span>'; } } else { const lblInsp = document.getElementById('lbl-fecha-insp'); if(lblInsp) lblInsp.innerHTML = "<span class='text-muted'>Equipo nuevo / Sin inspección</span>"; } }
     function recopilarDatosInspeccion() { let f = {...DATA}; f.servicio = getVal('insp_servicio'); f.observaciones = getVal('insp_obs'); f.realizado = getVal('insp_realizado'); const ids = ['placa','pintura','cuba','expansion','gabinete','radiadores','borne','termometro','nivel','silica','valvdrenaje','valvpresion','buchholz','bujesat','bujesbt','herrajesat','herrajesbt','ttr','aislamiento','resistencia']; ids.forEach(k => { f[k] = getVal('chk_'+k); }); f.fugatapa = getVal('chk_empaquetapatanque'); f.fugabujes_at = getVal('chk_empaquebujesat'); f.fugabujes_bt = getVal('chk_empaquebujesbt'); f.vacio = getVal('chk_vacio'); f.corto = getVal('chk_corto'); return f; }
     function guardarInsp(pdf) { if(!getVal('insp_realizado')) return Swal.fire('Falta Firma','','warning'); let f = recopilarDatosInspeccion(); f.estado_cert = "PENDIENTE"; loading(true); const action = pdf ? 'procesarInspeccion' : 'guardarSoloBD_Inspeccion'; google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { if(res.url) window.open(res.url); else Swal.fire('Guardado','Estado: PENDIENTE','success'); } else Swal.fire('Error',res.error,'error'); })[action](f); }
