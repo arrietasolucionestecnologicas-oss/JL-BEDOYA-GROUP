@@ -1127,9 +1127,75 @@ function generarVeredictoNorma(mod) {
 
     function filtrarHistorial() { const q = document.getElementById('filtroHistorial').value.toLowerCase(); const filtrados = HISTORIAL_CACHE.filter(i => i.entrada.toString().includes(q) || i.cliente.toLowerCase().includes(q) ); renderHistorial(filtrados); }
     function crearHoja() { const d = { entrada: getVal('new_entrada'), cliente: getVal('new_cliente'), kva: getVal('new_kva'), marca: getVal('new_marca'), serie: getVal('new_serie'), grupo: getVal('new_grupo'), vp: getVal('new_vp'), vs: getVal('new_vs'), fases: getVal('new_fases'), anio: getVal('new_anio'), tipo: getVal('new_tipo'), proyecto: getVal('new_proyecto'), celular: getVal('new_celular'), peso: getVal('new_peso'), aceite: getVal('new_aceite'), derivaciones: getVal('new_deriv') }; if(!d.cliente || !d.kva) return Swal.fire('Faltan Datos','','warning'); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { if(modalCrear) modalCrear.hide(); Swal.fire('Creado','','success').then(() => { if(ITEM_SELECCIONADO) { document.getElementById('search_insp').value = d.entrada; buscar('insp'); } }); } else Swal.fire('Error',res.error,'error'); }).registrarNuevaEntrada(d); }
-    function initHV() { document.getElementById('form_hv').classList.remove('d-none'); document.getElementById('edit_entrada').value=DATA.entrada; document.getElementById('edit_cliente').value=DATA.cliente; document.getElementById('edit_kva').value=DATA.kva; document.getElementById('edit_marca').value=DATA.marca; document.getElementById('edit_serie').value=DATA.serie; document.getElementById('edit_vp').value=DATA.vp; document.getElementById('edit_vs').value=DATA.vs; document.getElementById('edit_fases').value=DATA.fases; document.getElementById('edit_grupo').value=DATA.grupo; document.getElementById('edit_anio').value=DATA.anio; document.getElementById('edit_tipo').value=DATA.tipo; document.getElementById('edit_peso').value=DATA.peso; document.getElementById('edit_aceite').value=DATA.aceite; document.getElementById('edit_deriv').value=DATA.derivaciones; document.getElementById('edit_celular').value=DATA.celular; document.getElementById('edit_proyecto').value=DATA.proyecto; }
-    function guardarEdicionHV() { const d = { entrada: getVal('edit_entrada'), cliente: getVal('edit_cliente'), kva: getVal('edit_kva'), marca: getVal('edit_marca'), serie: getVal('edit_serie'), grupo: getVal('edit_grupo'), vp: getVal('edit_vp'), vs: getVal('edit_vs'), fases: getVal('edit_fases'), anio: getVal('edit_anio'), tipo: getVal('edit_tipo'), proyecto: getVal('edit_proyecto'), celular: getVal('edit_celular'), peso: getVal('edit_peso'), aceite: getVal('edit_aceite'), derivaciones: getVal('edit_deriv') }; loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) Swal.fire('Actualizado','','success'); else Swal.fire('Error',res.error,'error'); }).actualizarHojaVida(d); }
-    
+   function initHV
+   function guardarEdicionHV() {
+    const esEspecial = document.getElementById('edit_especial') 
+        ? document.getElementById('edit_especial').checked 
+        : false;
+
+    // Recopilar configuración de taps
+    let taps_config = {};
+    for (let i = 1; i <= 5; i++) {
+        const vpEl = document.getElementById(`tap_vp_${i}`);
+        const vsEl = document.getElementById(`tap_vs_${i}`);
+        if (vpEl && vsEl && (vpEl.value || vsEl.value)) {
+            taps_config['tap'+i] = { vp: vpEl.value, vs: vsEl.value };
+        }
+    }
+
+    const aisl_config = {
+        lbl1: document.getElementById('aisl_lbl_1') ? document.getElementById('aisl_lbl_1').value : 'AT-BT',
+        lbl2: document.getElementById('aisl_lbl_2') ? document.getElementById('aisl_lbl_2').value : 'AT-T',
+        lbl3: document.getElementById('aisl_lbl_3') ? document.getElementById('aisl_lbl_3').value : 'BT-T',
+    };
+
+    const res_config = {
+        lblA: document.getElementById('res_lbl_a') ? document.getElementById('res_lbl_a').value : 'PRIMARIO',
+        lblB: document.getElementById('res_lbl_b') ? document.getElementById('res_lbl_b').value : 'SECUNDARIO',
+        lblC: document.getElementById('res_lbl_c') ? document.getElementById('res_lbl_c').value : '',
+    };
+
+    const d = {
+        entrada:      getVal('edit_entrada'),
+        cliente:      getVal('edit_cliente'),
+        kva:          getVal('edit_kva'),
+        marca:        getVal('edit_marca'),
+        serie:        getVal('edit_serie'),
+        grupo:        getVal('edit_grupo'),
+        vp:           getVal('edit_vp'),
+        vs:           getVal('edit_vs'),
+        fases:        getVal('edit_fases'),
+        anio:         getVal('edit_anio'),
+        tipo:         getVal('edit_tipo'),
+        proyecto:     getVal('edit_proyecto'),
+        celular:      getVal('edit_celular'),
+        peso:         getVal('edit_peso'),
+        aceite:       getVal('edit_aceite'),
+        derivaciones: getVal('edit_deriv'),
+        // Equipo especial
+        especial:     String(esEspecial),
+        tipo_especial: document.getElementById('edit_tipo_especial') ? getVal('edit_tipo_especial') : '',
+        taps_config,
+        aisl_config,
+        res_config
+    };
+
+    loading(true);
+    google.script.run.withSuccessHandler(res => {
+        loading(false);
+        if (res.success) {
+            // Actualizar DATA local con configuración especial
+            DATA.especial     = d.especial;
+            DATA.tipo_especial = d.tipo_especial;
+            DATA.taps_config  = taps_config;
+            DATA.aisl_config  = aisl_config;
+            DATA.res_config   = res_config;
+            Swal.fire('Actualizado', 'Hoja de vida guardada correctamente.', 'success');
+        } else {
+            Swal.fire('Error', res.error, 'error');
+        }
+    }).actualizarHojaVida(d);
+}
     function initLab(mod) { 
         document.getElementById('form_'+mod).classList.remove('d-none'); 
         document.querySelectorAll('.lbl-deriv').forEach(e=>e.innerText=DATA.derivaciones); 
@@ -1207,7 +1273,66 @@ function generarVeredictoNorma(mod) {
         if(dateInput) dateInput.value = (saved && saved.fecha_prueba) ? saved.fecha_prueba : today;
     }
 
-    function calcTTRDev(mod, tapIdx) { let deriv = DATA.derivaciones || "+2"; let nomTap = 3; if(deriv === '+1') nomTap = 2; if(deriv === '0') nomTap = 1; let steps = nomTap - tapIdx; let factor = 1 + (steps * 0.025); let vp_tap = parseFloat(DATA.vp) * factor; let vs = parseFloat(DATA.vs); let factorFases = (DATA.fases === 3) ? 1.73205 : 1; let ttr_teorico = (vp_tap / vs) * factorFases; let u = getNum(`inp-${mod}-uv-${tapIdx}`); let v = (DATA.fases==3) ? getNum(`inp-${mod}-vw-${tapIdx}`) : 0; let w = (DATA.fases==3) ? getNum(`inp-${mod}-wu-${tapIdx}`) : 0; let errMax = 0; let hayDato = false; [u,v,w].forEach(val => { if(val > 0) { hayDato = true; let err = Math.abs((ttr_teorico - val)/ttr_teorico) * 100; if(err > errMax) errMax = err; } }); let badge = document.getElementById(`err-${mod}-${tapIdx}`); if(hayDato) { badge.innerText = errMax.toFixed(2) + '%'; badge.className = errMax > 0.5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
+   function calcTTRDev(mod, tapIdx) {
+    let ttr_teorico = 0;
+
+    const esEspecial = DATA.especial === "true" || DATA.especial === true;
+    const tc = DATA.taps_config || {};
+
+    if (esEspecial && tc['tap'+tapIdx] && tc['tap'+tapIdx].vp && tc['tap'+tapIdx].vs) {
+        // Equipo especial: usar voltajes teóricos reales configurados
+        let vpTap = parseFloat(tc['tap'+tapIdx].vp) || 0;
+        let vsTap = parseFloat(tc['tap'+tapIdx].vs) || 0;
+
+        // Si VP es un porcentaje (< 150), interpretarlo sobre VP base
+        if (vpTap > 0 && vpTap < 150) {
+            vpTap = (parseFloat(DATA.vp) || 0) * vpTap / 100;
+        }
+
+        if (vsTap > 0) {
+            let factorFases = (DATA.fases === 3) ? 1.73205 : 1;
+            ttr_teorico = (vpTap / vsTap) * factorFases;
+        }
+    } else {
+        // Equipo estándar: factor ±2.5% por tap
+        let deriv  = DATA.derivaciones || "+2";
+        let nomTap = 3;
+        if (deriv === '+1') nomTap = 2;
+        if (deriv === '0')  nomTap = 1;
+        let steps  = nomTap - tapIdx;
+        let factor = 1 + (steps * 0.025);
+        let vp_tap = parseFloat(DATA.vp) * factor;
+        let vs     = parseFloat(DATA.vs);
+        let factorFases = (DATA.fases === 3) ? 1.73205 : 1;
+        ttr_teorico = (vp_tap / vs) * factorFases;
+    }
+
+    let u = getNum(`inp-${mod}-uv-${tapIdx}`);
+    let v = (DATA.fases === 3) ? getNum(`inp-${mod}-vw-${tapIdx}`) : 0;
+    let w = (DATA.fases === 3) ? getNum(`inp-${mod}-wu-${tapIdx}`) : 0;
+    let errMax = 0;
+    let hayDato = false;
+
+    if (ttr_teorico > 0) {
+        [u, v, w].forEach(val => {
+            if (val > 0) {
+                hayDato = true;
+                let err = Math.abs((ttr_teorico - val) / ttr_teorico) * 100;
+                if (err > errMax) errMax = err;
+            }
+        });
+    }
+
+    const badge = document.getElementById(`err-${mod}-${tapIdx}`);
+    if (hayDato && ttr_teorico > 0) {
+        badge.innerText = errMax.toFixed(2) + '%';
+        badge.className = errMax > 0.5 ? 'badge bg-danger blink' : 'badge bg-success';
+        if (esEspecial) badge.title = `TTR teórico especial: ${ttr_teorico.toFixed(4)}`;
+    } else {
+        badge.innerText = '-';
+        badge.className = 'badge bg-secondary';
+    }
+}
     function calcResBal(mod, type, rowIdx) { if(DATA.fases !== 3) return; let v1=0, v2=0, v3=0; let badgeId = ''; if(type === 'pri') { v1 = getNum(`inp-${mod}-r-uv-${rowIdx}`); v2 = getNum(`inp-${mod}-r-vw-${rowIdx}`); v3 = getNum(`inp-${mod}-r-wu-${rowIdx}`); badgeId = `res-err-${mod}-pri-${rowIdx}`; } else { v1 = getNum(`${mod}_pnx`); v2 = getNum(`${mod}_pny`); v3 = getNum(`${mod}_pnz`); badgeId = `res-err-${mod}-sec`; } let badge = document.getElementById(badgeId); if(v1 > 0 && v2 > 0 && v3 > 0) { let avg = (v1 + v2 + v3) / 3; let maxDev = Math.max(Math.abs(v1-avg), Math.abs(v2-avg), Math.abs(v3-avg)); let percentDev = (maxDev / avg) * 100; badge.innerText = percentDev.toFixed(2) + '%'; badge.className = percentDev > 5 ? 'badge bg-danger blink' : 'badge bg-success'; } else { badge.innerText = '-'; badge.className = 'badge bg-secondary'; } }
     
    // [HOTFIX V45.3] calcLoss: Fórmula V×I directa para Corto y Vacío.
