@@ -162,6 +162,7 @@
                     <div class="col-12 border-top mt-2 pt-2"><h6 class="small fw-bold text-muted">DETALLES FÍSICOS DE PLACA</h6></div><div class="col-md-4 col-6"><label class="label-mini">PESO (Kg)</label><input id="edit_peso" type="number" class="form-control"></div><div class="col-md-4 col-6"><label class="label-mini">ACEITE (L)</label><input id="edit_aceite" type="number" class="form-control"></div><div class="col-md-4 col-12"><label class="label-mini text-danger">DERIVACIONES</label><select id="edit_deriv" class="form-select fw-bold text-danger border-danger"><option value="+2">+2</option><option value="+1">+1</option><option value="0">0</option></select></div>
                     <div class="col-6"><label class="label-mini">CELULAR</label><input id="edit_celular" class="form-control"></div><div class="col-6"><label class="label-mini">PROYECTO</label><input id="edit_proyecto" class="form-control"></div>
                 </div>
+                <div id="contenedor_especial"></div>
                 <div class="mt-4"><button class="btn btn-warning w-100 fw-bold" onclick="guardarEdicionHV()">GUARDAR CAMBIOS</button></div>
             </div>
         </div>
@@ -1127,7 +1128,102 @@ function generarVeredictoNorma(mod) {
 
     function filtrarHistorial() { const q = document.getElementById('filtroHistorial').value.toLowerCase(); const filtrados = HISTORIAL_CACHE.filter(i => i.entrada.toString().includes(q) || i.cliente.toLowerCase().includes(q) ); renderHistorial(filtrados); }
     function crearHoja() { const d = { entrada: getVal('new_entrada'), cliente: getVal('new_cliente'), kva: getVal('new_kva'), marca: getVal('new_marca'), serie: getVal('new_serie'), grupo: getVal('new_grupo'), vp: getVal('new_vp'), vs: getVal('new_vs'), fases: getVal('new_fases'), anio: getVal('new_anio'), tipo: getVal('new_tipo'), proyecto: getVal('new_proyecto'), celular: getVal('new_celular'), peso: getVal('new_peso'), aceite: getVal('new_aceite'), derivaciones: getVal('new_deriv') }; if(!d.cliente || !d.kva) return Swal.fire('Faltan Datos','','warning'); loading(true); google.script.run.withSuccessHandler(res => { loading(false); if(res.success) { if(modalCrear) modalCrear.hide(); Swal.fire('Creado','','success').then(() => { if(ITEM_SELECCIONADO) { document.getElementById('search_insp').value = d.entrada; buscar('insp'); } }); } else Swal.fire('Error',res.error,'error'); }).registrarNuevaEntrada(d); }
-   function initHV
+   function initHV() {
+        document.getElementById('form_hv').classList.remove('d-none');
+        document.getElementById('edit_entrada').value  = DATA.entrada;
+        document.getElementById('edit_cliente').value  = DATA.cliente;
+        document.getElementById('edit_kva').value      = DATA.kva;
+        document.getElementById('edit_marca').value    = DATA.marca;
+        document.getElementById('edit_serie').value    = DATA.serie;
+        document.getElementById('edit_vp').value       = DATA.vp;
+        document.getElementById('edit_vs').value       = DATA.vs;
+        document.getElementById('edit_fases').value    = DATA.fases;
+        document.getElementById('edit_grupo').value    = DATA.grupo;
+        document.getElementById('edit_anio').value     = DATA.anio;
+        document.getElementById('edit_tipo').value     = DATA.tipo;
+        document.getElementById('edit_peso').value     = DATA.peso;
+        document.getElementById('edit_aceite').value   = DATA.aceite;
+        document.getElementById('edit_deriv').value    = DATA.derivaciones;
+        document.getElementById('edit_celular').value  = DATA.celular;
+        document.getElementById('edit_proyecto').value = DATA.proyecto;
+
+        // Panel equipo especial — se construye una sola vez
+        var contenedor = document.getElementById('contenedor_especial');
+        if(contenedor && !document.getElementById('edit_especial')) {
+            var html = '<div class="card p-3 border-warning mt-3">';
+            html += '<div class="d-flex align-items-center mb-2">';
+            html += '<input type="checkbox" id="edit_especial" class="form-check-input me-2" onchange="togglePanelEspecial()">';
+            html += '<label class="fw-bold text-warning mb-0">Equipo de Diseno Especial</label>';
+            html += '</div>';
+            html += '<div id="panel_especial" class="d-none">';
+            html += '<div class="mb-2"><label class="label-mini">Tipo de equipo especial</label>';
+            html += '<select id="edit_tipo_especial" class="form-select form-select-sm">';
+            html += '<option value="AUTOTRANSFORMADOR">Autotransformador</option>';
+            html += '<option value="ZIGZAG">Zigzag</option>';
+            html += '<option value="PARTIDO">Devanado partido</option>';
+            html += '<option value="OTRO">Otro</option>';
+            html += '</select></div>';
+            html += '<label class="label-mini text-warning">Voltajes teoricos por TAP (VP / VS en voltios o %)</label>';
+            html += '<div class="row g-1 mb-1"><div class="col-1"></div><div class="col-5 label-mini text-center">VP (V o %)</div><div class="col-5 label-mini text-center">VS (V)</div></div>';
+            for(var ti = 1; ti <= 5; ti++) {
+                html += '<div class="row g-1 mb-1 align-items-center">';
+                html += '<div class="col-1 fw-bold small text-center">' + ti + '</div>';
+                html += '<div class="col-5"><input class="form-control form-control-sm" id="tap_vp_' + ti + '" placeholder="VP tap' + ti + '"></div>';
+                html += '<div class="col-5"><input class="form-control form-control-sm" id="tap_vs_' + ti + '" placeholder="VS tap' + ti + '"></div>';
+                html += '</div>';
+            }
+            html += '<label class="label-mini text-warning mt-2">Etiquetas de aislamiento personalizadas</label>';
+            html += '<div class="row g-1 mb-2">';
+            html += '<div class="col-4"><input class="form-control form-control-sm" id="aisl_lbl_1" placeholder="Medicion 1" value="AT-BT"></div>';
+            html += '<div class="col-4"><input class="form-control form-control-sm" id="aisl_lbl_2" placeholder="Medicion 2" value="AT-T"></div>';
+            html += '<div class="col-4"><input class="form-control form-control-sm" id="aisl_lbl_3" placeholder="Medicion 3" value="BT-T"></div>';
+            html += '</div>';
+            html += '<label class="label-mini text-warning">Etiquetas de devanados para resistencia</label>';
+            html += '<div class="row g-1">';
+            html += '<div class="col-4"><input class="form-control form-control-sm" id="res_lbl_a" placeholder="Devanado A" value="PRIMARIO"></div>';
+            html += '<div class="col-4"><input class="form-control form-control-sm" id="res_lbl_b" placeholder="Devanado B" value="SECUNDARIO"></div>';
+            html += '<div class="col-4"><input class="form-control form-control-sm" id="res_lbl_c" placeholder="Devanado C (opcional)"></div>';
+            html += '</div>';
+            html += '</div></div>';
+            contenedor.innerHTML = html;
+        }
+
+        // Cargar datos especiales si existen
+        var esEspecial = DATA.especial === "true" || DATA.especial === true;
+        var chkEsp = document.getElementById('edit_especial');
+        if(chkEsp) chkEsp.checked = esEspecial;
+        if(esEspecial) {
+            var panel = document.getElementById('panel_especial');
+            if(panel) panel.classList.remove('d-none');
+            var teEl = document.getElementById('edit_tipo_especial');
+            if(DATA.tipo_especial && teEl) teEl.value = DATA.tipo_especial;
+            var tc = DATA.taps_config || {};
+            for(var ti2 = 1; ti2 <= 5; ti2++) {
+                if(tc['tap'+ti2]) {
+                    var vpEl = document.getElementById('tap_vp_'+ti2);
+                    var vsEl = document.getElementById('tap_vs_'+ti2);
+                    if(vpEl) vpEl.value = tc['tap'+ti2].vp || '';
+                    if(vsEl) vsEl.value = tc['tap'+ti2].vs || '';
+                }
+            }
+            var ac = DATA.aisl_config || {};
+            if(ac.lbl1 && document.getElementById('aisl_lbl_1')) document.getElementById('aisl_lbl_1').value = ac.lbl1;
+            if(ac.lbl2 && document.getElementById('aisl_lbl_2')) document.getElementById('aisl_lbl_2').value = ac.lbl2;
+            if(ac.lbl3 && document.getElementById('aisl_lbl_3')) document.getElementById('aisl_lbl_3').value = ac.lbl3;
+            var rc = DATA.res_config || {};
+            if(rc.lblA && document.getElementById('res_lbl_a')) document.getElementById('res_lbl_a').value = rc.lblA;
+            if(rc.lblB && document.getElementById('res_lbl_b')) document.getElementById('res_lbl_b').value = rc.lblB;
+            if(rc.lblC && document.getElementById('res_lbl_c')) document.getElementById('res_lbl_c').value = rc.lblC;
+        }
+    }
+
+    function togglePanelEspecial() {
+        var chk = document.getElementById('edit_especial');
+        var panel = document.getElementById('panel_especial');
+        if(chk && panel) {
+            chk.checked ? panel.classList.remove('d-none') : panel.classList.add('d-none');
+        }
+    }
    function guardarEdicionHV() {
     const esEspecial = document.getElementById('edit_especial') 
         ? document.getElementById('edit_especial').checked 
