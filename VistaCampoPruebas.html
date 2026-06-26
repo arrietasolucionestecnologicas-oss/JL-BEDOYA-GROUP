@@ -1368,7 +1368,7 @@ function generarVeredictoNorma(mod) {
         let dateInput = document.getElementById(mod+'_fecha_prueba');
         if(dateInput) dateInput.value=(saved&&saved.fecha_prueba)?saved.fecha_prueba:today;
 
-        // [V46] Aplicar etiquetas de aislamiento personalizadas si equipo especial
+       // [V46] Aplicar etiquetas de aislamiento personalizadas si equipo especial
         var esEsp = DATA.especial === "true" || DATA.especial === true;
         if(esEsp && DATA.aisl_config) {
             var ac = DATA.aisl_config;
