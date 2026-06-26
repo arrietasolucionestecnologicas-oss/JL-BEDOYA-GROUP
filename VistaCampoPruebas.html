@@ -529,9 +529,9 @@
                 <div class="card p-3">
                     <h6 class="fw-bold mb-2 d-none mostrar-en-informe">1. RESISTENCIA DE AISLAMIENTO</h6>
                     <label class="fw-bold mb-2 ocultar-en-informe">Aislamiento</label>
-                    <div class="input-group mb-2"><span class="input-group-text">AT-BT</span><input type="number" id="${l.id}_atbt" class="form-control"><select class="form-select unit-select" id="u_${l.id}_atbt"><option>MΩ</option><option>GΩ</option></select></div>
-                    <div class="input-group mb-2"><span class="input-group-text">AT-T</span><input type="number" id="${l.id}_att" class="form-control"><select class="form-select unit-select" id="u_${l.id}_att"><option>MΩ</option><option>GΩ</option></select></div>
-                    <div class="input-group mb-2"><span class="input-group-text">BT-T</span><input type="number" id="${l.id}_btt" class="form-control"><select class="form-select unit-select" id="u_${l.id}_btt"><option>MΩ</option><option>GΩ</option></select></div>
+                    <div class="input-group mb-2"><span class="input-group-text" id="lbl_aisl_1_${l.id}">AT-BT</span><input type="number" id="${l.id}_atbt" class="form-control"><select class="form-select unit-select" id="u_${l.id}_atbt"><option>MΩ</option><option>GΩ</option></select></div>
+                    <div class="input-group mb-2"><span class="input-group-text" id="lbl_aisl_2_${l.id}">AT-T</span><input type="number" id="${l.id}_att" class="form-control"><select class="form-select unit-select" id="u_${l.id}_att"><option>MΩ</option><option>GΩ</option></select></div>
+                    <div class="input-group mb-2"><span class="input-group-text" id="lbl_aisl_3_${l.id}">BT-T</span><input type="number" id="${l.id}_btt" class="form-control"><select class="form-select unit-select" id="u_${l.id}_btt"><option>MΩ</option><option>GΩ</option></select></div>
                 </div>
             </div>
             
@@ -1372,15 +1372,12 @@ function generarVeredictoNorma(mod) {
         var esEsp = DATA.especial === "true" || DATA.especial === true;
         if(esEsp && DATA.aisl_config) {
             var ac = DATA.aisl_config;
-            var lbl1 = ac.lbl1 || 'AT-BT';
-            var lbl2 = ac.lbl2 || 'AT-T';
-            var lbl3 = ac.lbl3 || 'BT-T';
-            var g1 = document.querySelector('#tab_' + mod + '_aisl .input-group:nth-child(2) .input-group-text');
-            var g2 = document.querySelector('#tab_' + mod + '_aisl .input-group:nth-child(3) .input-group-text');
-            var g3 = document.querySelector('#tab_' + mod + '_aisl .input-group:nth-child(4) .input-group-text');
-            if(g1) g1.innerText = lbl1;
-            if(g2) g2.innerText = lbl2;
-            if(g3) g3.innerText = lbl3;
+            var g1 = document.getElementById('lbl_aisl_1_' + mod);
+            var g2 = document.getElementById('lbl_aisl_2_' + mod);
+            var g3 = document.getElementById('lbl_aisl_3_' + mod);
+            if(g1) g1.innerText = ac.lbl1 || 'AT-BT';
+            if(g2) g2.innerText = ac.lbl2 || 'AT-T';
+            if(g3) g3.innerText = ac.lbl3 || 'BT-T';
         }
     }
 
