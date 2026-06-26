@@ -1309,7 +1309,13 @@ function generarVeredictoNorma(mod) {
             }
         } catch(e){} 
         
-        let taps=5; 
+       // [V46] Taps dinámicos: equipo especial usa solo los configurados
+        const esEspLab = DATA.especial === "true" || DATA.especial === true;
+        const tcLab = DATA.taps_config || {};
+        let taps = 5;
+        if(esEspLab && Object.keys(tcLab).length > 0) {
+            taps = Object.keys(tcLab).length;
+        }
         let hTTR='<thead><tr><th>T</th><th>U-V</th>'+(DATA.fases==3?'<th>V-W</th><th>W-U</th>':'')+'<th>%Err</th></tr></thead><tbody>'; 
         let hRes='<thead><tr><th>T</th><th>U-V</th>'+(DATA.fases==3?'<th>V-W</th><th>W-U</th>':'')+'<th>%Desb</th></tr></thead><tbody>'; 
         for(let i=1;i<=taps;i++) { 
@@ -1380,13 +1386,16 @@ function generarVeredictoNorma(mod) {
                 if(g2) g2.innerText = ac.lbl2 || 'AT-T';
                 if(g3) g3.innerText = ac.lbl3 || 'BT-T';
             }
-            if(DATA.res_config) {
+           if(DATA.res_config) {
                 var rc = DATA.res_config;
                 var rp = document.getElementById('lbl_res_pri_' + mod);
                 var rs = document.getElementById('lbl_res_sec_' + mod);
                 if(rp && rc.lblA) rp.innerText = rc.lblA;
                 if(rs && rc.lblB) {
-                    rs.innerHTML = rc.lblB + ' <span id="res-err-' + mod + '-sec" class="badge bg-secondary ms-2">-</span>';
+                    // Preservar el badge reconstruyendo el h6 completo
+                    var badgeSpan = document.getElementById('res-err-' + mod + '-sec');
+                    var badgeHtml = badgeSpan ? badgeSpan.outerHTML : '<span id="res-err-' + mod + '-sec" class="badge bg-secondary ms-2">-</span>';
+                    rs.innerHTML = rc.lblB + ' ' + badgeHtml;
                 }
             }
         }
