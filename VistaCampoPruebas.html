@@ -1322,10 +1322,7 @@ function generarVeredictoNorma(mod) {
         let secInputs = `<div class="input-group mb-1"><span class="input-group-text">PN-X</span><input type="number" id="${mod}_pnx" class="form-control" value="${saved?saved.res_sec.pnx:''}" onchange="calcResBal('${mod}','sec')"><span class="input-group-text">X-Y</span><input type="number" id="${mod}_xy" class="form-control" value="${saved?saved.res_sec.xy:''}"></div>`; 
         if(DATA.fases==3) secInputs += `<div class="input-group mb-1"><span class="input-group-text">PN-Y</span><input type="number" id="${mod}_pny" class="form-control" value="${saved?saved.res_sec.pny:''}" onchange="calcResBal('${mod}','sec')"><span class="input-group-text">Y-Z</span><input type="number" id="${mod}_yz" class="form-control" value="${saved?saved.res_sec.yz:''}"></div><div class="input-group mb-1"><span class="input-group-text">PN-Z</span><input type="number" id="${mod}_pnz" class="form-control" value="${saved?saved.res_sec.pnz:''}" onchange="calcResBal('${mod}','sec')"><span class="input-group-text">Z-X</span><input type="number" id="${mod}_zx" class="form-control" value="${saved?saved.res_sec.zx:''}"></div>`; 
         let unitOpts = '<option value="mΩ">mΩ</option><option value="Ω">Ω</option><option value="kΩ">kΩ</option><option value="μΩ">μΩ</option>'; 
-        document.getElementById(`${mod}_wrapper_res`).innerHTML = `<div class="card p-2 mb-3"><div class="d-flex justify-content-between mb-2"><h6 class="m-0 fw-bold small text-muted">PRIMARIO</h6><select id="u_${mod}_res_pri" class="form-select form-select-sm" style="width:auto">${unitOpts}</select></div><div class="scroll-x"><table class="table table-sm text-center mb-0">${hRes}</tbody></table></div></div><div class="card p-2"><div class="d-flex justify-content-between mb-2"><h6 class="m-0 fw-bold small text-muted">SECUNDARIO <span id="res-err-${mod}-sec" class="badge bg-secondary ms-2">-</span></h6><select id="u_${mod}_res_sec" class="form-select form-select-sm" style="width:auto">${unitOpts}</select></div>${secInputs}</div>`; 
-        if(saved) { 
-            document.getElementById(`${mod}_temp`).value = saved.temp_amb || 30; 
-            if(saved.mat_pri) document.getElementById(`${mod}_mat_pri`).value = saved.mat_pri; 
+       document.getElementById(`${mod}_wrapper_res`).innerHTML = `<div class="card p-2 mb-3"><div class="d-flex justify-content-between mb-2"><h6 class="m-0 fw-bold small text-muted" id="lbl_res_pri_${mod}">PRIMARIO</h6><select id="u_${mod}_res_pri" class="form-select form-select-sm" style="width:auto">${unitOpts}</select></div><div class="scroll-x"><table class="table table-sm text-center mb-0">${hRes}</tbody></table></div></div><div class="card p-2"><div class="d-flex justify-content-between mb-2"><h6 class="m-0 fw-bold small text-muted" id="lbl_res_sec_${mod}">SECUNDARIO <span id="res-err-${mod}-sec" class="badge bg-secondary ms-2">-</span></h6><select id="u_${mod}_res_sec" class="form-select form-select-sm" style="width:auto">${unitOpts}</select></div>${secInputs}</div>`;
             if(saved.mat_sec) document.getElementById(`${mod}_mat_sec`).value = saved.mat_sec; 
             if(saved.gar_w_vacio) document.getElementById(`${mod}_gar_wvacio`).value = saved.gar_w_vacio; 
             if(saved.gar_w_carga) document.getElementById(`${mod}_gar_wcarga`).value = saved.gar_w_carga; 
@@ -1368,17 +1365,33 @@ function generarVeredictoNorma(mod) {
         let dateInput = document.getElementById(mod+'_fecha_prueba');
         if(dateInput) dateInput.value=(saved&&saved.fecha_prueba)?saved.fecha_prueba:today;
 
-       // [V46] Aplicar etiquetas de aislamiento personalizadas si equipo especial
+       // [V46] Aplicar etiquetas personalizadas si equipo especial
         var esEsp = DATA.especial === "true" || DATA.especial === true;
-        if(esEsp && DATA.aisl_config) {
-            var ac = DATA.aisl_config;
-            var g1 = document.getElementById('lbl_aisl_1_' + mod);
-            var g2 = document.getElementById('lbl_aisl_2_' + mod);
-            var g3 = document.getElementById('lbl_aisl_3_' + mod);
-            if(g1) g1.innerText = ac.lbl1 || 'AT-BT';
-            if(g2) g2.innerText = ac.lbl2 || 'AT-T';
-            if(g3) g3.innerText = ac.lbl3 || 'BT-T';
+        if(esEsp) {
+            // Etiquetas de aislamiento
+            if(DATA.aisl_config) {
+                var ac = DATA.aisl_config;
+                var g1 = document.getElementById('lbl_aisl_1_' + mod);
+                var g2 = document.getElementById('lbl_aisl_2_' + mod);
+                var g3 = document.getElementById('lbl_aisl_3_' + mod);
+                if(g1) g1.innerText = ac.lbl1 || 'AT-BT';
+                if(g2) g2.innerText = ac.lbl2 || 'AT-T';
+                if(g3) g3.innerText = ac.lbl3 || 'BT-T';
+            }
+            // Etiquetas de resistencia (secciones PRIMARIO / SECUNDARIO)
+            if(DATA.res_config) {
+                var rc = DATA.res_config;
+                var rp = document.getElementById('lbl_res_pri_' + mod);
+                var rs = document.getElementById('lbl_res_sec_' + mod);
+                if(rp && rc.lblA) rp.innerText = rc.lblA;
+                if(rs && rc.lblB) {
+                    // Preservar el badge de desbalance dentro del h6
+                    var badge = document.getElementById('res-err-' + mod + '-sec');
+                    rs.innerHTML = rc.lblB + ' <span id="res-err-' + mod + '-sec" class="badge bg-secondary ms-2">-</span>';
+                }
+            }
         }
+    }
     }
 
    function calcTTRDev(mod, tapIdx) {
