@@ -1366,7 +1366,22 @@ function generarVeredictoNorma(mod) {
         
         let today = new Date().toISOString().split('T')[0];
         let dateInput = document.getElementById(mod+'_fecha_prueba');
-        if(dateInput) dateInput.value = (saved && saved.fecha_prueba) ? saved.fecha_prueba : today;
+        if(dateInput) dateInput.value=(saved&&saved.fecha_prueba)?saved.fecha_prueba:today;
+
+        // [V46] Aplicar etiquetas de aislamiento personalizadas si equipo especial
+        var esEsp = DATA.especial === "true" || DATA.especial === true;
+        if(esEsp && DATA.aisl_config) {
+            var ac = DATA.aisl_config;
+            var lbl1 = ac.lbl1 || 'AT-BT';
+            var lbl2 = ac.lbl2 || 'AT-T';
+            var lbl3 = ac.lbl3 || 'BT-T';
+            var g1 = document.querySelector('#tab_' + mod + '_aisl .input-group:nth-child(2) .input-group-text');
+            var g2 = document.querySelector('#tab_' + mod + '_aisl .input-group:nth-child(3) .input-group-text');
+            var g3 = document.querySelector('#tab_' + mod + '_aisl .input-group:nth-child(4) .input-group-text');
+            if(g1) g1.innerText = lbl1;
+            if(g2) g2.innerText = lbl2;
+            if(g3) g3.innerText = lbl3;
+        }
     }
 
    function calcTTRDev(mod, tapIdx) {
