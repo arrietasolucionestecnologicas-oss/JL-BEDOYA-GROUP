@@ -1163,6 +1163,10 @@ function generarVeredictoNorma(mod) {
             html += '<option value="PARTIDO">Devanado partido</option>';
             html += '<option value="OTRO">Otro</option>';
             html += '</select></div>';
+            html += '<div class="d-flex align-items-center mb-2 mt-1">';
+            html += '<input type="checkbox" id="edit_sin_raiz3" class="form-check-input me-2">';
+            html += '<label class="label-mini mb-0">Relacion directa VP/VS (sin factor raiz 3) — Autotransformador monofasico o relacion %</label>';
+            html += '</div>';
             html += '<label class="label-mini text-warning">Voltajes teoricos por TAP (VP / VS en voltios o %)</label>';
             html += '<div class="row g-1 mb-1"><div class="col-1"></div><div class="col-5 label-mini text-center">VP (V o %)</div><div class="col-5 label-mini text-center">VS (V)</div></div>';
             for(var ti = 1; ti <= 5; ti++) {
@@ -1197,6 +1201,8 @@ function generarVeredictoNorma(mod) {
             if(panel) panel.classList.remove('d-none');
             var teEl = document.getElementById('edit_tipo_especial');
             if(DATA.tipo_especial && teEl) teEl.value = DATA.tipo_especial;
+            var sinR3El = document.getElementById('edit_sin_raiz3');
+            if(sinR3El) sinR3El.checked = DATA.sin_raiz3 === "true" || DATA.sin_raiz3 === true;
             var tc = DATA.taps_config || {};
             for(var ti2 = 1; ti2 <= 5; ti2++) {
                 if(tc['tap'+ti2]) {
@@ -1270,6 +1276,7 @@ function generarVeredictoNorma(mod) {
         derivaciones: getVal('edit_deriv'),
         // Equipo especial
         especial:     String(esEspecial),
+        sin_raiz3: String(document.getElementById('edit_sin_raiz3') ? document.getElementById('edit_sin_raiz3').checked : false),
         tipo_especial: document.getElementById('edit_tipo_especial') ? getVal('edit_tipo_especial') : '',
         taps_config,
         aisl_config,
@@ -1286,6 +1293,7 @@ function generarVeredictoNorma(mod) {
             DATA.taps_config  = taps_config;
             DATA.aisl_config  = aisl_config;
             DATA.res_config   = res_config;
+            DATA.sin_raiz3 = d.sin_raiz3;
             Swal.fire('Actualizado', 'Hoja de vida guardada correctamente.', 'success');
         } else {
             Swal.fire('Error', res.error, 'error');
@@ -1417,8 +1425,9 @@ function generarVeredictoNorma(mod) {
         }
 
         if (vsTap > 0) {
-            let factorFases = (DATA.fases === 3) ? 1.73205 : 1;
-            ttr_teorico = (vpTap / vsTap) * factorFases;
+            var sinRaiz3 = DATA.sin_raiz3 === "true" || DATA.sin_raiz3 === true;
+            var factorEsp = sinRaiz3 ? 1 : ((DATA.fases === 3) ? 1.73205 : 1);
+            ttr_teorico = (vpTap / vsTap) * factorEsp;
         }
     } else {
         // Equipo estándar: factor ±2.5% por tap
