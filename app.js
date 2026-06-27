@@ -76,10 +76,17 @@ async function guardarFotoOffline(payload) {
         const db = await initOfflineDB();
         const tx = db.transaction(STORE_FOTOS, 'readwrite');
         tx.objectStore(STORE_FOTOS).add({ timestamp: Date.now(), payload: payload });
-        return new Promise((resolve, reject) => {
+        await new Promise((resolve, reject) => {
             tx.oncomplete = resolve;
             tx.onerror = () => reject(tx.error);
         });
+        // Background Sync: sincroniza aunque la app esté cerrada cuando regrese la señal
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+            try {
+                const sw = await navigator.serviceWorker.ready;
+                await sw.sync.register('sync-fotos-jlb');
+            } catch(e) { console.warn('Background Sync no soportado:', e); }
+        }
     } catch(e) { console.error("Error IndexedDB", e); }
 }
 
@@ -141,6 +148,15 @@ window.onload = function() {
         nav('programacion');
         google.script.run.withSuccessHandler(d => { dbClientes = d; actualizarDatalistClientes(); }).obtenerClientesDB();
         setTimeout(syncFotosOffline, 3000); 
+    }
+    // Escuchar al SW cuando sincroniza fotos en background (app cerrada)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'FOTOS_SINCRONIZADAS') {
+                showToast(`✅ ${event.data.cantidad} foto(s) sincronizadas en background`);
+                if (document.getElementById('galeria-fotos-grid')) cargarGaleriaFotos();
+            }
+        });
     }
 };
 
