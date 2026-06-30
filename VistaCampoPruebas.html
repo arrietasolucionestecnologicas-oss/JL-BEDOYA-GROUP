@@ -958,6 +958,30 @@ function generarVeredictoNorma(mod) {
     }
 }
 
+    function cruzarInformacion(item) {
+    const etapa = String(item.ETAPA_TECNICA || "").toUpperCase().trim();
+    const admin = String(item.ESTADO_ADMIN  || "").toUpperCase().trim();
+    let color = 'secondary', estado = 'PENDIENTE';
+
+    if      (etapa.includes('4. ENCUBADO'))         { color = 'purple';    estado = 'PRUEBAS FINALES'; }
+    else if (etapa.includes('6. SOLO PRUEBAS')) {
+        if (admin.includes('EN PROCESO') || admin.includes('FINALIZADO'))
+                                                      { color = 'purple';    estado = 'PRUEBAS FINALES'; }
+        else                                          { color = 'warning';   estado = 'INICIALES PENDIENTES'; }
+    }
+    else if (etapa.includes('3. REPARACION'))         { color = 'primary';   estado = 'EN REPARACIÓN'; }
+    else if (etapa.includes('2.1 DIAGNOSTICO OK'))    { color = 'warning';   estado = 'DIAG. OK / SIN AUTORIZAR'; }
+    else if (etapa.includes('2. DIAGNOSTICO'))        { color = 'warning';   estado = 'INSPECCIÓN PENDIENTE'; }
+    else if (etapa.includes('5. TERMINADO'))          { color = 'success';   estado = 'LISTO'; }
+    else if (etapa.includes('EXTERNO'))               { color = 'secondary'; estado = 'EN PROVEEDOR'; }
+    else if (admin.includes('INGRESO'))               { color = 'warning';   estado = 'INGRESADO / PENDIENTE'; }
+
+    item.estadoTecnico = estado;
+    item.colorTecnico  = color;
+    item.descripcion   = item.descripcion || item.desc || '';
+    item.estado        = item.ESTADO_ADMIN || '';
+    return item;
+}
     function abrirAgenda() { if(modalAgenda) modalAgenda.show(); cargarAgenda(); }
     
     function cargarAgenda() {
@@ -969,10 +993,11 @@ function generarVeredictoNorma(mod) {
                c.innerHTML = `<div class="alert alert-danger">Error: ${res.error || lista[0].mensaje}</div>`; return; 
            }
            if(!Array.isArray(lista) || lista.length === 0) { c.innerHTML = `<div class="text-center py-5 text-muted"><i class="fas fa-check-circle fa-2x mb-2 text-success"></i><br>¡Todo al día! No hay pendientes.</div>`; return; }
-           AGENDA_CACHE = lista;
-           renderAgenda(lista);
-       }).withFailureHandler(e => { c.innerHTML = `<div class="alert alert-danger">Error de Conexión: ${e}</div>`; }).obtenerDatosProgramacion(); 
-    }
+           lista = lista.map(cruzarInformacion);
+       AGENDA_CACHE = lista;
+       renderAgenda(lista);
+   }).withFailureHandler(e => { c.innerHTML = `<div class="alert alert-danger">Error de Conexión: ${e}</div>`; }).obtenerAgendaCampo(); 
+}
 
     function renderAgenda(lista) {
        const c = document.getElementById('listaAgendaContainer'); c.innerHTML = '';
