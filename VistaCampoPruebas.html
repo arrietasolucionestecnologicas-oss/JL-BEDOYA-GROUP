@@ -958,26 +958,27 @@ function generarVeredictoNorma(mod) {
     }
 }
 
-    function cruzarInformacion(item) {
+   function cruzarInformacion(item) {
     const etapa = String(item.ETAPA_TECNICA || "").toUpperCase().trim();
     const admin = String(item.ESTADO_ADMIN  || "").toUpperCase().trim();
-    let color = 'secondary', estado = 'PENDIENTE';
+    let color = 'secondary', estado = 'PENDIENTE', destino = 'insp';
 
-    if      (etapa.includes('4. ENCUBADO'))         { color = 'purple';    estado = 'PRUEBAS FINALES'; }
+    if      (etapa.includes('4. ENCUBADO'))       { color='purple';    estado='PRUEBAS FINALES';             destino='fin';  }
     else if (etapa.includes('6. SOLO PRUEBAS')) {
         if (admin.includes('EN PROCESO') || admin.includes('FINALIZADO'))
-                                                      { color = 'purple';    estado = 'PRUEBAS FINALES'; }
-        else                                          { color = 'warning';   estado = 'INICIALES PENDIENTES'; }
+                                                    { color='purple';    estado='PRUEBAS FINALES';             destino='fin';  }
+        else                                        { color='warning';   estado='INICIALES PENDIENTES';        destino='ini';  }
     }
-    else if (etapa.includes('3. REPARACION'))         { color = 'primary';   estado = 'EN REPARACIÓN'; }
-    else if (etapa.includes('2.1 DIAGNOSTICO OK'))    { color = 'warning';   estado = 'DIAG. OK / SIN AUTORIZAR'; }
-    else if (etapa.includes('2. DIAGNOSTICO'))        { color = 'warning';   estado = 'INSPECCIÓN PENDIENTE'; }
-    else if (etapa.includes('5. TERMINADO'))          { color = 'success';   estado = 'LISTO'; }
-    else if (etapa.includes('EXTERNO'))               { color = 'secondary'; estado = 'EN PROVEEDOR'; }
-    else if (admin.includes('INGRESO'))               { color = 'warning';   estado = 'INGRESADO / PENDIENTE'; }
+    else if (etapa.includes('3. REPARACION'))       { color='primary';   estado='EN REPARACIÓN';              destino='insp'; }
+    else if (etapa.includes('2.1 DIAGNOSTICO OK'))  { color='warning';   estado='DIAGNOSTICO OK / AUTORIZAR'; destino='ini';  }
+    else if (etapa.includes('2. DIAGNOSTICO'))      { color='warning';   estado='INSPECCIÓN PENDIENTE';       destino='insp'; }
+    else if (etapa.includes('5. TERMINADO'))        { color='success';   estado='LISTO';                      destino='fin';  }
+    else if (etapa.includes('EXTERNO'))             { color='secondary'; estado='EN PROVEEDOR';               destino='insp'; }
+    else if (admin.includes('INGRESO'))             { color='warning';   estado='INGRESADO / PENDIENTE';      destino='insp'; }
 
     item.estadoTecnico = estado;
     item.colorTecnico  = color;
+    item.moduloDestino = destino;
     item.descripcion   = item.descripcion || item.desc || '';
     item.estado        = item.ESTADO_ADMIN || '';
     return item;
@@ -1045,22 +1046,17 @@ function generarVeredictoNorma(mod) {
        renderAgenda(filtrados);
     }
     
-    function seleccionarDeAgendaPorId(idStr) {
-        const item = AGENDA_CACHE.find(i => String(i.id) === String(idStr));
-        if(item) {
-            ITEM_SELECCIONADO = item;
-            modalAgenda.hide();
-            
-            let moduloDestino = 'insp';
-            if (ITEM_SELECCIONADO.colorTecnico === 'purple') moduloDestino = 'fin';
-            else if (ITEM_SELECCIONADO.colorTecnico === 'warning') moduloDestino = 'insp';
-            else moduloDestino = 'insp';
-
-            document.getElementById('search_' + moduloDestino).value = ITEM_SELECCIONADO.id;
-            buscar(moduloDestino);
-            nav(moduloDestino);
-        }
+   function seleccionarDeAgendaPorId(idStr) {
+    const item = AGENDA_CACHE.find(i => String(i.id) === String(idStr));
+    if(item) {
+        ITEM_SELECCIONADO = item;
+        modalAgenda.hide();
+        const moduloDestino = item.moduloDestino || 'insp';
+        document.getElementById('search_' + moduloDestino).value = ITEM_SELECCIONADO.id;
+        buscar(moduloDestino);
+        nav(moduloDestino);
     }
+}
 
     function buscarCurva() { 
         const entrada = getVal('search_curva'); 
