@@ -959,8 +959,8 @@ function generarVeredictoNorma(mod) {
 }
 
    function cruzarInformacion(item) {
-    const etapa = String(item.ETAPA_TECNICA || "").toUpperCase().trim();
-    const admin = String(item.ESTADO_ADMIN  || "").toUpperCase().trim();
+    const etapa  = String(item.etapa_tecnica || "").toUpperCase().trim();
+    const admin  = String(item.estado        || "").toUpperCase().trim();
     let color = 'secondary', estado = 'PENDIENTE', destino = 'insp';
 
     if      (etapa.includes('4. ENCUBADO'))       { color='purple';    estado='PRUEBAS FINALES';             destino='fin';  }
@@ -976,11 +976,17 @@ function generarVeredictoNorma(mod) {
     else if (etapa.includes('EXTERNO'))             { color='secondary'; estado='EN PROVEEDOR';               destino='insp'; }
     else if (admin.includes('INGRESO'))             { color='warning';   estado='INGRESADO / PENDIENTE';      destino='insp'; }
 
+    if (admin.includes('SIN INGRESAR'))             { return null; }
+    if (admin.includes('ENTREGADO') || etapa.includes('TERMINADO') && admin.includes('ENTREGADO')) { return null; }
+
+    item.id            = item.idJLB || item.idGroup || 'S/N';
+    item.empresa       = item.idJLB ? 'JLB' : 'GROUP';
+    item.descripcion   = item.desc || '';
     item.estadoTecnico = estado;
     item.colorTecnico  = color;
     item.moduloDestino = destino;
-    item.descripcion   = item.descripcion || item.desc || '';
-    item.estado        = item.ESTADO_ADMIN || '';
+    item.ESTADO_ADMIN  = item.estado || '';
+    item.ETAPA_TECNICA = etapa;
     return item;
 }
     function abrirAgenda() { if(modalAgenda) modalAgenda.show(); cargarAgenda(); }
@@ -994,10 +1000,10 @@ function generarVeredictoNorma(mod) {
                c.innerHTML = `<div class="alert alert-danger">Error: ${res.error || lista[0].mensaje}</div>`; return; 
            }
            if(!Array.isArray(lista) || lista.length === 0) { c.innerHTML = `<div class="text-center py-5 text-muted"><i class="fas fa-check-circle fa-2x mb-2 text-success"></i><br>¡Todo al día! No hay pendientes.</div>`; return; }
-           lista = lista.map(cruzarInformacion);
+           lista = lista.map(cruzarInformacion).filter(i => i !== null);
        AGENDA_CACHE = lista;
        renderAgenda(lista);
-   }).withFailureHandler(e => { c.innerHTML = `<div class="alert alert-danger">Error de Conexión: ${e}</div>`; }).obtenerAgendaCampo(); 
+   }).withFailureHandler(e => { c.innerHTML = `<div class="alert alert-danger">Error de Conexión: ${e}</div>`; }).obtenerDatosProgramacion(); 
 }
 
     function renderAgenda(lista) {
