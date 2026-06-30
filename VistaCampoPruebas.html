@@ -958,34 +958,41 @@ function generarVeredictoNorma(mod) {
     }
 }
 
-   function cruzarInformacion(item) {
-    const etapa  = String(item.etapa_tecnica || "").toUpperCase().trim();
-    const admin  = String(item.estado        || "").toUpperCase().trim();
-    let color = 'secondary', estado = 'PENDIENTE', destino = 'insp';
+  function cruzarInformacion(item) {
+    // ETAPA: viene en ETAPA_TECNICA (nuevos) o en ESTADO_ADMIN con patrón "N." (viejos)
+    const etapaTec  = String(item.ETAPA_TECNICA || item.etapa_tecnica || "").toUpperCase().trim();
+    const adminBruto= String(item.ESTADO_ADMIN  || item.estado        || "").toUpperCase().trim();
+    const etapa     = etapaTec !== "" ? etapaTec : (/^\d+\./.test(adminBruto) ? adminBruto : "");
+    const admin     = etapaTec !== "" ? adminBruto : (/^\d+\./.test(adminBruto) ? "" : adminBruto);
 
-    if      (etapa.includes('4. ENCUBADO'))       { color='purple';    estado='PRUEBAS FINALES';             destino='fin';  }
-    else if (etapa.includes('6. SOLO PRUEBAS')) {
+    const tiene = (f) => f && String(f).length > 4;
+    if (admin.includes('SIN INGRESAR')) return null;
+    if (admin.includes('ENTREGADO'))    return null;
+
+    let color = 'secondary', estadoTec = 'PENDIENTE', destino = 'insp';
+
+    if      (etapa.includes('4. ENCUBADO'))       { color='purple';   estadoTec='PRUEBAS FINALES';          destino='fin';  }
+    else if (etapa.includes('5. TERMINADO'))       { color='success';  estadoTec='LISTO';                   destino='fin';  }
+    else if (etapa.includes('6. SOLO PRUEBAS'))  {
         if (admin.includes('EN PROCESO') || admin.includes('FINALIZADO'))
-                                                    { color='purple';    estado='PRUEBAS FINALES';             destino='fin';  }
-        else                                        { color='warning';   estado='INICIALES PENDIENTES';        destino='ini';  }
+                                                    { color='purple';   estadoTec='PRUEBAS FINALES';          destino='fin';  }
+        else                                        { color='warning';  estadoTec='INICIALES PENDIENTES';     destino='ini';  }
     }
-    else if (etapa.includes('3. REPARACION'))       { color='primary';   estado='EN REPARACIÓN';              destino='insp'; }
-    else if (etapa.includes('2.1 DIAGNOSTICO OK'))  { color='warning';   estado='DIAGNOSTICO OK / AUTORIZAR'; destino='ini';  }
-    else if (etapa.includes('2. DIAGNOSTICO'))      { color='warning';   estado='INSPECCIÓN PENDIENTE';       destino='insp'; }
-    else if (etapa.includes('5. TERMINADO'))        { color='success';   estado='LISTO';                      destino='fin';  }
-    else if (etapa.includes('EXTERNO'))             { color='secondary'; estado='EN PROVEEDOR';               destino='insp'; }
-    else if (admin.includes('INGRESO'))             { color='warning';   estado='INGRESADO / PENDIENTE';      destino='insp'; }
+    else if (etapa.includes('3. REPARACION'))       { color='primary';  estadoTec='EN REPARACION';           destino='insp'; }
+    else if (etapa.includes('2.1 DIAGNOSTICO'))     { color='warning';  estadoTec='DIAG OK / SIN AUTORIZAR'; destino='ini';  }
+    else if (etapa.includes('2. DIAGNOSTICO'))      { color='warning';  estadoTec='INSPECCION PENDIENTE';    destino='insp'; }
+    else if (etapa.includes('EXTERNO'))             { color='secondary';estadoTec='EN PROVEEDOR';            destino='insp'; }
+    else if (admin.includes('INGRESO'))             { color='warning';  estadoTec='INSPECCION PENDIENTE';    destino='insp'; }
+    else if (admin.includes('EN PROCESO'))          { color='primary';  estadoTec='EN REPARACION';           destino='insp'; }
 
-    if (admin.includes('SIN INGRESAR'))             { return null; }
-    if (admin.includes('ENTREGADO') || etapa.includes('TERMINADO') && admin.includes('ENTREGADO')) { return null; }
-
-    item.id            = item.idJLB || item.idGroup || 'S/N';
-    item.empresa       = item.idJLB ? 'JLB' : 'GROUP';
-    item.descripcion   = item.desc || '';
-    item.estadoTecnico = estado;
+    // FIX: leer campos en mayúscula que devuelve el GAS de campo
+    item.id            = item.ID_JLB  || item.idJLB  || item.ID_GROUP || item.idGroup || 'S/N';
+    item.empresa       = (item.ID_JLB || item.idJLB) ? 'JLB' : 'GROUP';
+    item.descripcion   = item.descripcion || item.desc || '';
+    item.estadoTecnico = estadoTec;
     item.colorTecnico  = color;
     item.moduloDestino = destino;
-    item.ESTADO_ADMIN  = item.estado || '';
+    item.ESTADO_ADMIN  = adminBruto;
     item.ETAPA_TECNICA = etapa;
     return item;
 }
