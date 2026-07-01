@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jlb-ops-v_FINAL'; // <--- CAMBIO CRÍTICO PARA FORZAR ACTUALIZACIÓN
+const CACHE_NAME = 'jlb-ops-v_FINAL_2'; // <--- CAMBIO CRÍTICO PARA FORZAR ACTUALIZACIÓN
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
